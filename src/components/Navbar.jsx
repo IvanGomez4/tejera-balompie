@@ -4,19 +4,19 @@ import { adminAuth } from '../lib/adminAuth'
 import escudo from '../assets/escudo.png'
 
 const tabs = [
-  { to: '/',              label: 'Inicio',    icon: '🏠' },
-  { to: '/clasificacion', label: 'Tabla',     icon: '🏆' },
-  { to: '/jugadores',     label: 'Plantilla', icon: '👕' },
-  { to: '/partidos',      label: 'Partidos',  icon: '⚽' },
-  { to: '/estadisticas',  label: 'Stats',     icon: '📊' },
+  { to: '/', label: 'Inicio', icon: '🏠' },
+  { to: '/clasificacion', label: 'Tabla', icon: '🏆' },
+  { to: '/jugadores', label: 'Plantilla', icon: '👕' },
+  { to: '/partidos', label: 'Partidos', icon: '⚽' },
+  { to: '/estadisticas', label: 'Stats', icon: '📊' },
 ]
 
 export default function Navbar() {
-  const location  = useLocation()
-  const navigate  = useNavigate()
+  const location = useLocation()
+  const navigate = useNavigate()
   const [logged, setLogged] = useState(adminAuth.isLogged())
   const [showModal, setShowModal] = useState(false)
-  const [pwd, setPwd]   = useState('')
+  const [pwd, setPwd] = useState('')
   const [error, setError] = useState('')
 
   // Sincroniza si cambia en otra pestaña
@@ -114,15 +114,6 @@ export default function Navbar() {
             <span>{t.label}</span>
           </button>
         ))}
-        {/* Pestaña Admin solo visible cuando estás logueado */}
-        {logged && (
-          <button
-            className={`bottom-nav-btn ${location.pathname === '/admin' ? 'active' : ''}`}
-            onClick={() => navigate('/admin')}>
-            <span className="nav-icon">⚙️</span>
-            <span>Admin</span>
-          </button>
-        )}
       </nav>
 
       {/* ── Modal de login ── */}
