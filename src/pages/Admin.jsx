@@ -178,6 +178,7 @@ function PanelStats({ jugadores, partidos, stats, store }) {
   const [modal, setModal] = useState(null)
   const emptyS = { jugador_id: '', goles: 0, asistencias: 0, tarjetas_amarillas: 0, tarjetas_rojas: 0, minutos: 90 }
   const [form, setForm] = useState(emptyS)
+  const [mvpSel, setMvpSel] = useState('')
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const jugados = partidos
@@ -190,6 +191,7 @@ function PanelStats({ jugadores, partidos, stats, store }) {
   const save = () => {
     if (!form.jugador_id || !partidoSel) return
     store.upsertStat({ jugador_id: Number(form.jugador_id), partido_id: Number(partidoSel), goles: form.goles, asistencias: form.asistencias, tarjetas_amarillas: form.tarjetas_amarillas, tarjetas_rojas: form.tarjetas_rojas, minutos: form.minutos })
+    store.updatePartido(Number(partidoSel), { mvp_jugador_id: mvpSel ? Number(mvpSel) : null })
     setModal(null)
   }
   const del = (jid) => { if (window.confirm('¿Eliminar estas estadísticas?')) store.deleteStat(jid, Number(partidoSel)) }
@@ -254,6 +256,15 @@ function PanelStats({ jugadores, partidos, stats, store }) {
           <div className="form-group">
             <label className="label">Minutos jugados</label>
             <input className="input" type="number" value={form.minutos} onChange={e => set('minutos', Number(e.target.value))} min={0} max={120} />
+          </div>
+          <div className="form-group">
+            <label className="label">⭐ MVP del partido</label>
+            <select className="select" value={mvpSel} onChange={e => setMvpSel(e.target.value)}>
+              <option value="">Sin MVP</option>
+              {jugadores.map(j => (
+                <option key={j.id} value={j.id}>#{j.dorsal} — {j.nombre}</option>
+              ))}
+            </select>
           </div>
           <button onClick={save} className="btn btn-primary btn-block">Guardar</button>
         </Modal>

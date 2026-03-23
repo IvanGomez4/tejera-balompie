@@ -16,12 +16,12 @@ function load(key, fallback) {
   catch { return fallback }
 }
 function save(key, val) {
-  try { localStorage.setItem(key, JSON.stringify(val)) } catch {}
+  try { localStorage.setItem(key, JSON.stringify(val)) } catch { }
 }
 
-let _jugadores    = load('tj_jugadores',    jugadoresIniciales)
-let _partidos     = load('tj_partidos',     partidosIniciales)
-let _stats        = load('tj_stats',        statsIniciales)
+let _jugadores = load('tj_jugadores', jugadoresIniciales)
+let _partidos = load('tj_partidos', partidosIniciales)
+let _stats = load('tj_stats', statsIniciales)
 let _clasificacion = load('tj_clasificacion', clasificacionInicial)
 
 let listeners = []
@@ -46,9 +46,9 @@ export const store = {
   // =====================
   // GETTERS (síncronos — usan caché local)
   // =====================
-  getJugadores()     { return [..._jugadores] },
-  getPartidos()      { return [..._partidos] },
-  getStats()         { return [..._stats] },
+  getJugadores() { return [..._jugadores] },
+  getPartidos() { return [..._partidos] },
+  getStats() { return [..._stats] },
   getClasificacion() { return [..._clasificacion] },
 
   getStatsPartido(partido_id) {
@@ -57,11 +57,11 @@ export const store = {
   getStatsTotalesJugador(jugador_id) {
     const ss = _stats.filter(s => s.jugador_id === jugador_id)
     return {
-      partidos:           ss.length,
-      goles:              ss.reduce((a, s) => a + s.goles, 0),
-      asistencias:        ss.reduce((a, s) => a + s.asistencias, 0),
+      partidos: ss.length,
+      goles: ss.reduce((a, s) => a + s.goles, 0),
+      asistencias: ss.reduce((a, s) => a + s.asistencias, 0),
       tarjetas_amarillas: ss.reduce((a, s) => a + s.tarjetas_amarillas, 0),
-      tarjetas_rojas:     ss.reduce((a, s) => a + s.tarjetas_rojas, 0),
+      tarjetas_rojas: ss.reduce((a, s) => a + s.tarjetas_rojas, 0),
     }
   },
 
@@ -78,9 +78,9 @@ export const store = {
       sbFetch('clasificacion', '*, pos'),
     ])
 
-    _jugadores    = jugadores.map(j => ({ id: j.id, nombre: j.nombre, posicion: j.posicion, dorsal: j.dorsal }))
-    _partidos     = partidos.map(p  => ({ ...p, jugado: p.jugado || false }))
-    _stats        = stats.map(s    => ({ id: s.id, jugador_id: s.jugador_id, partido_id: s.partido_id, goles: s.goles, asistencias: s.asistencias, tarjetas_amarillas: s.tarjetas_amarillas, tarjetas_rojas: s.tarjetas_rojas, minutos: s.minutos }))
+    _jugadores = jugadores.map(j => ({ id: j.id, nombre: j.nombre, posicion: j.posicion, dorsal: j.dorsal }))
+    _partidos = partidos.map(p => ({ ...p, jugado: p.jugado || false, mvp_jugador_id: p.mvp_jugador_id || null }))
+    _stats = stats.map(s => ({ id: s.id, jugador_id: s.jugador_id, partido_id: s.partido_id, goles: s.goles, asistencias: s.asistencias, tarjetas_amarillas: s.tarjetas_amarillas, tarjetas_rojas: s.tarjetas_rojas, minutos: s.minutos }))
     _clasificacion = clasificacion.sort((a, b) => a.pos - b.pos)
 
     notify()
@@ -109,7 +109,7 @@ export const store = {
   async deleteJugador(id) {
     if (USE_SUPABASE) await supabase.from('jugadores').delete().eq('id', id)
     _jugadores = _jugadores.filter(j => j.id !== id)
-    _stats     = _stats.filter(s => s.jugador_id !== id)
+    _stats = _stats.filter(s => s.jugador_id !== id)
     if (!USE_SUPABASE) { save('tj_jugadores', _jugadores); save('tj_stats', _stats) }
     notify()
   },
@@ -137,7 +137,7 @@ export const store = {
   async deletePartido(id) {
     if (USE_SUPABASE) await supabase.from('partidos').delete().eq('id', id)
     _partidos = _partidos.filter(p => p.id !== id)
-    _stats    = _stats.filter(s => s.partido_id !== id)
+    _stats = _stats.filter(s => s.partido_id !== id)
     if (!USE_SUPABASE) { save('tj_partidos', _partidos); save('tj_stats', _stats) }
     notify()
   },
@@ -180,11 +180,11 @@ export const store = {
   // RESET
   // =====================
   resetAll() {
-    _jugadores    = jugadoresIniciales
-    _partidos     = partidosIniciales
-    _stats        = statsIniciales
+    _jugadores = jugadoresIniciales
+    _partidos = partidosIniciales
+    _stats = statsIniciales
     _clasificacion = clasificacionInicial
-    ;['tj_jugadores','tj_partidos','tj_stats','tj_clasificacion'].forEach(k => localStorage.removeItem(k))
+      ;['tj_jugadores', 'tj_partidos', 'tj_stats', 'tj_clasificacion'].forEach(k => localStorage.removeItem(k))
     notify()
   }
 }
