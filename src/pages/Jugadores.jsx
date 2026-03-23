@@ -12,7 +12,7 @@ export default function Jugadores() {
 
   const conTotales = jugadores.map(j => {
     const ss = stats.filter(s => s.jugador_id === j.id)
-    return { ...j, partidos: ss.length, goles: ss.reduce((a, s) => a + s.goles, 0), asistencias: ss.reduce((a, s) => a + s.asistencias, 0), tarjetas_amarillas: ss.reduce((a, s) => a + s.tarjetas_amarillas, 0), tarjetas_rojas: ss.reduce((a, s) => a + s.tarjetas_rojas, 0) }
+    return { ...j, partidos: ss.length, goles: ss.reduce((a, s) => a + s.goles, 0), asistencias: ss.reduce((a, s) => a + s.asistencias, 0), tarjetas_amarillas: ss.reduce((a, s) => a + s.tarjetas_amarillas, 0), tarjetas_rojas: ss.reduce((a, s) => a + s.tarjetas_rojas, 0), paradas: ss.reduce((a, s) => a + (s.paradas || 0), 0), goles_encajados: ss.reduce((a, s) => a + (s.goles_encajados || 0), 0), }
   })
   const filtrados = filtro === 'Todos' ? conTotales : conTotales.filter(j => j.posicion === filtro)
   const jugador = selected ? conTotales.find(j => j.id === selected) : null
@@ -66,11 +66,19 @@ export default function Jugadores() {
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: '1rem' }}>
-              {[['Partidos', jugador.partidos, 'var(--verde)'], ['Goles', jugador.goles, 'var(--verde-mid)'], ['Asistencias', jugador.asistencias, 'var(--dorado)'], ['Amarillas', jugador.tarjetas_amarillas, '#c8a800']].map(([l, v, c]) => (
-                <div key={l} style={{ background: '#f4f7f4', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'Bebas Neue', fontSize: 28, color: c, lineHeight: 1 }}>{v}</div>
-                  <div style={{ fontSize: 10, color: 'var(--gris-mid)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3 }}>{l}</div>
-                </div>
+              {[
+                ['Partidos', jugador.partidos, 'var(--verde)'],
+                ['Goles', jugador.goles, 'var(--verde-mid)'],
+                ['Asistencias', jugador.asistencias, 'var(--dorado)'],
+                ['Amarillas', jugador.tarjetas_amarillas, '#c8a800'],
+                ...(jugador.posicion === 'Portero' ? [
+                  ['Paradas', jugador.paradas || 0, '#185fa5'],
+                  ['Goles enc.', jugador.goles_encajados || 0, '#c0392b'],
+                ] : [])
+              ].map(([l, v, c]) => (<div key={l} style={{ background: '#f4f7f4', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
+                <div style={{ fontFamily: 'Bebas Neue', fontSize: 28, color: c, lineHeight: 1 }}>{v}</div>
+                <div style={{ fontSize: 10, color: 'var(--gris-mid)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3 }}>{l}</div>
+              </div>
               ))}
             </div>
             {(jugador.goles + jugador.asistencias) > 0 && (
