@@ -80,7 +80,7 @@ export const store = {
 
     _jugadores = jugadores.map(j => ({ id: j.id, nombre: j.nombre, posicion: j.posicion, dorsal: j.dorsal }))
     _partidos = partidos.map(p => ({ ...p, jugado: p.jugado || false, mvp_jugador_id: p.mvp_jugador_id || null }))
-    _stats = stats.map(s => ({ id: s.id, jugador_id: s.jugador_id, partido_id: s.partido_id, goles: s.goles, asistencias: s.asistencias, tarjetas_amarillas: s.tarjetas_amarillas, tarjetas_rojas: s.tarjetas_rojas, minutos: s.minutos }))
+    _stats = stats.map(s => ({ id: s.id, jugador_id: s.jugador_id, partido_id: s.partido_id, goles: s.goles, asistencias: s.asistencias, tarjetas_amarillas: s.tarjetas_amarillas, tarjetas_rojas: s.tarjetas_rojas, minutos: s.minutos, paradas: s.paradas || 0, goles_encajados: s.goles_encajados || 0 }))
     _clasificacion = clasificacion.sort((a, b) => a.pos - b.pos)
 
     notify()
@@ -147,7 +147,7 @@ export const store = {
   // =====================
   async upsertStat(data) {
     if (USE_SUPABASE) {
-      await supabase.from('estadisticas').upsert({ jugador_id: data.jugador_id, partido_id: data.partido_id, goles: data.goles, asistencias: data.asistencias, tarjetas_amarillas: data.tarjetas_amarillas, tarjetas_rojas: data.tarjetas_rojas, minutos: data.minutos }, { onConflict: 'jugador_id,partido_id' })
+      await supabase.from('estadisticas').upsert({ jugador_id: data.jugador_id, partido_id: data.partido_id, goles: data.goles, asistencias: data.asistencias, tarjetas_amarillas: data.tarjetas_amarillas, tarjetas_rojas: data.tarjetas_rojas, minutos: data.minutos, paradas: data.paradas || 0, goles_encajados: data.goles_encajados || 0 }, { onConflict: 'jugador_id,partido_id' })
     }
     const existing = _stats.find(s => s.jugador_id === data.jugador_id && s.partido_id === data.partido_id)
     if (existing) {

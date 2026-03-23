@@ -171,8 +171,7 @@ export default function DetallePartido() {
             <h2 style={{ fontSize: 18, color: 'var(--verde)', marginBottom: 12 }}>📋 Ficha completa</h2>
             <div style={{ overflowX: 'auto' }}>
               <table>
-                <thead><tr><th>Jugador</th><th style={{ textAlign: 'center' }}>⚽</th><th style={{ textAlign: 'center' }}>🅰️</th><th style={{ textAlign: 'center' }}>🟨</th><th style={{ textAlign: 'center' }}>🟥</th><th style={{ textAlign: 'center' }}>Min</th></tr></thead>
-                <tbody>
+                <thead><tr><th>Jugador</th><th style={{ textAlign: 'center' }}>⚽</th><th style={{ textAlign: 'center' }}>🅰️</th><th style={{ textAlign: 'center' }}>🟨</th><th style={{ textAlign: 'center' }}>🟥</th><th style={{ textAlign: 'center' }}>🧤</th><th style={{ textAlign: 'center' }}>🥅</th><th style={{ textAlign: 'center' }}>Min</th></tr></thead>                <tbody>
                   {statsPartido.map(s => {
                     const j = getJugador(s.jugador_id); if (!j) return null
                     return (
@@ -183,6 +182,8 @@ export default function DetallePartido() {
                         <td style={{ textAlign: 'center' }}>{s.tarjetas_amarillas > 0 ? <span style={{ display: 'inline-block', width: 10, height: 14, background: '#f0c040', borderRadius: 2 }} /> : '—'}</td>
                         <td style={{ textAlign: 'center' }}>{s.tarjetas_rojas > 0 ? <span style={{ display: 'inline-block', width: 10, height: 14, background: '#c0392b', borderRadius: 2 }} /> : '—'}</td>
                         <td style={{ textAlign: 'center', color: 'var(--gris-mid)', fontSize: 13 }}>{s.minutos}'</td>
+                        <td style={{ textAlign: 'center' }}>{s.paradas > 0 ? <span style={{ color: '#185fa5', fontWeight: 700 }}>{s.paradas}</span> : '—'}</td>
+                        <td style={{ textAlign: 'center' }}>{s.goles_encajados > 0 ? <span style={{ color: '#c0392b', fontWeight: 700 }}>{s.goles_encajados}</span> : '—'}</td>
                       </tr>
                     )
                   })}

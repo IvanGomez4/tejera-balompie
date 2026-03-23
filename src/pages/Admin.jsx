@@ -176,7 +176,7 @@ function PanelPartidos({ partidos, store }) {
 function PanelStats({ jugadores, partidos, stats, store }) {
   const [partidoSel, setPartidoSel] = useState('')
   const [modal, setModal] = useState(null)
-  const emptyS = { jugador_id: '', goles: 0, asistencias: 0, tarjetas_amarillas: 0, tarjetas_rojas: 0, minutos: 90 }
+  const emptyS = { jugador_id: '', goles: 0, asistencias: 0, tarjetas_amarillas: 0, tarjetas_rojas: 0, minutos: 90, paradas: 0, goles_encajados: 0 }
   const [form, setForm] = useState(emptyS)
   const [mvpSel, setMvpSel] = useState('')
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
@@ -187,7 +187,7 @@ function PanelStats({ jugadores, partidos, stats, store }) {
   const statsDelPartido = stats.filter(s => s.partido_id === Number(partidoSel))
 
   const openAdd = () => { setForm(emptyS); setModal({ mode: 'add' }) }
-  const openEdit = (s) => { setForm({ jugador_id: String(s.jugador_id), goles: s.goles, asistencias: s.asistencias, tarjetas_amarillas: s.tarjetas_amarillas, tarjetas_rojas: s.tarjetas_rojas, minutos: s.minutos }); setModal({ mode: 'edit', jugador_id: s.jugador_id }) }
+  const openEdit = (s) => { setForm({ jugador_id: String(s.jugador_id), goles: s.goles, asistencias: s.asistencias, tarjetas_amarillas: s.tarjetas_amarillas, tarjetas_rojas: s.tarjetas_rojas, minutos: s.minutos, paradas: s.paradas || 0, goles_encajados: s.goles_encajados || 0 }); setModal({ mode: 'edit', jugador_id: s.jugador_id }) }
   const save = () => {
     if (!form.jugador_id || !partidoSel) return
     store.upsertStat({ jugador_id: Number(form.jugador_id), partido_id: Number(partidoSel), goles: form.goles, asistencias: form.asistencias, tarjetas_amarillas: form.tarjetas_amarillas, tarjetas_rojas: form.tarjetas_rojas, minutos: form.minutos })
@@ -224,7 +224,10 @@ function PanelStats({ jugadores, partidos, stats, store }) {
                   <div className="avatar avatar-sm">{initials(j.nombre)}</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 600 }}>{j.nombre}</div>
-                    <div style={{ fontSize: 11, color: 'var(--gris-mid)' }}>⚽{s.goles} 🅰️{s.asistencias} 🟨{s.tarjetas_amarillas} 🟥{s.tarjetas_rojas} · {s.minutos}'</div>
+                    <div style={{ fontSize: 11, color: 'var(--gris-mid)' }}>
+                      ⚽{s.goles} 🅰️{s.asistencias} 🟨{s.tarjetas_amarillas} 🟥{s.tarjetas_rojas} · {s.minutos}'
+                      {s.paradas > 0 || s.goles_encajados > 0 ? ` · 🧤${s.paradas} 🥅${s.goles_encajados}` : ''}
+                    </div>
                   </div>
                   <button onClick={() => openEdit(s)} style={{ background: 'none', border: '1px solid #c0d0c0', borderRadius: 8, padding: '4px 10px', fontSize: 12, cursor: 'pointer', color: 'var(--verde)' }}>Editar</button>
                   <button onClick={() => del(s.jugador_id)} style={{ background: 'none', border: '1px solid #fcc', borderRadius: 8, padding: '4px 10px', fontSize: 12, cursor: 'pointer', color: '#c0392b' }}>✕</button>
@@ -246,7 +249,16 @@ function PanelStats({ jugadores, partidos, stats, store }) {
             </div>
           )}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-            {[['goles', '⚽ Goles'], ['asistencias', '🅰️ Asistencias'], ['tarjetas_amarillas', '🟨 Amarillas'], ['tarjetas_rojas', '🟥 Rojas']].map(([k, l]) => (
+            {[
+              ['goles', '⚽ Goles'],
+              ['asistencias', '🅰️ Asistencias'],
+              ['tarjetas_amarillas', '🟨 Amarillas'],
+              ['tarjetas_rojas', '🟥 Rojas'],
+              ...(jugadores.find(j => j.id === Number(form.jugador_id))?.posicion === 'Portero'
+                ? [['paradas', '🧤 Paradas'], ['goles_encajados', '🥅 Goles encajados']]
+                : []
+              )
+            ].map(([k, l]) => (
               <div key={k} style={{ textAlign: 'center' }}>
                 <div className="label" style={{ textAlign: 'center', marginBottom: 8 }}>{l}</div>
                 <Counter value={form[k]} onChange={v => set(k, v)} />
