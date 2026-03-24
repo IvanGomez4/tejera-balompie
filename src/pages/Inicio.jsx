@@ -3,7 +3,6 @@ import { useStore } from '../hooks/useStore'
 import { EQUIPO_NOMBRE } from '../lib/mockData'
 import escudo from '../assets/escudo.png'
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 
 function initials(n) { return n.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() }
 function res(p) {
