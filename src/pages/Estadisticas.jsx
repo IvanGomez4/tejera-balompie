@@ -24,7 +24,8 @@ export default function Estadisticas() {
   const porteroTabs = ['paradas', 'goles_encajados']
   const sorted = [...conTotales]
     .filter(j => j[tab] > 0 && (porteroTabs.includes(tab) ? j.posicion === 'Portero' : true))
-    .sort((a, b) => b[tab] - a[tab])  const max = Math.max(...conTotales.map(j => j[tab]), 1)
+    .sort((a, b) => b[tab] - a[tab])
+  const max = Math.max(...conTotales.map(j => j[tab]), 1)
   const totGoles = conTotales.reduce((s, j) => s + j.goles, 0)
   const totAsist = conTotales.reduce((s, j) => s + j.asistencias, 0)
   const totAmar = conTotales.reduce((s, j) => s + j.tarjetas_amarillas, 0)
