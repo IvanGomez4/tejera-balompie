@@ -190,7 +190,8 @@ function PanelStats({ jugadores, partidos, stats, store }) {
   const openEdit = (s) => { setForm({ jugador_id: String(s.jugador_id), goles: s.goles, asistencias: s.asistencias, tarjetas_amarillas: s.tarjetas_amarillas, tarjetas_rojas: s.tarjetas_rojas, minutos: s.minutos, paradas: s.paradas || 0, goles_encajados: s.goles_encajados || 0 }); setModal({ mode: 'edit', jugador_id: s.jugador_id }) }
   const save = () => {
     if (!form.jugador_id || !partidoSel) return
-    store.upsertStat({ jugador_id: Number(form.jugador_id), partido_id: Number(partidoSel), goles: form.goles, asistencias: form.asistencias, tarjetas_amarillas: form.tarjetas_amarillas, tarjetas_rojas: form.tarjetas_rojas, minutos: form.minutos, paradas: form.paradas || 0, goles_encajados: form.goles_encajados || 0 })    store.updatePartido(Number(partidoSel), { mvp_jugador_id: mvpSel ? Number(mvpSel) : null })
+    store.upsertStat({ jugador_id: Number(form.jugador_id), partido_id: Number(partidoSel), goles: form.goles, asistencias: form.asistencias, tarjetas_amarillas: form.tarjetas_amarillas, tarjetas_rojas: form.tarjetas_rojas, minutos: form.minutos, paradas: form.paradas || 0, goles_encajados: form.goles_encajados || 0 })
+    store.updatePartido(Number(partidoSel), { mvp_jugador_id: mvpSel ? Number(mvpSel) : null })
     setModal(null)
   }
   const del = (jid) => { if (window.confirm('¿Eliminar estas estadísticas?')) store.deleteStat(jid, Number(partidoSel)) }
