@@ -2,6 +2,8 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../hooks/useStore'
 import { EQUIPO_NOMBRE } from '../lib/mockData'
 import escudo from '../assets/escudo.png'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 function initials(n) { return n.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() }
 function res(p) {
@@ -32,6 +34,17 @@ export default function Inicio() {
   const proximos = [...partidos].filter(p => !p.jugado && (p.local === EQUIPO_NOMBRE || p.visitante === EQUIPO_NOMBRE))
     .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
   const proximo = proximos[0]
+  const [ahora, setAhora] = useState(new Date())
+  useEffect(() => {
+    const t = setInterval(() => setAhora(new Date()), 1000)
+    return () => clearInterval(t)
+  }, [])
+
+  if (!jugadores.length) return (
+    <div className="page">
+      <div className="empty" style={{ marginTop: '3rem' }}>Cargando datos...</div>
+    </div>
+  )
 
   return (
     <div className="page">
@@ -54,7 +67,6 @@ export default function Inicio() {
 
       {/* Próximo partido en grande */}
       {proximo && (() => {
-        const ahora = new Date()
         const fechaP = new Date(proximo.fecha + 'T00:00:00')
         const diffMs = fechaP - ahora
         const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24))

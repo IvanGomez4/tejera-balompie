@@ -38,11 +38,13 @@ export default function Jugadores() {
               </div>
             </div>
             <div style={{ display: 'flex', gap: 12, flexShrink: 0 }}>
-              {[['⚽', j.goles], ['🅰️', j.asistencias], ['🎮', j.partidos]].map(([ic, v]) => (
-                <div key={ic} style={{ textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'Bebas Neue', fontSize: 20, color: 'var(--verde)', lineHeight: 1 }}>{v}</div>
-                  <div style={{ fontSize: 9, color: 'var(--gris-mid)' }}>{ic}</div>
-                </div>
+              {(j.posicion === 'Portero'
+                ? [['🧤', j.paradas], ['🥅', j.goles_encajados], ['🎮', j.partidos]]
+                : [['⚽', j.goles], ['🅰️', j.asistencias], ['🎮', j.partidos]]
+              ).map(([ic, v]) => (<div key={ic} style={{ textAlign: 'center' }}>
+                <div style={{ fontFamily: 'Bebas Neue', fontSize: 20, color: 'var(--verde)', lineHeight: 1 }}>{v}</div>
+                <div style={{ fontSize: 9, color: 'var(--gris-mid)' }}>{ic}</div>
+              </div>
               ))}
             </div>
             <div style={{ color: '#c0d0c0', fontSize: 16 }}>›</div>

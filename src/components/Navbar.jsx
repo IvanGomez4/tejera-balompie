@@ -19,7 +19,6 @@ export default function Navbar() {
 
   const [logged, setLogged] = useState(adminAuth.isLogged())
   const [jugadorActivo, setJugadorActivo] = useState(adminAuth.getJugador())
-  const [step, setStep] = useState('pwd')  // 'pwd' | 'nombre'
   const [showModal, setShowModal] = useState(false)
   const [pwd, setPwd] = useState('')
   const [jugadorSel, setJugadorSel] = useState('')
@@ -35,28 +34,19 @@ export default function Navbar() {
   }, [])
 
   const openModal = () => {
-    setStep('pwd'); setPwd(''); setJugadorSel(''); setError(''); setShowModal(true)
+    setPwd(''); setJugadorSel(''); setError(''); setShowModal(true)
   }
 
-  const handlePwd = (e) => {
+  const handleLogin = (e) => {
     e.preventDefault()
-    if (adminAuth.login(pwd)) {
-      setLogged(true)
-      setStep('nombre')
-      setError('')
-    } else {
-      setError('Contraseña incorrecta')
-    }
-  }
-
-  const handleNombre = (e) => {
-    e.preventDefault()
-    if (!jugadorSel) { setError('Elige tu nombre para continuar'); return }
+    if (!jugadorSel) { setError('Elige tu nombre'); return }
+    if (!adminAuth.login(pwd)) { setError('Contraseña incorrecta'); return }
     const jugador = jugadores.find(j => j.id === Number(jugadorSel))
     if (jugador) {
       adminAuth.setJugador(jugador)
       setJugadorActivo(jugador)
     }
+    setLogged(true)
     setShowModal(false)
     navigate('/admin')
   }
@@ -72,8 +62,7 @@ export default function Navbar() {
     <>
       <header className="top-header">
         <div style={{ maxWidth: 680, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px' }}>
-          <img src={escudo} alt="Escudo" style={{ width: 42, height: 42, objectFit: 'contain', flexShrink: 0 }} />
-          <div style={{ flex: 1 }}>
+          <img src={escudo} alt="Escudo" onClick={() => navigate('/')} style={{ width: 42, height: 42, objectFit: 'contain', flexShrink: 0, cursor: 'pointer' }} />          <div style={{ flex: 1 }}>
             <div style={{ fontFamily: 'Bebas Neue', fontSize: 17, color: '#7dce7d', letterSpacing: '0.06em', lineHeight: 1.1 }}>
               Tejera Balompié
             </div>
@@ -132,10 +121,10 @@ export default function Navbar() {
               </div>
               <div>
                 <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: 'var(--verde)', lineHeight: 1 }}>
-                  {step === 'pwd' ? 'Acceso al equipo' : '¿Quién eres?'}
+                  Acceso al equipo
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--gris-mid)', marginTop: 2 }}>
-                  {step === 'pwd' ? 'Introduce la contraseña del vestuario' : 'Elige tu nombre para identificarte'}
+                  Introduce la contraseña del vestuario
                 </div>
               </div>
             </div>
@@ -146,31 +135,27 @@ export default function Navbar() {
               </div>
             )}
 
-            {step === 'pwd' ? (
-              <form onSubmit={handlePwd}>
-                <div className="form-group">
-                  <label className="label">Contraseña del equipo</label>
-                  <input className="input" type="password" placeholder="••••••••••••" value={pwd} onChange={e => { setPwd(e.target.value); setError('') }} autoFocus autoComplete="current-password" required />
-                </div>
-                <button type="submit" className="btn btn-primary btn-block" style={{ fontSize: 16 }}>Continuar</button>
-              </form>
-            ) : (
-              <form onSubmit={handleNombre}>
-                <div className="form-group">
-                  <label className="label">Tu nombre</label>
-                  <select className="select" value={jugadorSel} onChange={e => { setJugadorSel(e.target.value); setError('') }} autoFocus>
-                    <option value="">Selecciona tu nombre...</option>
-                    {[...jugadores].sort((a, b) => a.nombre.localeCompare(b.nombre)).map(j => (
-                      <option key={j.id} value={j.id}>{j.nombre} — #{j.dorsal}</option>
-                    ))}
-                  </select>
-                </div>
-                <button type="submit" className="btn btn-primary btn-block" style={{ fontSize: 16 }}>Entrar al panel</button>
-              </form>
-            )}
+            <form onSubmit={handleLogin}>
+              <div className="form-group">
+                <label className="label">Tu nombre</label>
+                <select className="select" value={jugadorSel} onChange={e => { setJugadorSel(e.target.value); setError('') }}>
+                  <option value="">Selecciona tu nombre...</option>
+                  {[...jugadores].sort((a, b) => a.nombre.localeCompare(b.nombre)).map(j => (
+                    <option key={j.id} value={j.id}>{j.nombre} — #{j.dorsal}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="label">Contraseña del equipo</label>
+                <input className="input" type="password" placeholder="••••••••••••" value={pwd} onChange={e => { setPwd(e.target.value); setError('') }} autoComplete="current-password" required />
+              </div>
+              <button type="submit" className="btn btn-primary btn-block" style={{ fontSize: 16 }}>
+                Entrar al panel
+              </button>
+            </form>
 
             <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--gris-mid)', marginTop: '1rem' }}>
-              {step === 'pwd' ? 'La contraseña la tiene el organizador' : 'Tu nombre quedará registrado en los cambios'}
+              La contraseña la tiene el organizador
             </p>
           </div>
         </>
