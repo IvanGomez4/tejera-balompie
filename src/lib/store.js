@@ -215,6 +215,49 @@ export const store = {
       .single()
     return data?.votado_id || null
   },
+  // =====================
+  // VOTOS MVP
+  // =====================
+  async getVotosMvp(partido_id) {
+    if (USE_SUPABASE) {
+      const { data } = await supabase.from('votos_mvp').select('*').eq('partido_id', partido_id)
+      return data || []
+    }
+    return load('tj_votos_' + partido_id, [])
+  },
+  async votarMvp(partido_id, votante_id, votado_id) {
+    if (USE_SUPABASE) {
+      await supabase.from('votos_mvp').upsert(
+        { partido_id, votante_id, votado_id },
+        { onConflict: 'partido_id,votante_id' }
+      )
+    } else {
+      const votos = load('tj_votos_' + partido_id, [])
+      const sin = votos.filter(v => v.votante_id !== votante_id)
+      save('tj_votos_' + partido_id, [...sin, { partido_id, votante_id, votado_id }])
+    }
+  },
+
+  // =====================
+  // ALINEACIONES
+  // =====================
+  async getAlineacion(partido_id) {
+    if (USE_SUPABASE) {
+      const { data } = await supabase.from('alineaciones').select('*').eq('partido_id', partido_id).single()
+      return data || null
+    }
+    return load('tj_alin_' + partido_id, null)
+  },
+  async saveAlineacion(partido_id, formacion, jugadoresAlin) {
+    if (USE_SUPABASE) {
+      await supabase.from('alineaciones').upsert(
+        { partido_id, formacion, jugadores: jugadoresAlin },
+        { onConflict: 'partido_id' }
+      )
+    } else {
+      save('tj_alin_' + partido_id, { partido_id, formacion, jugadores: jugadoresAlin })
+    }
+  },
 
   // =====================
   // RESET

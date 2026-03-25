@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useStore } from '../hooks/useStore'
 import { adminAuth } from '../lib/adminAuth'
 import { EQUIPO_NOMBRE } from '../lib/mockData'
+import Alineacion from '../components/Alineacion'
 
 function fmt(str) { return new Date(str).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) }
 function initials(n) { return n.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() }
@@ -230,13 +231,52 @@ function VotacionMVP({ partido, jugadores, store }) {
 export default function DetallePartido() {
   const { id } = useParams()
   const nav = useNavigate()
-  const { partidos, jugadores, stats, store } = useStore()
+  const { partidos, jugadores, stats } = useStore()
   const [editandoAlin, setEditandoAlin] = useState(false)
   const isAdmin = adminAuth.isLogged()
 
   const partido = partidos.find(p => p.id === Number(id))
   if (!partido) return <div className="page"><div className="empty">Partido no encontrado</div></div>
+  const { store } = useStore()
+  const [votos, setVotos] = useState([])
+  const [miVoto, setMiVoto] = useState(null)
+  const [alineacion, setAlineacion] = useState(null)
+  const jugadorActivo = adminAuth.isLogged() ? (() => {
+    try { return JSON.parse(localStorage.getItem('tj_jugador_activo')) } catch { return null }
+  })() : null
 
+  useEffect(() => {
+    if (!partido) return
+    store.getVotosMvp(partido.id).then(v => {
+      setVotos(v)
+      if (jugadorActivo) {
+        const miV = v.find(x => x.votante_id === jugadorActivo.id)
+        if (miV) setMiVoto(miV.votado_id)
+      }
+    })
+    store.getAlineacion(partido.id).then(a => setAlineacion(a))
+  }, [partido?.id])
+
+  const handleVotar = async (votado_id) => {
+    if (!jugadorActivo) return
+    await store.votarMvp(partido.id, jugadorActivo.id, votado_id)
+    setMiVoto(votado_id)
+    const nuevos = await store.getVotosMvp(partido.id)
+    setVotos(nuevos)
+  }
+
+  const handleSaveAlineacion = async (formacion, jugadoresAlin) => {
+    await store.saveAlineacion(partido.id, formacion, jugadoresAlin)
+    setAlineacion({ formacion, jugadores: jugadoresAlin })
+  }
+
+  // Calcular MVP (el más votado)
+  const mvpId = votos.length > 0 ? (() => {
+    const conteo = {}
+    votos.forEach(v => { conteo[v.votado_id] = (conteo[v.votado_id] || 0) + 1 })
+    return Number(Object.entries(conteo).sort((a, b) => b[1] - a[1])[0][0])
+  })() : null
+  const mvpJugador = mvpId ? jugadores.find(j => j.id === mvpId) : null
   const esLocal = partido.local === EQUIPO_NOMBRE
   const statsPartido = stats.filter(s => s.partido_id === partido.id)
   const goleadores = statsPartido.filter(s => s.goles > 0).sort((a, b) => b.goles - a.goles)
@@ -421,6 +461,80 @@ export default function DetallePartido() {
 
       {!partido.jugado && (
         <div className="card"><div className="empty">El partido aún no se ha jugado.</div></div>
+      )}
+
+      {/* Alineación */}
+      {partido.jugado && (
+        <div className="card" style={{ marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <h2 style={{ fontSize: 18, color: 'var(--verde)' }}>👕 Alineación</h2>
+            <span style={{ fontSize: 12, color: 'var(--gris-mid)' }}>{alineacion?.formacion || '1-3-2-1'}</span>
+          </div>
+          <Alineacion
+            partido={partido}
+            jugadores={jugadores}
+            alineacionInicial={alineacion}
+            onSave={adminAuth.isLogged() ? handleSaveAlineacion : null}
+            modoEdicion={adminAuth.isLogged()}
+          />
+        </div>
+      )}
+
+      {/* MVP y votación */}
+      {partido.jugado && statsPartido.length > 0 && (
+        <div className="card" style={{ marginBottom: '1rem' }}>
+          <h2 style={{ fontSize: 18, color: 'var(--verde)', marginBottom: 14 }}>⭐ MVP del partido</h2>
+
+          {/* MVP actual */}
+          {mvpJugador && (
+            <div style={{ background: 'linear-gradient(135deg,#0d1a0d,#1e4d1e)', borderRadius: 12, padding: '12px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ fontSize: 28 }}>⭐</div>
+              <div>
+                <div style={{ fontSize: 11, color: '#7dce7d', textTransform: 'uppercase', letterSpacing: '0.08em' }}>MVP — {votos.length} voto{votos.length !== 1 ? 's' : ''}</div>
+                <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: 'white' }}>{mvpJugador.nombre}</div>
+              </div>
+            </div>
+          )}
+
+          {/* Votar */}
+          {jugadorActivo && !miVoto && (
+            <div>
+              <div style={{ fontSize: 13, color: 'var(--gris-mid)', marginBottom: 10 }}>Vota al mejor del partido:</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {statsPartido.map(s => {
+                  const j = jugadores.find(x => x.id === s.jugador_id)
+                  if (!j || j.id === jugadorActivo.id) return null
+                  return (
+                    <button key={s.id} onClick={() => handleVotar(j.id)} style={{
+                      display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+                      background: 'white', border: '1.5px solid #c0d0c0', borderRadius: 10,
+                      cursor: 'pointer', textAlign: 'left', width: '100%'
+                    }}>
+                      <div className="avatar avatar-sm">{j.nombre.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 14, fontWeight: 600 }}>{j.nombre}</div>
+                        <div style={{ fontSize: 11, color: 'var(--gris-mid)' }}>⚽{s.goles} 🅰️{s.asistencias}</div>
+                      </div>
+                      <span style={{ fontSize: 18 }}>›</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {jugadorActivo && miVoto && (
+            <div style={{ background: 'var(--verde-pale)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: 'var(--verde)' }}>
+              ✓ Ya has votado a <strong>{jugadores.find(j => j.id === miVoto)?.nombre}</strong>
+            </div>
+          )}
+
+          {!jugadorActivo && (
+            <div style={{ fontSize: 13, color: 'var(--gris-mid)', textAlign: 'center', padding: '0.5rem 0' }}>
+              Identifícate como jugador para votar al MVP
+            </div>
+          )}
+        </div>
       )}
 
       {isAdmin && (
