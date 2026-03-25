@@ -14,22 +14,32 @@ export default function Alineacion({ partido, jugadores, alineacionInicial, onSa
     const [formacion, setFormacion] = useState(alineacionInicial?.formacion || '1-3-2-1')
     const [slots, setSlots] = useState([]) // [{linea, posicion, jugador_id}]
     const [slotEditando, setSlotEditando] = useState(null)
+    const [guardado, setGuardado] = useState(false)
+    const [guardando, setGuardando] = useState(false)
 
-    const estructura = FORMACIONES[formacion]
+    const generarSlotsVacios = (f) => {
+        const est = FORMACIONES[f]
+        const nuevos = []
+        Object.keys(est).forEach(linea => {
+            for (let i = 0; i < est[linea]; i++) {
+                nuevos.push({ linea, posicion: i, jugador_id: null })
+            }
+        })
+        setSlots(nuevos)
+    }
 
+    // Solo al montar — carga la alineación guardada si existe
     useEffect(() => {
         if (alineacionInicial?.jugadores?.length) {
             setSlots(alineacionInicial.jugadores)
         } else {
-            // Generar slots vacíos según formación
-            const nuevos = []
-            LINEAS.forEach(linea => {
-                for (let i = 0; i < estructura[linea]; i++) {
-                    nuevos.push({ linea, posicion: i, jugador_id: null })
-                }
-            })
-            setSlots(nuevos)
+            generarSlotsVacios(formacion)
         }
+    }, [])
+
+    // Al cambiar formación — siempre genera slots vacíos
+    useEffect(() => {
+        generarSlotsVacios(formacion)
     }, [formacion])
 
     const getJugador = (id) => jugadores.find(j => j.id === id)
@@ -48,8 +58,13 @@ export default function Alineacion({ partido, jugadores, alineacionInicial, onSa
     const jugadoresUsados = slots.filter(s => s.jugador_id).map(s => s.jugador_id)
     const jugadoresDisponibles = jugadores.filter(j => !jugadoresUsados.includes(j.id))
 
-    const handleSave = () => {
-        if (onSave) onSave(formacion, slots)
+    const handleSave = async () => {
+        if (!onSave) return
+        setGuardando(true)
+        await onSave(formacion, slots)
+        setGuardando(false)
+        setGuardado(true)
+        setTimeout(() => setGuardado(false), 3000)
     }
 
     return (
@@ -137,11 +152,26 @@ export default function Alineacion({ partido, jugadores, alineacionInicial, onSa
                 ))}
             </div>
 
-            {/* Botón guardar en modo edición */}
             {modoEdicion && (
-                <button onClick={handleSave} className="btn btn-primary btn-block" style={{ marginTop: 12 }}>
-                    Guardar alineación
-                </button>
+                <>
+                    <button
+                        onClick={handleSave}
+                        disabled={guardando}
+                        className="btn btn-primary btn-block"
+                        style={{ marginTop: 12 }}>
+                        {guardando ? 'Guardando...' : 'Guardar alineación'}
+                    </button>
+
+                    {guardado && (
+                        <div style={{
+                            marginTop: 10, background: 'var(--verde-pale)', border: '1px solid #c3e0c3',
+                            borderRadius: 10, padding: '10px 14px', textAlign: 'center',
+                            fontSize: 13, color: 'var(--verde)', fontWeight: 600
+                        }}>
+                            ✅ Alineación guardada correctamente
+                        </div>
+                    )}
+                </>
             )}
         </div>
     )
