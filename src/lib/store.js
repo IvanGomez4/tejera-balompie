@@ -129,7 +129,7 @@ export const store = {
     notify()
   },
   async updatePartido(id, data) {
-    if (USE_SUPABASE) await supabase.from('partidos').update({ jornada: data.jornada, fecha: data.fecha, local: data.local, visitante: data.visitante, campo: data.campo, jugado: data.jugado, goles_local: data.goles_local, goles_visitante: data.goles_visitante }).eq('id', id)
+    if (USE_SUPABASE) await supabase.from('partidos').update({ jornada: data.jornada, fecha: data.fecha, local: data.local, visitante: data.visitante, campo: data.campo, jugado: data.jugado, goles_local: data.goles_local, goles_visitante: data.goles_visitante, mvp_jugador_id: data.mvp_jugador_id || null, alineacion: data.alineacion || null, formacion: data.formacion || '1-3-2-1' }).eq('id', id)
     _partidos = _partidos.map(p => p.id === id ? { ...p, ...data } : p)
     if (!USE_SUPABASE) save('tj_partidos', _partidos)
     notify()
@@ -174,6 +174,46 @@ export const store = {
     _clasificacion = _clasificacion.map(e => e.equipo === equipo ? { ...e, ...data } : e)
     if (!USE_SUPABASE) save('tj_clasificacion', _clasificacion)
     notify()
+  },
+
+  // =====================
+  // VOTOS MVP
+  // =====================
+  async votarMvp(partido_id, votante_id, votado_id) {
+    if (USE_SUPABASE) {
+      await supabase.from('votos_mvp').upsert(
+        { partido_id, votante_id, votado_id },
+        { onConflict: 'partido_id,votante_id' }
+      )
+    }
+    // Recalcular MVP por votos
+    if (USE_SUPABASE) {
+      const { data } = await supabase
+        .from('votos_mvp')
+        .select('votado_id')
+        .eq('partido_id', partido_id)
+      if (data && data.length > 0) {
+        const conteo = data.reduce((acc, v) => {
+          acc[v.votado_id] = (acc[v.votado_id] || 0) + 1
+          return acc
+        }, {})
+        const mvp_id = Number(Object.entries(conteo).sort((a, b) => b[1] - a[1])[0][0])
+        await supabase.from('partidos').update({ mvp_jugador_id: mvp_id }).eq('id', partido_id)
+        _partidos = _partidos.map(p => p.id === partido_id ? { ...p, mvp_jugador_id: mvp_id } : p)
+      }
+    }
+    notify()
+  },
+
+  async getVotoMvp(partido_id, votante_id) {
+    if (!USE_SUPABASE) return null
+    const { data } = await supabase
+      .from('votos_mvp')
+      .select('votado_id')
+      .eq('partido_id', partido_id)
+      .eq('votante_id', votante_id)
+      .single()
+    return data?.votado_id || null
   },
 
   // =====================
