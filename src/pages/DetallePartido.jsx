@@ -231,15 +231,15 @@ function VotacionMVP({ partido, jugadores, store }) {
 export default function DetallePartido() {
   const { id } = useParams()
   const nav = useNavigate()
-  const { partidos, jugadores, stats } = useStore()
+  const { partidos, jugadores, stats, store } = useStore()  // ← una sola llamada
+  const [editandoAlin, setEditandoAlin] = useState(false)
   const isAdmin = adminAuth.isLogged()
-
-  const partido = partidos.find(p => p.id === Number(id))
-  if (!partido) return <div className="page"><div className="empty">Partido no encontrado</div></div>
-  const { store } = useStore()
   const [votos, setVotos] = useState([])
   const [miVoto, setMiVoto] = useState(null)
   const [alineacion, setAlineacion] = useState(null)
+
+  const partido = partidos.find(p => p.id === Number(id))
+
   const jugadorActivo = adminAuth.isLogged() ? (() => {
     try { return JSON.parse(localStorage.getItem('tj_jugador_activo')) } catch { return null }
   })() : null
@@ -255,6 +255,8 @@ export default function DetallePartido() {
     })
     store.getAlineacion(partido.id).then(a => setAlineacion(a))
   }, [partido?.id])
+
+  if (!partido) return <div className="page"><div className="empty">Partido no encontrado</div></div>
 
   const handleVotar = async (votado_id) => {
     if (!jugadorActivo) return

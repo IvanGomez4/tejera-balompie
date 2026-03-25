@@ -16,6 +16,7 @@ export default function Alineacion({ partido, jugadores, alineacionInicial, onSa
     const [slotEditando, setSlotEditando] = useState(null)
     const [guardado, setGuardado] = useState(false)
     const [guardando, setGuardando] = useState(false)
+    const [montado, setMontado] = useState(false)
 
     const generarSlotsVacios = (f) => {
         const est = FORMACIONES[f]
@@ -28,17 +29,16 @@ export default function Alineacion({ partido, jugadores, alineacionInicial, onSa
         setSlots(nuevos)
     }
 
-    // Solo al montar — carga la alineación guardada si existe
     useEffect(() => {
-        if (alineacionInicial?.jugadores?.length) {
-            setSlots(alineacionInicial.jugadores)
-        } else {
-            generarSlotsVacios(formacion)
+        if (!montado) {
+            // Primera vez — carga guardado si existe
+            setMontado(true)
+            if (alineacionInicial?.jugadores?.length) {
+                setSlots(alineacionInicial.jugadores)
+                return
+            }
         }
-    }, [])
-
-    // Al cambiar formación — siempre genera slots vacíos
-    useEffect(() => {
+        // Cambio de formación — slots vacíos
         generarSlotsVacios(formacion)
     }, [formacion])
 

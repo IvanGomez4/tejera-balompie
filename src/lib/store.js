@@ -176,35 +176,6 @@ export const store = {
     notify()
   },
 
-  // =====================
-  // VOTOS MVP
-  // =====================
-  async votarMvp(partido_id, votante_id, votado_id) {
-    if (USE_SUPABASE) {
-      await supabase.from('votos_mvp').upsert(
-        { partido_id, votante_id, votado_id },
-        { onConflict: 'partido_id,votante_id' }
-      )
-    }
-    // Recalcular MVP por votos
-    if (USE_SUPABASE) {
-      const { data } = await supabase
-        .from('votos_mvp')
-        .select('votado_id')
-        .eq('partido_id', partido_id)
-      if (data && data.length > 0) {
-        const conteo = data.reduce((acc, v) => {
-          acc[v.votado_id] = (acc[v.votado_id] || 0) + 1
-          return acc
-        }, {})
-        const mvp_id = Number(Object.entries(conteo).sort((a, b) => b[1] - a[1])[0][0])
-        await supabase.from('partidos').update({ mvp_jugador_id: mvp_id }).eq('id', partido_id)
-        _partidos = _partidos.map(p => p.id === partido_id ? { ...p, mvp_jugador_id: mvp_id } : p)
-      }
-    }
-    notify()
-  },
-
   async getVotoMvp(partido_id, votante_id) {
     if (!USE_SUPABASE) return null
     const { data } = await supabase
