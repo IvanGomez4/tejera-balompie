@@ -243,17 +243,22 @@ export const store = {
   // =====================
   async getAlineacion(partido_id) {
     if (USE_SUPABASE) {
-      const { data } = await supabase.from('alineaciones').select('*').eq('partido_id', partido_id).single()
+      const { data } = await supabase
+        .from('alineaciones')
+        .select('*')
+        .eq('partido_id', partido_id)
+        .maybeSingle()
       return data || null
     }
     return load('tj_alin_' + partido_id, null)
   },
   async saveAlineacion(partido_id, formacion, jugadoresAlin) {
     if (USE_SUPABASE) {
-      await supabase.from('alineaciones').upsert(
+      const { error } = await supabase.from('alineaciones').upsert(
         { partido_id, formacion, jugadores: jugadoresAlin },
         { onConflict: 'partido_id' }
       )
+      if (error) console.error('Error guardando alineacion:', error)
     } else {
       save('tj_alin_' + partido_id, { partido_id, formacion, jugadores: jugadoresAlin })
     }

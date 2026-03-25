@@ -232,7 +232,6 @@ export default function DetallePartido() {
   const { id } = useParams()
   const nav = useNavigate()
   const { partidos, jugadores, stats } = useStore()
-  const [editandoAlin, setEditandoAlin] = useState(false)
   const isAdmin = adminAuth.isLogged()
 
   const partido = partidos.find(p => p.id === Number(id))
@@ -330,27 +329,21 @@ export default function DetallePartido() {
       {partido.jugado && (
         <>
           {/* Alineación */}
-          <div className="card" style={{ marginBottom: '1rem', padding: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <h2 style={{ fontSize: 18, color: 'var(--verde)' }}>🟢 Alineación · {partido.formacion || '1-3-2-1'}</h2>
-              {isAdmin && (
-                <button onClick={() => setEditandoAlin(true)} style={{ background: 'none', border: '1px solid #c0d0c0', borderRadius: 8, padding: '4px 10px', fontSize: 12, cursor: 'pointer', color: 'var(--verde)' }}>
-                  Editar
-                </button>
-              )}
-            </div>
-            <Campo
-              alineacion={partido.alineacion}
-              jugadores={jugadores}
-              mvpId={partido.mvp_jugador_id}
-              formacion={partido.formacion || '1-3-2-1'}
-            />
-            {mvp && (
-              <div style={{ textAlign: 'center', marginTop: 8, fontSize: 12, color: '#c8a800', fontWeight: 600 }}>
-                ⭐ Camiseta dorada = MVP ({mvp.nombre.split(' ')[0]})
+          {partido.jugado && (
+            <div className="card" style={{ marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <h2 style={{ fontSize: 18, color: 'var(--verde)' }}>👕 Alineación</h2>
+                <span style={{ fontSize: 12, color: 'var(--gris-mid)' }}>{alineacion?.formacion || '1-3-2-1'}</span>
               </div>
-            )}
-          </div>
+              <Alineacion
+                partido={partido}
+                jugadores={jugadores}
+                alineacionInicial={alineacion}
+                onSave={adminAuth.isLogged() ? handleSaveAlineacion : null}
+                modoEdicion={adminAuth.isLogged()}
+              />
+            </div>
+          )}
 
           {/* MVP */}
           <div className="card" style={{ marginBottom: '1rem' }}>
@@ -524,15 +517,6 @@ export default function DetallePartido() {
         <button onClick={() => nav('/admin')} className="btn btn-ghost btn-block" style={{ marginTop: '0.5rem' }}>
           ✏️ Editar este partido
         </button>
-      )}
-
-      {editandoAlin && (
-        <EditorAlineacion
-          partido={partido}
-          jugadores={jugadores}
-          store={store}
-          onClose={() => setEditandoAlin(false)}
-        />
       )}
     </div>
   )
