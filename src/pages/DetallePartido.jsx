@@ -463,23 +463,6 @@ export default function DetallePartido() {
         <div className="card"><div className="empty">El partido aún no se ha jugado.</div></div>
       )}
 
-      {/* Alineación */}
-      {partido.jugado && (
-        <div className="card" style={{ marginBottom: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <h2 style={{ fontSize: 18, color: 'var(--verde)' }}>👕 Alineación</h2>
-            <span style={{ fontSize: 12, color: 'var(--gris-mid)' }}>{alineacion?.formacion || '1-3-2-1'}</span>
-          </div>
-          <Alineacion
-            partido={partido}
-            jugadores={jugadores}
-            alineacionInicial={alineacion}
-            onSave={adminAuth.isLogged() ? handleSaveAlineacion : null}
-            modoEdicion={adminAuth.isLogged()}
-          />
-        </div>
-      )}
-
       {/* MVP y votación */}
       {partido.jugado && statsPartido.length > 0 && (
         <div className="card" style={{ marginBottom: '1rem' }}>
