@@ -237,7 +237,7 @@ export default function DetallePartido() {
   const [votos, setVotos] = useState([])
   const [miVoto, setMiVoto] = useState(null)
   const [alineacion, setAlineacion] = useState(null)
-
+  const [alineacionCargada, setAlineacionCargada] = useState(false)
   const partido = partidos.find(p => p.id === Number(id))
 
   const jugadorActivo = adminAuth.isLogged() ? (() => {
@@ -253,7 +253,10 @@ export default function DetallePartido() {
         if (miV) setMiVoto(miV.votado_id)
       }
     })
-    store.getAlineacion(partido.id).then(a => setAlineacion(a))
+    store.getAlineacion(partido.id).then(a => {
+      setAlineacion(a)
+      setAlineacionCargada(true)
+    })
   }, [partido?.id])
 
   if (!partido) return <div className="page"><div className="empty">Partido no encontrado</div></div>
@@ -337,13 +340,19 @@ export default function DetallePartido() {
                 <h2 style={{ fontSize: 18, color: 'var(--verde)' }}>👕 Alineación</h2>
                 <span style={{ fontSize: 12, color: 'var(--gris-mid)' }}>{alineacion?.formacion || '1-3-2-1'}</span>
               </div>
-              <Alineacion
-                partido={partido}
-                jugadores={jugadores}
-                alineacionInicial={alineacion}
-                onSave={adminAuth.isLogged() ? handleSaveAlineacion : null}
-                modoEdicion={adminAuth.isLogged()}
-              />
+              {alineacionCargada ? (
+                <Alineacion
+                  partido={partido}
+                  jugadores={jugadores}
+                  alineacionInicial={alineacion}
+                  onSave={adminAuth.isLogged() ? handleSaveAlineacion : null}
+                  modoEdicion={adminAuth.isLogged()}
+                />
+              ) : (
+                <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--gris-mid)', fontSize: 13 }}>
+                  Cargando alineación...
+                </div>
+              )}
             </div>
           )}
 
