@@ -5,6 +5,18 @@ import escudo from '../assets/escudo.png'
 import { useState, useEffect } from 'react'
 
 function initials(n) { return n.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() }
+function Avatar({ jugador, size = 'sm' }) {
+  const dim = size === 'sm' ? 32 : size === 'md' ? 42 : 64
+  const fs = size === 'sm' ? 12 : size === 'md' ? 15 : 22
+  return (
+    <div className={`avatar avatar-${size}`} style={{ overflow: 'hidden', padding: 0, width: dim, height: dim, flexShrink: 0 }}>
+      {jugador?.foto_url
+        ? <img src={jugador.foto_url} alt={jugador.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+        : <span style={{ fontSize: fs }}>{initials(jugador?.nombre || '?')}</span>
+      }
+    </div>
+  )
+}
 function res(p) {
   const esL = p.local === EQUIPO_NOMBRE
   const n = esL ? p.goles_local : p.goles_visitante
@@ -192,7 +204,7 @@ export default function Inicio() {
           return (
             <div key={j.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: i < 3 ? '1px solid #f0f4f0' : 'none' }}>
               <div style={{ fontFamily: 'Bebas Neue', fontSize: 18, color: ['#c8a800', '#909090', '#a06030', '#ddd'][i], minWidth: 18, textAlign: 'center' }}>{i + 1}</div>
-              <div className="avatar avatar-sm">{initials(j.nombre)}</div>
+              <Avatar jugador={j} size="sm" />
               <div style={{ flex: 1 }}><div style={{ fontSize: 14, fontWeight: 500 }}>{j.nombre}</div><div style={{ fontSize: 11, color: 'var(--gris-mid)' }}>{j.posicion}</div></div>
               <div className="bar-wrap" style={{ maxWidth: 60 }}><div className="bar-fill" style={{ width: `${Math.round(j.goles / maxG * 100)}%` }} /></div>
               <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: 'var(--verde)', minWidth: 24, textAlign: 'right' }}>{j.goles}</div>

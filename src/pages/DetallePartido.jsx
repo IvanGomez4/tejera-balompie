@@ -7,7 +7,18 @@ import Alineacion from '../components/Alineacion'
 
 function fmt(str) { return new Date(str).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) }
 function initials(n) { return n.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() }
-
+function Avatar({ jugador, size = 'sm' }) {
+  const dim = size === 'sm' ? 32 : size === 'md' ? 42 : 64
+  const fs = size === 'sm' ? 12 : size === 'md' ? 15 : 22
+  return (
+    <div className={`avatar avatar-${size}`} style={{ overflow: 'hidden', padding: 0, width: dim, height: dim, flexShrink: 0 }}>
+      {jugador?.foto_url
+        ? <img src={jugador.foto_url} alt={jugador.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+        : <span style={{ fontSize: fs }}>{initials(jugador?.nombre || '?')}</span>
+      }
+    </div>
+  )
+}
 // ── Camiseta SVG verde con dorsal y nombre ──
 function Camiseta({ nombre, dorsal, highlight = false }) {
   const apellido = nombre ? nombre.split(' ')[0] : '?'
@@ -210,7 +221,7 @@ function VotacionMVP({ partido, jugadores, store }) {
               background: '#f4f7f4', borderRadius: 10, border: '1.5px solid #e0e8e0',
               cursor: 'pointer', textAlign: 'left', fontSize: 14, fontWeight: 500
             }}>
-              <div className="avatar avatar-sm">{initials(j.nombre)}</div>
+              <Avatar jugador={j} size="sm" />
               <span>{j.nombre}</span>
               <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--gris-mid)' }}>#{j.dorsal}</span>
             </button>
@@ -361,8 +372,11 @@ export default function DetallePartido() {
             <h2 style={{ fontSize: 18, color: 'var(--verde)', marginBottom: 12 }}>⭐ MVP del partido</h2>
             {mvp ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', marginBottom: 12 }}>
-                <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'linear-gradient(135deg,#c8a800,#f0c040)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: 'white', flexShrink: 0 }}>
-                  {initials(mvp.nombre)}
+                <div style={{ width: 48, height: 48, borderRadius: '50%', overflow: 'hidden', background: 'linear-gradient(135deg,#c8a800,#f0c040)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: 'white', flexShrink: 0 }}>
+                  {mvp.foto_url
+                    ? <img src={mvp.foto_url} alt={mvp.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                    : initials(mvp.nombre)
+                  }
                 </div>
                 <div>
                   <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: 'var(--negro)', lineHeight: 1 }}>{mvp.nombre}</div>
@@ -386,7 +400,7 @@ export default function DetallePartido() {
                 const j = getJugador(s.jugador_id); if (!j) return null
                 return (
                   <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid #f0f4f0' }}>
-                    <div className="avatar avatar-sm">{initials(j.nombre)}</div>
+                    <Avatar jugador={j} size="sm" />
                     <div style={{ flex: 1 }}><div style={{ fontSize: 14, fontWeight: 600 }}>{j.nombre}</div><div style={{ fontSize: 11, color: 'var(--gris-mid)' }}>#{j.dorsal} · {j.posicion}</div></div>
                     <div style={{ display: 'flex', gap: 4 }}>
                       {Array.from({ length: s.goles }).map((_, i) => <span key={i} style={{ fontSize: 18 }}>⚽</span>)}
@@ -405,7 +419,7 @@ export default function DetallePartido() {
                 const j = getJugador(s.jugador_id); if (!j) return null
                 return (
                   <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid #f0f4f0' }}>
-                    <div className="avatar avatar-sm">{initials(j.nombre)}</div>
+                    <Avatar jugador={j} size="sm" />
                     <div style={{ flex: 1 }}><div style={{ fontSize: 14, fontWeight: 600 }}>{j.nombre}</div></div>
                     <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: 'var(--dorado)' }}>{s.asistencias}</div>
                   </div>
@@ -422,7 +436,7 @@ export default function DetallePartido() {
                 const j = getJugador(s.jugador_id); if (!j) return null
                 return (
                   <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid #f0f4f0' }}>
-                    <div className="avatar avatar-sm">{initials(j.nombre)}</div>
+                    <Avatar jugador={j} size="sm" />
                     <div style={{ flex: 1 }}><div style={{ fontSize: 14, fontWeight: 600 }}>{j.nombre}</div></div>
                     <div style={{ display: 'flex', gap: 3 }}>
                       {Array.from({ length: s.tarjetas_amarillas }).map((_, i) => <span key={i} style={{ width: 14, height: 18, background: '#f0c040', borderRadius: 2, display: 'inline-block' }} />)}
@@ -446,7 +460,7 @@ export default function DetallePartido() {
                       const j = getJugador(s.jugador_id); if (!j) return null
                       return (
                         <tr key={s.id}>
-                          <td><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><div className="avatar avatar-sm">{initials(j.nombre)}</div><span style={{ fontSize: 13, fontWeight: 600 }}>{j.nombre}</span></div></td>
+                          <td><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Avatar jugador={j} size="sm" /><span style={{ fontSize: 13, fontWeight: 600 }}>{j.nombre}</span></div></td>
                           <td style={{ textAlign: 'center', fontWeight: 700, color: s.goles > 0 ? 'var(--verde)' : '#ccc' }}>{s.goles || '—'}</td>
                           <td style={{ textAlign: 'center', fontWeight: 700, color: s.asistencias > 0 ? 'var(--dorado)' : '#ccc' }}>{s.asistencias || '—'}</td>
                           <td style={{ textAlign: 'center' }}>{s.tarjetas_amarillas > 0 ? <span style={{ display: 'inline-block', width: 10, height: 14, background: '#f0c040', borderRadius: 2 }} /> : '—'}</td>
@@ -497,7 +511,7 @@ export default function DetallePartido() {
                       background: 'white', border: '1.5px solid #c0d0c0', borderRadius: 10,
                       cursor: 'pointer', textAlign: 'left', width: '100%'
                     }}>
-                      <div className="avatar avatar-sm">{j.nombre.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}</div>
+                      <Avatar jugador={j} size="sm" />
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 14, fontWeight: 600 }}>{j.nombre}</div>
                         <div style={{ fontSize: 11, color: 'var(--gris-mid)' }}>⚽{s.goles} 🅰️{s.asistencias}</div>

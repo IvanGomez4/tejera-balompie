@@ -5,6 +5,18 @@ import { adminAuth } from '../lib/adminAuth'
 import { EQUIPO_NOMBRE } from '../lib/mockData'
 
 function initials(n) { return n.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() }
+function Avatar({ jugador, size = 'sm' }) {
+  const dim = size === 'sm' ? 32 : size === 'md' ? 42 : 64
+  const fs = size === 'sm' ? 12 : size === 'md' ? 15 : 22
+  return (
+    <div className={`avatar avatar-${size}`} style={{ overflow: 'hidden', padding: 0, width: dim, height: dim, flexShrink: 0 }}>
+      {jugador?.foto_url
+        ? <img src={jugador.foto_url} alt={jugador.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+        : <span style={{ fontSize: fs }}>{initials(jugador?.nombre || '?')}</span>
+      }
+    </div>
+  )
+}
 const POSICIONES = ['Portero', 'Defensa', 'Centrocampista', 'Delantero']
 
 // Guard: si alguien navega a /admin directamente sin estar logueado, redirige a inicio
@@ -97,7 +109,7 @@ function PanelJugadores({ jugadores, store }) {
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         {jugadores.map((j, i) => (
           <div key={j.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: i < jugadores.length - 1 ? '1px solid #f0f4f0' : 'none' }}>
-            <div className="avatar avatar-sm">{initials(j.nombre)}</div>
+            <Avatar jugador={j} size="sm" />
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 14, fontWeight: 600 }}>{j.nombre}</div>
               <div style={{ fontSize: 11, color: 'var(--gris-mid)' }}>{j.posicion} · #{j.dorsal}</div>
@@ -276,7 +288,7 @@ function PanelStats({ jugadores, partidos, stats, store }) {
               if (!j) return null
               return (
                 <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: i < statsDelPartido.length - 1 ? '1px solid #f0f4f0' : 'none' }}>
-                  <div className="avatar avatar-sm">{initials(j.nombre)}</div>
+                  <Avatar jugador={j} size="sm" />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 600 }}>{j.nombre}</div>
                     <div style={{ fontSize: 11, color: 'var(--gris-mid)' }}>

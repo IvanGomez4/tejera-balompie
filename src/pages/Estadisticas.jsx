@@ -2,6 +2,18 @@ import { useState } from 'react'
 import { useStore } from '../hooks/useStore'
 
 function initials(n) { return n.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() }
+function Avatar({ jugador, size = 'sm' }) {
+  const dim = size === 'sm' ? 32 : size === 'md' ? 42 : 64
+  const fs = size === 'sm' ? 12 : size === 'md' ? 15 : 22
+  return (
+    <div className={`avatar avatar-${size}`} style={{ overflow: 'hidden', padding: 0, width: dim, height: dim, flexShrink: 0 }}>
+      {jugador?.foto_url
+        ? <img src={jugador.foto_url} alt={jugador.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+        : <span style={{ fontSize: fs }}>{initials(jugador?.nombre || '?')}</span>
+      }
+    </div>
+  )
+}
 const tabs = [
   { key: 'goles', label: '⚽ Goles', color: 'var(--verde)' },
   { key: 'asistencias', label: '🅰️ Asistencias', color: 'var(--dorado)' },
@@ -51,7 +63,7 @@ export default function Estadisticas() {
         {sorted.map((j, i) => (
           <div key={j.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < sorted.length - 1 ? '1px solid #f0f4f0' : 'none', background: i === 0 ? '#f0f9f0' : 'white' }}>
             <div style={{ fontFamily: 'Bebas Neue', fontSize: 20, minWidth: 24, textAlign: 'center', color: ['#c8a800', '#909090', '#a06030', '#c0d0c0'][Math.min(i, 3)] }}>{i + 1}</div>
-            <div className="avatar avatar-sm">{initials(j.nombre)}</div>
+            <Avatar jugador={j} size="sm" />
             <div style={{ flex: 1 }}><div style={{ fontSize: 14, fontWeight: 600 }}>{j.nombre}</div><div style={{ fontSize: 11, color: 'var(--gris-mid)' }}>{j.posicion}</div></div>
             <div className="bar-wrap" style={{ maxWidth: 80 }}><div className="bar-fill" style={{ width: `${Math.round(j[tab] / max * 100)}%`, background: cur.color }} /></div>
             <div style={{ fontFamily: 'Bebas Neue', fontSize: 26, color: cur.color, minWidth: 28, textAlign: 'right' }}>{j[tab]}</div>
@@ -64,7 +76,7 @@ export default function Estadisticas() {
           <thead><tr><th>Jugador</th><th style={{ textAlign: 'center' }}>PJ</th><th style={{ textAlign: 'center' }}>⚽</th><th style={{ textAlign: 'center' }}>🅰️</th><th style={{ textAlign: 'center' }}>🟨</th><th style={{ textAlign: 'center' }}>🧤</th><th style={{ textAlign: 'center' }}>🥅</th></tr></thead>          <tbody>
             {[...conTotales].sort((a, b) => (b.goles + b.asistencias) - (a.goles + a.asistencias)).map(j => (
               <tr key={j.id}>
-                <td><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><div className="avatar avatar-sm">{initials(j.nombre)}</div><div><div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.2 }}>{j.nombre}</div><div style={{ fontSize: 10, color: 'var(--gris-mid)' }}>{j.posicion}</div></div></div></td>
+                <td><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Avatar jugador={j} size="sm" /><div><div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.2 }}>{j.nombre}</div><div style={{ fontSize: 10, color: 'var(--gris-mid)' }}>{j.posicion}</div></div></div></td>
                 <td style={{ textAlign: 'center', fontSize: 14 }}>{j.partidos}</td>
                 <td style={{ textAlign: 'center', fontSize: 14, fontWeight: 700, color: j.goles > 0 ? 'var(--verde)' : '#ccc' }}>{j.goles || '—'}</td>
                 <td style={{ textAlign: 'center', fontSize: 14, fontWeight: 700, color: j.asistencias > 0 ? 'var(--dorado)' : '#ccc' }}>{j.asistencias || '—'}</td>
