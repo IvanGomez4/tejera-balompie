@@ -37,10 +37,14 @@ export default function Navbar() {
     setPwd(''); setJugadorSel(''); setError(''); setShowModal(true)
   }
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault()
     if (!jugadorSel) { setError('Elige tu nombre'); return }
-    if (!adminAuth.login(pwd)) { setError('Contraseña incorrecta'); return }
+
+    const isValid = await adminAuth.login(pwd)
+
+    if (!isValid) { setError('Contraseña incorrecta'); return }
+
     const jugador = jugadores.find(j => j.id === Number(jugadorSel))
     if (jugador) {
       adminAuth.setJugador(jugador)

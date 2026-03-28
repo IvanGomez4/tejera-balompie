@@ -78,7 +78,7 @@ export const store = {
       sbFetch('clasificacion', '*, pos'),
     ])
 
-    _jugadores = jugadores.map(j => ({ id: j.id, nombre: j.nombre, posicion: j.posicion, dorsal: j.dorsal }))
+    _jugadores = jugadores.map(j => ({ id: j.id, nombre: j.nombre, posicion: j.posicion, dorsal: j.dorsal, foto_url: j.foto_url || null }))
     _partidos = partidos.map(p => ({ ...p, jugado: p.jugado || false, mvp_jugador_id: p.mvp_jugador_id || null }))
     _stats = stats.map(s => ({ id: s.id, jugador_id: s.jugador_id, partido_id: s.partido_id, goles: s.goles, asistencias: s.asistencias, tarjetas_amarillas: s.tarjetas_amarillas, tarjetas_rojas: s.tarjetas_rojas, minutos: s.minutos, paradas: s.paradas || 0, goles_encajados: s.goles_encajados || 0 }))
     _clasificacion = clasificacion.sort((a, b) => a.pos - b.pos)
@@ -101,7 +101,7 @@ export const store = {
     notify()
   },
   async updateJugador(id, data) {
-    if (USE_SUPABASE) await supabase.from('jugadores').update({ nombre: data.nombre, posicion: data.posicion, dorsal: data.dorsal }).eq('id', id)
+    if (USE_SUPABASE) await supabase.from('jugadores').update({ nombre: data.nombre, posicion: data.posicion, dorsal: data.dorsal, foto_url: data.foto_url || null }).eq('id', id)
     _jugadores = _jugadores.map(j => j.id === id ? { ...j, ...data } : j)
     if (!USE_SUPABASE) save('tj_jugadores', _jugadores)
     notify()
@@ -233,6 +233,18 @@ export const store = {
     } else {
       save('tj_alin_' + partido_id, { partido_id, formacion, jugadores: jugadoresAlin })
     }
+  },
+  async subirFotoJugador(jugador_id, archivo) {
+    if (!USE_SUPABASE) return null
+    const ext = archivo.name.split('.').pop()
+    const path = `jugador_${jugador_id}.${ext}`
+    // Eliminar foto anterior si existe
+    await supabase.storage.from('avatares').remove([path])
+    // Subir nueva
+    const { error } = await supabase.storage.from('avatares').upload(path, archivo, { upsert: true })
+    if (error) { console.error('Error subiendo foto:', error); return null }
+    const { data } = supabase.storage.from('avatares').getPublicUrl(path)
+    return data.publicUrl
   },
 
   // =====================

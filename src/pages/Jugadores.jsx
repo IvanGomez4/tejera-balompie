@@ -29,7 +29,12 @@ export default function Jugadores() {
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         {filtrados.map((j, i) => (
           <div key={j.id} onClick={() => setSelected(j.id === selected ? null : j.id)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < filtrados.length - 1 ? '1px solid #f0f4f0' : 'none', background: selected === j.id ? '#f0f9f0' : 'white', cursor: 'pointer' }}>
-            <div className="avatar avatar-md">{initials(j.nombre)}</div>
+            <div className="avatar avatar-md" style={{ overflow: 'hidden', padding: 0 }}>
+              {j.foto_url
+                ? <img src={j.foto_url} alt={j.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                : initials(j.nombre)
+              }
+            </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 15, fontWeight: 600 }}>{j.nombre}</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
@@ -58,8 +63,12 @@ export default function Jugadores() {
           <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 300, background: 'white', borderRadius: '20px 20px 0 0', padding: '1.5rem', paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))', boxShadow: '0 -4px 30px rgba(0,0,0,0.15)', maxHeight: '75vh', overflowY: 'auto' }}>
             <div style={{ width: 36, height: 4, background: '#ddd', borderRadius: 2, margin: '-0.5rem auto 1.25rem' }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: '1.25rem' }}>
-              <div className="avatar avatar-lg">{initials(jugador.nombre)}</div>
-              <div>
+              <div className="avatar avatar-lg" style={{ overflow: 'hidden', padding: 0 }}>
+                {jugador.foto_url
+                  ? <img src={jugador.foto_url} alt={jugador.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                  : initials(jugador.nombre)
+                }
+              </div>              <div>
                 <div style={{ fontFamily: 'Bebas Neue', fontSize: 26, color: 'var(--verde)', lineHeight: 1 }}>{jugador.nombre}</div>
                 <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
                   <span className={`pos-pill ${posClass[jugador.posicion]}`}>{jugador.posicion}</span>

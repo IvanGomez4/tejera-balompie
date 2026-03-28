@@ -56,16 +56,34 @@ function Counter({ value, onChange }) {
 // ---- Panel Jugadores ----
 function PanelJugadores({ jugadores, store }) {
   const [modal, setModal] = useState(null)
-  const empty = { nombre: '', posicion: 'Delantero', dorsal: '' }
+  const empty = { nombre: '', posicion: 'Delantero', dorsal: '', foto_url: '' }
   const [form, setForm] = useState(empty)
+  const [fotoArchivo, setFotoArchivo] = useState(null)
+  const [fotoPreview, setFotoPreview] = useState(null)
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
-  const openAdd = () => { setForm(empty); setModal({ mode: 'add' }) }
-  const openEdit = (j) => { setForm({ nombre: j.nombre, posicion: j.posicion, dorsal: j.dorsal }); setModal({ mode: 'edit', id: j.id }) }
-  const save = () => {
+  const openAdd = () => { setForm(empty); setFotoArchivo(null); setFotoPreview(null); setModal({ mode: 'add' }) }
+  const openEdit = (j) => {
+    setForm({ nombre: j.nombre, posicion: j.posicion, dorsal: j.dorsal, foto_url: j.foto_url || '' })
+    setFotoArchivo(null)
+    setFotoPreview(j.foto_url || null)
+    setModal({ mode: 'edit', id: j.id })
+  }
+  const save = async () => {
     if (!form.nombre.trim()) return
-    if (modal.mode === 'add') store.addJugador({ ...form, dorsal: Number(form.dorsal) || 0 })
-    else store.updateJugador(modal.id, { ...form, dorsal: Number(form.dorsal) || 0 })
+    let foto_url = form.foto_url || null
+
+    if (fotoArchivo) {
+      const id = modal.mode === 'add'
+        ? Math.max(0, ...store.getJugadores().map(j => j.id)) + 1
+        : modal.id
+      foto_url = await store.subirFotoJugador(id, fotoArchivo)
+    }
+
+    if (modal.mode === 'add') store.addJugador({ ...form, dorsal: Number(form.dorsal) || 0, foto_url })
+    else store.updateJugador(modal.id, { ...form, dorsal: Number(form.dorsal) || 0, foto_url })
+    setFotoArchivo(null)
+    setFotoPreview(null)
     setModal(null)
   }
   const del = (id) => { if (window.confirm('¿Eliminar jugador y todas sus estadísticas?')) store.deleteJugador(id) }
@@ -98,6 +116,43 @@ function PanelJugadores({ jugadores, store }) {
             </select>
           </div>
           <div className="form-group"><label className="label">Dorsal</label><input className="input" type="number" value={form.dorsal} onChange={e => set('dorsal', e.target.value)} placeholder="Número de camiseta" /></div>
+          <div className="form-group">
+            <label className="label">Foto de perfil</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+              {/* Preview */}
+              <div style={{ width: 64, height: 64, borderRadius: '50%', overflow: 'hidden', background: 'var(--verde)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '2px solid #c0d0c0' }}>
+                {fotoPreview ? (
+                  <img src={fotoPreview} alt="foto" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span style={{ color: '#7dce7d', fontWeight: 700, fontSize: 20 }}>
+                    {form.nombre ? form.nombre.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?'}
+                  </span>
+                )}
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', background: 'white', border: '1.5px solid #c0d0c0', borderRadius: 10, padding: '8px 14px', fontSize: 13, cursor: 'pointer', textAlign: 'center', color: 'var(--verde-mid)', fontWeight: 600 }}>
+                  📷 {fotoPreview ? 'Cambiar foto' : 'Subir foto'}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={e => {
+                      const file = e.target.files[0]
+                      if (!file) return
+                      setFotoArchivo(file)
+                      setFotoPreview(URL.createObjectURL(file))
+                    }}
+                  />
+                </label>
+                {fotoPreview && (
+                  <button type="button" onClick={() => { setFotoArchivo(null); setFotoPreview(null); set('foto_url', '') }}
+                    style={{ width: '100%', marginTop: 6, background: 'none', border: 'none', fontSize: 12, color: '#c0392b', cursor: 'pointer' }}>
+                    Eliminar foto
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
           <button onClick={save} className="btn btn-primary btn-block">Guardar</button>
         </Modal>
       )}
