@@ -9,7 +9,7 @@ const tabs = [
   { to: '/clasificacion', label: 'Tabla', icon: '🏆' },
   { to: '/jugadores', label: 'Plantilla', icon: '👕' },
   { to: '/partidos', label: 'Partidos', icon: '⚽' },
-  { to: '/estadisticas', label: 'Stats', icon: '📊' },
+  { to: '/noticias', label: 'Noticias', icon: '📰' },
 ]
 
 export default function Navbar() {
@@ -80,8 +80,11 @@ export default function Navbar() {
               {/* Nombre del jugador activo */}
               {jugadorActivo && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(125,206,125,0.12)', borderRadius: 20, padding: '4px 10px' }}>
-                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--verde)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: 'white', flexShrink: 0 }}>
-                    {jugadorActivo.nombre.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--verde)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: 'white', flexShrink: 0, overflow: 'hidden', padding: 0 }}>
+                    {jugadorActivo.foto_url
+                      ? <img src={jugadorActivo.foto_url} alt={jugadorActivo.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                      : jugadorActivo.nombre.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+                    }
                   </div>
                   <span style={{ fontSize: 12, color: '#7dce7d', fontWeight: 600, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {jugadorActivo.nombre.split(' ')[0]}

@@ -247,6 +247,68 @@ export const store = {
     return data.publicUrl
   },
 
+
+  // =====================
+  // NOTICIAS
+  // =====================
+  async getNoticias() {
+    if (USE_SUPABASE) {
+      const { data, error } = await supabase
+        .from('noticias')
+        .select('*')
+        .order('created_at', { ascending: false })
+      if (error) console.error(error)
+      return data || []
+    }
+    return load('tj_noticias', [])
+  },
+  async addNoticia({ titulo, archivo }) {
+    let imagen_url = null
+    const id = Date.now()
+    const created_at = new Date().toISOString()
+
+    if (USE_SUPABASE) {
+      if (archivo) {
+        const ext = archivo.name.split('.').pop()
+        const path = `noticia_${id}.${ext}`
+        const { error: uploadError } = await supabase.storage
+          .from('noticias')
+          .upload(path, archivo, { upsert: true })
+        if (uploadError) throw uploadError
+        const { data: urlData } = supabase.storage.from('noticias').getPublicUrl(path)
+        imagen_url = urlData.publicUrl
+      }
+      const { data, error } = await supabase
+        .from('noticias')
+        .insert({ titulo, imagen_url, created_at })
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    } else {
+      // LocalStorage: guardar imagen como base64
+      if (archivo) {
+        imagen_url = await new Promise((res) => {
+          const reader = new FileReader()
+          reader.onload = (e) => res(e.target.result)
+          reader.readAsDataURL(archivo)
+        })
+      }
+      const nueva = { id, titulo, imagen_url, created_at }
+      const noticias = load('tj_noticias', [])
+      save('tj_noticias', [nueva, ...noticias])
+      return nueva
+    }
+  },
+  async deleteNoticia(id) {
+    if (USE_SUPABASE) {
+      await supabase.from('noticias').delete().eq('id', id)
+    } else {
+      const noticias = load('tj_noticias', [])
+      save('tj_noticias', noticias.filter(n => n.id !== id))
+    }
+  },
+
   // =====================
   // RESET
   // =====================

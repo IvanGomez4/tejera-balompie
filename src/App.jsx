@@ -7,6 +7,7 @@ import Partidos from './pages/Partidos'
 import DetallePartido from './pages/DetallePartido'
 import Estadisticas from './pages/Estadisticas'
 import Admin from './pages/Admin'
+import Noticias from './pages/Noticias'
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="/partidos"      element={<Partidos />} />
         <Route path="/partido/:id"   element={<DetallePartido />} />
         <Route path="/estadisticas"  element={<Estadisticas />} />
+        <Route path="/noticias"      element={<Noticias />} />
         <Route path="/admin"         element={<Admin />} />
       </Routes>
     </BrowserRouter>

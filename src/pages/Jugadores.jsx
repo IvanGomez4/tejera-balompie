@@ -4,6 +4,7 @@ import { useStore } from '../hooks/useStore'
 function initials(n) { return n.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() }
 const posiciones = ['Todos', 'Portero', 'Defensa', 'Centrocampista', 'Delantero']
 const posClass = { Portero: 'pos-portero', Defensa: 'pos-defensa', Centrocampista: 'pos-centrocampista', Delantero: 'pos-delantero' }
+const posOrder = { Portero: 0, Defensa: 1, Centrocampista: 2, Delantero: 3 }
 
 export default function Jugadores() {
   const { jugadores, stats } = useStore()
@@ -14,7 +15,7 @@ export default function Jugadores() {
     const ss = stats.filter(s => s.jugador_id === j.id)
     return { ...j, partidos: ss.length, goles: ss.reduce((a, s) => a + s.goles, 0), asistencias: ss.reduce((a, s) => a + s.asistencias, 0), tarjetas_amarillas: ss.reduce((a, s) => a + s.tarjetas_amarillas, 0), tarjetas_rojas: ss.reduce((a, s) => a + s.tarjetas_rojas, 0), paradas: ss.reduce((a, s) => a + (s.paradas || 0), 0), goles_encajados: ss.reduce((a, s) => a + (s.goles_encajados || 0), 0), }
   })
-  const filtrados = filtro === 'Todos' ? conTotales : conTotales.filter(j => j.posicion === filtro)
+  const filtrados = (filtro === 'Todos' ? conTotales : conTotales.filter(j => j.posicion === filtro)).sort((a, b) => (posOrder[a.posicion] ?? 99) - (posOrder[b.posicion] ?? 99))
   const jugador = selected ? conTotales.find(j => j.id === selected) : null
 
   return (
