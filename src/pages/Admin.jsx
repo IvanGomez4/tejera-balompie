@@ -424,18 +424,11 @@ export default function Admin() {
             <h1 style={{ fontFamily: 'Bebas Neue', fontSize: 26, color: 'var(--verde)', lineHeight: 1 }}>Panel de gestión</h1>
             <div style={{ fontSize: 12, color: 'var(--gris-mid)' }}>Tejera Balompié · Liga Verano 2026</div>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              onClick={() => { if (window.confirm('¿Restaurar datos iniciales? Se perderán los cambios.')) store.resetAll() }}
-              style={{ background: 'none', border: '1px solid #fcc', borderRadius: 8, padding: '5px 10px', fontSize: 11, cursor: 'pointer', color: '#c0392b' }}>
-              ↺ Reset
-            </button>
-            <button
+          <button
               onClick={handleLogout}
               style={{ background: 'none', border: '1px solid #c0d0c0', borderRadius: 8, padding: '5px 10px', fontSize: 11, cursor: 'pointer', color: 'var(--gris-mid)' }}>
               Salir
             </button>
-          </div>
         </div>
 
         {/* Tabs */}
