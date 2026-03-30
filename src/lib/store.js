@@ -262,12 +262,13 @@ export const store = {
     }
     return load('tj_noticias', [])
   },
-  async addNoticia({ titulo, archivo }) {
-    let imagen_url = null
+  // imagen_url ya viene procesada desde el componente (base64 o URL de Supabase)
+  async addNoticia({ titulo, archivo, imagen_url_local }) {
     const id = Date.now()
     const created_at = new Date().toISOString()
 
     if (USE_SUPABASE) {
+      let imagen_url = imagen_url_local || null
       if (archivo) {
         const ext = archivo.name.split('.').pop()
         const path = `noticia_${id}.${ext}`
@@ -286,15 +287,8 @@ export const store = {
       if (error) throw error
       return data
     } else {
-      // LocalStorage: guardar imagen como base64
-      if (archivo) {
-        imagen_url = await new Promise((res) => {
-          const reader = new FileReader()
-          reader.onload = (e) => res(e.target.result)
-          reader.readAsDataURL(archivo)
-        })
-      }
-      const nueva = { id, titulo, imagen_url, created_at }
+      // En modo local, imagen_url_local ya es el base64 generado en el componente
+      const nueva = { id, titulo, imagen_url: imagen_url_local || null, created_at }
       const noticias = load('tj_noticias', [])
       save('tj_noticias', [nueva, ...noticias])
       return nueva

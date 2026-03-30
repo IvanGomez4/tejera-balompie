@@ -7,15 +7,24 @@ function formatFecha(iso) {
   return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
+// Convierte un File a base64 en el componente, donde FileReader funciona bien
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (e) => resolve(e.target.result)
+    reader.onerror = () => reject(new Error('Error leyendo el archivo'))
+    reader.readAsDataURL(file)
+  })
+}
+
 export default function Noticias() {
   const { store } = useStore()
   const [noticias, setNoticias] = useState([])
   const [loading, setLoading] = useState(true)
-  const [visor, setVisor] = useState(null) // noticia seleccionada para ver a pantalla completa
+  const [visor, setVisor] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const logged = adminAuth.isLogged()
 
-  // Form state
   const [titulo, setTitulo] = useState('')
   const [archivo, setArchivo] = useState(null)
   const [preview, setPreview] = useState(null)
@@ -26,6 +35,8 @@ export default function Noticias() {
     store.getNoticias().then(data => {
       setNoticias(data)
       setLoading(false)
+    }).catch(() => {
+      setLoading(false)
     })
   }, [])
 
@@ -33,25 +44,26 @@ export default function Noticias() {
     const f = e.target.files[0]
     if (!f) return
     setArchivo(f)
-    const reader = new FileReader()
-    reader.onload = (ev) => setPreview(ev.target.result)
-    reader.readAsDataURL(f)
+    fileToBase64(f).then(b64 => setPreview(b64))
   }
 
   const handleSubmit = async () => {
     if (!titulo.trim()) { setError('Escribe un título'); return }
-    if (!archivo && !preview) { setError('Selecciona una imagen'); return }
+    if (!archivo) { setError('Selecciona una imagen'); return }
     setSaving(true)
     setError('')
     try {
-      const nueva = await store.addNoticia({ titulo: titulo.trim(), archivo })
+      // Convertimos a base64 aquí, en el componente
+      const imagen_url_local = await fileToBase64(archivo)
+      const nueva = await store.addNoticia({ titulo: titulo.trim(), archivo, imagen_url_local })
       setNoticias(prev => [nueva, ...prev])
       setTitulo('')
       setArchivo(null)
       setPreview(null)
       setShowForm(false)
     } catch (e) {
-      setError('Error al guardar la noticia')
+      console.error(e)
+      setError('Error al guardar la portada. Inténtalo de nuevo.')
     }
     setSaving(false)
   }
@@ -79,7 +91,6 @@ export default function Noticias() {
           <button
             onClick={() => setShowForm(true)}
             className="btn btn-primary btn-sm"
-            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
           >
             + Portada
           </button>
@@ -143,45 +154,43 @@ export default function Noticias() {
 
       {/* Visor a pantalla completa */}
       {visor && (
-        <>
+        <div
+          onClick={() => setVisor(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 500, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
+        >
           <div
-            onClick={() => setVisor(null)}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 500, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
+            onClick={e => e.stopPropagation()}
+            style={{ position: 'relative', maxWidth: 480, width: '100%', borderRadius: 16, overflow: 'hidden', background: 'white', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}
           >
-            <div
-              onClick={e => e.stopPropagation()}
-              style={{ position: 'relative', maxWidth: 480, width: '100%', borderRadius: 16, overflow: 'hidden', background: 'white', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}
-            >
-              <img
-                src={visor.imagen_url}
-                alt={visor.titulo}
-                style={{ width: '100%', display: 'block', maxHeight: '70vh', objectFit: 'contain', background: '#111' }}
-              />
-              <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: 'Bebas Neue', fontSize: 20, color: 'var(--verde)', lineHeight: 1.2 }}>{visor.titulo}</div>
-                  <div style={{ fontSize: 11, color: 'var(--gris-mid)', marginTop: 2 }}>{formatFecha(visor.created_at)}</div>
-                </div>
-                <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                  {logged && (
-                    <button
-                      onClick={() => handleDelete(visor.id)}
-                      style={{ background: '#fee', border: '1px solid #fcc', color: '#c0392b', borderRadius: 8, padding: '6px 12px', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}
-                    >
-                      🗑️
-                    </button>
-                  )}
+            <img
+              src={visor.imagen_url}
+              alt={visor.titulo}
+              style={{ width: '100%', display: 'block', maxHeight: '70vh', objectFit: 'contain', background: '#111' }}
+            />
+            <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: 'Bebas Neue', fontSize: 20, color: 'var(--verde)', lineHeight: 1.2 }}>{visor.titulo}</div>
+                <div style={{ fontSize: 11, color: 'var(--gris-mid)', marginTop: 2 }}>{formatFecha(visor.created_at)}</div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                {logged && (
                   <button
-                    onClick={() => setVisor(null)}
-                    style={{ background: '#f4f7f4', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 13, cursor: 'pointer', fontWeight: 600, color: 'var(--negro)' }}
+                    onClick={() => handleDelete(visor.id)}
+                    style={{ background: '#fee', border: '1px solid #fcc', color: '#c0392b', borderRadius: 8, padding: '6px 12px', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}
                   >
-                    Cerrar
+                    🗑️
                   </button>
-                </div>
+                )}
+                <button
+                  onClick={() => setVisor(null)}
+                  style={{ background: '#f4f7f4', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 13, cursor: 'pointer', fontWeight: 600, color: 'var(--negro)' }}
+                >
+                  Cerrar
+                </button>
               </div>
             </div>
           </div>
-        </>
+        </div>
       )}
 
       {/* Modal añadir portada */}
@@ -208,7 +217,7 @@ export default function Noticias() {
                 width: '100%', aspectRatio: '3/2', borderRadius: 12, border: '2px dashed #c0d0c0',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 overflow: 'hidden', marginBottom: '1rem', cursor: 'pointer',
-                background: preview ? 'black' : '#f4f7f4', position: 'relative'
+                background: preview ? 'black' : '#f4f7f4',
               }}
             >
               {preview
@@ -230,7 +239,6 @@ export default function Noticias() {
               onChange={handleArchivo}
             />
 
-            {/* Título */}
             <div className="form-group" style={{ marginBottom: '1rem' }}>
               <label className="label">Titular</label>
               <input
@@ -247,7 +255,7 @@ export default function Noticias() {
               onClick={handleSubmit}
               disabled={saving}
               className="btn btn-primary btn-block"
-              style={{ fontSize: 16 }}
+              style={{ fontSize: 16, opacity: saving ? 0.7 : 1 }}
             >
               {saving ? 'Guardando...' : '📰 Publicar portada'}
             </button>
