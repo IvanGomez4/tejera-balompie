@@ -81,7 +81,7 @@ export const store = {
     _jugadores = jugadores.map(j => ({ id: j.id, nombre: j.nombre, posicion: j.posicion, dorsal: j.dorsal, foto_url: j.foto_url || null }))
     _partidos = partidos.map(p => ({ ...p, jugado: p.jugado || false, mvp_jugador_id: p.mvp_jugador_id || null }))
     _stats = stats.map(s => ({ id: s.id, jugador_id: s.jugador_id, partido_id: s.partido_id, goles: s.goles, asistencias: s.asistencias, tarjetas_amarillas: s.tarjetas_amarillas, tarjetas_rojas: s.tarjetas_rojas, minutos: s.minutos, paradas: s.paradas || 0, goles_encajados: s.goles_encajados || 0 }))
-    _clasificacion = clasificacion.sort((a, b) => a.pos - b.pos)
+    _clasificacion = clasificacion.sort((a, b) => (a.grupo || '').localeCompare(b.grupo || '') || a.pos - b.pos)
 
     notify()
   },
@@ -170,8 +170,26 @@ export const store = {
   // CLASIFICACIÓN
   // =====================
   async updateFilaClasificacion(equipo, data) {
-    if (USE_SUPABASE) await supabase.from('clasificacion').update({ pj: data.pj, pg: data.pg, pe: data.pe, pp: data.pp, gf: data.gf, gc: data.gc, pts: data.pts }).eq('equipo', equipo)
+    if (USE_SUPABASE) await supabase.from('clasificacion').update({ pj: data.pj, pg: data.pg, pe: data.pe, pp: data.pp, gf: data.gf, gc: data.gc, pts: data.pts, grupo: data.grupo || null }).eq('equipo', equipo)
     _clasificacion = _clasificacion.map(e => e.equipo === equipo ? { ...e, ...data } : e)
+    if (!USE_SUPABASE) save('tj_clasificacion', _clasificacion)
+    notify()
+  },
+  async addEquipoClasificacion(data) {
+    const newEntry = { equipo: data.equipo, pos: data.pos || 1, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, pts: 0, grupo: data.grupo || 'A' }
+    if (USE_SUPABASE) {
+      const { data: row, error } = await supabase.from('clasificacion').insert(newEntry).select().single()
+      if (error) throw error
+      _clasificacion = [..._clasificacion, row].sort((a, b) => (a.grupo || '').localeCompare(b.grupo || '') || a.pos - b.pos)
+    } else {
+      _clasificacion = [..._clasificacion, newEntry].sort((a, b) => (a.grupo || '').localeCompare(b.grupo || '') || a.pos - b.pos)
+      save('tj_clasificacion', _clasificacion)
+    }
+    notify()
+  },
+  async deleteEquipoClasificacion(equipo) {
+    if (USE_SUPABASE) await supabase.from('clasificacion').delete().eq('equipo', equipo)
+    _clasificacion = _clasificacion.filter(e => e.equipo !== equipo)
     if (!USE_SUPABASE) save('tj_clasificacion', _clasificacion)
     notify()
   },

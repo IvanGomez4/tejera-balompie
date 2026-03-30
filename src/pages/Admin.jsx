@@ -356,31 +356,91 @@ function PanelStats({ jugadores, partidos, stats, store }) {
 function PanelClasificacion({ clasificacion, store }) {
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState({})
+  const [showAdd, setShowAdd] = useState(false)
+  const [newEquipo, setNewEquipo] = useState({ equipo: '', grupo: 'A' })
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  const grupos = [...new Set(clasificacion.map(e => e.grupo || 'A'))].sort()
+  const [grupoFiltro, setGrupoFiltro] = useState(null)
+  const grupoActivo = grupoFiltro || grupos[0] || 'A'
+  const equiposFiltrados = clasificacion
+    .filter(e => (e.grupo || 'A') === grupoActivo)
+    .sort((a, b) => b.pts - a.pts || (b.gf - b.gc) - (a.gf - a.gc))
 
   const openEdit = (e) => { setForm({ ...e }); setEditing(e.equipo) }
   const save = () => {
-    store.updateFilaClasificacion(editing, { ...form, pj: +form.pj, pg: +form.pg, pe: +form.pe, pp: +form.pp, gf: +form.gf, gc: +form.gc, pts: +form.pts })
+    store.updateFilaClasificacion(editing, { ...form, pj: +form.pj, pg: +form.pg, pe: +form.pe, pp: +form.pp, gf: +form.gf, gc: +form.gc, pts: +form.pts, grupo: form.grupo || 'A' })
     setEditing(null)
+  }
+  const handleAdd = () => {
+    if (!newEquipo.equipo.trim()) return
+    store.addEquipoClasificacion({ equipo: newEquipo.equipo.trim(), grupo: newEquipo.grupo || 'A' })
+    setNewEquipo({ equipo: '', grupo: newEquipo.grupo })
+    setShowAdd(false)
+  }
+  const handleDelete = (equipo) => {
+    if (window.confirm(`¿Eliminar ${equipo} de la clasificación?`)) store.deleteEquipoClasificacion(equipo)
   }
 
   return (
     <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <span style={{ fontSize: 14, color: 'var(--gris-mid)' }}>{clasificacion.length} equipos</span>
+        <button onClick={() => setShowAdd(true)} className="btn btn-primary btn-sm">+ Añadir equipo</button>
+      </div>
+
+      {/* Filtro por grupo */}
+      {grupos.length > 0 && (
+        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', marginBottom: 10, scrollbarWidth: 'none' }}>
+          {grupos.map(g => (
+            <button key={g} onClick={() => setGrupoFiltro(g)}
+              style={{ padding: '5px 14px', borderRadius: 20, border: '1.5px solid', fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0,
+                background: grupoActivo === g ? 'var(--verde)' : 'white',
+                color: grupoActivo === g ? 'white' : 'var(--verde-mid)',
+                borderColor: grupoActivo === g ? 'var(--verde)' : '#c0d0c0' }}>
+              Grupo {g}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        {clasificacion.map((e, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: i < clasificacion.length - 1 ? '1px solid #f0f4f0' : 'none' }}>
-            <div style={{ fontFamily: 'Bebas Neue', fontSize: 18, color: 'var(--gris-mid)', minWidth: 20 }}>{e.pos}</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 600 }}>{e.equipo}</div>
-              <div style={{ fontSize: 11, color: 'var(--gris-mid)' }}>PJ:{e.pj} G:{e.pg} E:{e.pe} P:{e.pp} GF:{e.gf} GC:{e.gc}</div>
+        {equiposFiltrados.length === 0 && <div className="empty">Sin equipos en este grupo</div>}
+        {equiposFiltrados.map((e, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: i < equiposFiltrados.length - 1 ? '1px solid #f0f4f0' : 'none' }}>
+            <div style={{ fontFamily: 'Bebas Neue', fontSize: 18, color: 'var(--gris-mid)', minWidth: 20 }}>{i + 1}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.equipo}</div>
+              <div style={{ fontSize: 11, color: 'var(--gris-mid)' }}>PJ:{e.pj} G:{e.pg} E:{e.pe} P:{e.pp} GF:{e.gf} GC:{e.gc} · {e.pts}pts</div>
             </div>
-            <div style={{ fontFamily: 'Bebas Neue', fontSize: 20, color: 'var(--verde)', minWidth: 34, textAlign: 'center' }}>{e.pts}pts</div>
-            <button onClick={() => openEdit(e)} style={{ background: 'none', border: '1px solid #c0d0c0', borderRadius: 8, padding: '4px 10px', fontSize: 12, cursor: 'pointer', color: 'var(--verde)' }}>Editar</button>
+            <button onClick={() => openEdit(e)} style={{ background: 'none', border: '1px solid #c0d0c0', borderRadius: 8, padding: '4px 10px', fontSize: 12, cursor: 'pointer', color: 'var(--verde)', flexShrink: 0 }}>Editar</button>
+            <button onClick={() => handleDelete(e.equipo)} style={{ background: 'none', border: '1px solid #fcc', borderRadius: 8, padding: '4px 10px', fontSize: 12, cursor: 'pointer', color: '#c0392b', flexShrink: 0 }}>✕</button>
           </div>
         ))}
       </div>
+
+      {/* Modal añadir equipo */}
+      {showAdd && (
+        <Modal title="Añadir equipo" onClose={() => setShowAdd(false)}>
+          <div className="form-group">
+            <label className="label">Nombre del equipo</label>
+            <input className="input" value={newEquipo.equipo} onChange={e => setNewEquipo(n => ({ ...n, equipo: e.target.value }))} placeholder="Ej: CD Villacañas" autoFocus />
+          </div>
+          <div className="form-group">
+            <label className="label">Grupo</label>
+            <input className="input" value={newEquipo.grupo} onChange={e => setNewEquipo(n => ({ ...n, grupo: e.target.value.toUpperCase() }))} placeholder="A, B, C..." maxLength={2} />
+          </div>
+          <button onClick={handleAdd} className="btn btn-primary btn-block">Añadir</button>
+        </Modal>
+      )}
+
+      {/* Modal editar equipo */}
       {editing && (
         <Modal title={`Editar: ${editing}`} onClose={() => setEditing(null)}>
+          <div className="form-group">
+            <label className="label">Grupo</label>
+            <input className="input" value={form.grupo || 'A'} onChange={e => set('grupo', e.target.value.toUpperCase())} maxLength={2} />
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             {[['pj', 'PJ — Jugados'], ['pg', 'PG — Ganados'], ['pe', 'PE — Empates'], ['pp', 'PP — Perdidos'], ['gf', 'GF — Goles favor'], ['gc', 'GC — Goles contra'], ['pts', 'Pts — Puntos']].map(([k, l]) => (
               <div key={k} className="form-group" style={{ marginBottom: 10 }}>
