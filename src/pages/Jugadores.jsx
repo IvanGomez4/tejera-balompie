@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../hooks/useStore'
+import { adminAuth } from '../lib/adminAuth'
 
 function initials(n) { return n.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() }
 function Avatar({ jugador, size = 'sm' }) {
@@ -16,6 +17,7 @@ function Avatar({ jugador, size = 'sm' }) {
 }
 
 const posiciones = ['Todos', 'Portero', 'Defensa', 'Centrocampista', 'Delantero']
+const POSICIONES = ['Portero', 'Defensa', 'Centrocampista', 'Delantero']
 const posClass = { Portero: 'pos-portero', Defensa: 'pos-defensa', Centrocampista: 'pos-centrocampista', Delantero: 'pos-delantero' }
 const posOrder = { Portero: 0, Defensa: 1, Centrocampista: 2, Delantero: 3 }
 
@@ -29,11 +31,22 @@ const statTabs = [
 ]
 
 export default function Jugadores() {
-  const { jugadores, stats } = useStore()
+  const { jugadores, stats, store } = useStore()
+  const isAdmin = adminAuth.isLogged()
+
   const [vista, setVista] = useState('plantilla')
   const [filtro, setFiltro] = useState('Todos')
   const [selected, setSelected] = useState(null)
   const [statTab, setStatTab] = useState('goles')
+
+  // Edit modal state
+  const emptyForm = { nombre: '', posicion: 'Delantero', dorsal: '', foto_url: '' }
+  const [editModal, setEditModal] = useState(false)
+  const [form, setForm] = useState(emptyForm)
+  const [fotoArchivo, setFotoArchivo] = useState(null)
+  const [fotoPreview, setFotoPreview] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const conTotales = jugadores.map(j => {
     const ss = stats.filter(s => s.jugador_id === j.id)
@@ -54,6 +67,7 @@ export default function Jugadores() {
 
   const jugador = selected ? conTotales.find(j => j.id === selected) : null
 
+  // Stats
   const cur = statTabs.find(t => t.key === statTab)
   const porteroTabs = ['paradas', 'goles_encajados']
   const sorted = [...conTotales]
@@ -64,6 +78,27 @@ export default function Jugadores() {
   const totAsist = conTotales.reduce((s, j) => s + j.asistencias, 0)
   const totAmar = conTotales.reduce((s, j) => s + j.tarjetas_amarillas, 0)
   const maxPJ = Math.max(...conTotales.map(j => j.partidos), 0)
+
+  const openEdit = (j) => {
+    setForm({ nombre: j.nombre, posicion: j.posicion, dorsal: j.dorsal, foto_url: j.foto_url || '' })
+    setFotoArchivo(null)
+    setFotoPreview(j.foto_url || null)
+    setEditModal(true)
+  }
+
+  const saveEdit = async () => {
+    if (!form.nombre.trim()) return
+    setSaving(true)
+    let foto_url = form.foto_url || null
+    if (fotoArchivo) {
+      foto_url = await store.subirFotoJugador(jugador.id, fotoArchivo)
+    }
+    await store.updateJugador(jugador.id, { ...form, dorsal: Number(form.dorsal) || 0, foto_url })
+    setFotoArchivo(null)
+    setFotoPreview(null)
+    setEditModal(false)
+    setSaving(false)
+  }
 
   return (
     <div className="page">
@@ -229,7 +264,7 @@ export default function Jugadores() {
               ))}
             </div>
             {(jugador.goles + jugador.asistencias) > 0 && (
-              <div style={{ background: '#f4f7f4', borderRadius: 12, padding: '12px 14px' }}>
+              <div style={{ background: '#f4f7f4', borderRadius: 12, padding: '12px 14px', marginBottom: '1rem' }}>
                 <div style={{ fontSize: 12, color: 'var(--gris-mid)', marginBottom: 6 }}>Participación ofensiva</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div className="bar-wrap"><div className="bar-fill" style={{ width: `${Math.round((jugador.goles + jugador.asistencias) / Math.max(...conTotales.map(j => j.goles + j.asistencias), 1) * 100)}%` }} /></div>
@@ -237,7 +272,75 @@ export default function Jugadores() {
                 </div>
               </div>
             )}
-            <button onClick={() => setSelected(null)} className="btn btn-primary btn-block" style={{ marginTop: '1.25rem' }}>Cerrar</button>
+            {isAdmin && (
+              <button
+                onClick={() => openEdit(jugador)}
+                className="btn btn-ghost btn-block"
+                style={{ marginBottom: 10 }}
+              >
+                ✏️ Editar jugador
+              </button>
+            )}
+            <button onClick={() => setSelected(null)} className="btn btn-primary btn-block">Cerrar</button>
+          </div>
+        </>
+      )}
+
+      {/* Modal editar jugador */}
+      {editModal && jugador && (
+        <>
+          <div onClick={() => setEditModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 400 }} />
+          <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 500, background: 'white', borderRadius: '20px 20px 0 0', padding: '1.5rem', paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))', boxShadow: '0 -4px 30px rgba(0,0,0,0.2)', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ width: 36, height: 4, background: '#ddd', borderRadius: 2, margin: '-0.5rem auto 1rem' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h2 style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: 'var(--verde)' }}>Editar jugador</h2>
+              <button onClick={() => setEditModal(false)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#aaa' }}>✕</button>
+            </div>
+            <div className="form-group">
+              <label className="label">Nombre</label>
+              <input className="input" value={form.nombre} onChange={e => setF('nombre', e.target.value)} placeholder="Nombre completo" />
+            </div>
+            <div className="form-group">
+              <label className="label">Posición</label>
+              <select className="select" value={form.posicion} onChange={e => setF('posicion', e.target.value)}>
+                {POSICIONES.map(p => <option key={p}>{p}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="label">Dorsal</label>
+              <input className="input" type="number" value={form.dorsal} onChange={e => setF('dorsal', e.target.value)} placeholder="Número de camiseta" />
+            </div>
+            <div className="form-group">
+              <label className="label">Foto de perfil</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                <div style={{ width: 64, height: 64, borderRadius: '50%', overflow: 'hidden', background: 'var(--verde)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '2px solid #c0d0c0' }}>
+                  {fotoPreview
+                    ? <img src={fotoPreview} alt="foto" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : <span style={{ color: '#7dce7d', fontWeight: 700, fontSize: 20 }}>{form.nombre ? initials(form.nombre) : '?'}</span>
+                  }
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', background: 'white', border: '1.5px solid #c0d0c0', borderRadius: 10, padding: '8px 14px', fontSize: 13, cursor: 'pointer', textAlign: 'center', color: 'var(--verde-mid)', fontWeight: 600 }}>
+                    📷 {fotoPreview ? 'Cambiar foto' : 'Subir foto'}
+                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
+                      const file = e.target.files[0]
+                      if (!file) return
+                      setFotoArchivo(file)
+                      setFotoPreview(URL.createObjectURL(file))
+                    }} />
+                  </label>
+                  {fotoPreview && (
+                    <button type="button" onClick={() => { setFotoArchivo(null); setFotoPreview(null); setF('foto_url', '') }}
+                      style={{ width: '100%', marginTop: 6, background: 'none', border: 'none', fontSize: 12, color: '#c0392b', cursor: 'pointer' }}>
+                      Eliminar foto
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+            <button onClick={saveEdit} disabled={saving} className="btn btn-primary btn-block" style={{ opacity: saving ? 0.7 : 1 }}>
+              {saving ? 'Guardando...' : 'Guardar cambios'}
+            </button>
           </div>
         </>
       )}
