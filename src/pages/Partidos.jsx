@@ -36,7 +36,9 @@ export default function Partidos() {
   const proximos = [...nuestros].filter(p => !p.jugado).sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
 
   const handleSave = () => {
-    if (!form.fecha) return
+    if (!form.fecha) { alert('La fecha es obligatoria'); return }
+    if (!form.visitante.trim()) { alert('El nombre del rival es obligatorio'); return }
+    if (!form.jornada || Number(form.jornada) < 1) { alert('La jornada debe ser mayor que 0'); return }
     const data = {
       ...form,
       jornada: Number(form.jornada) || 0,

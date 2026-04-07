@@ -81,8 +81,27 @@ function PanelJugadores({ jugadores, store }) {
     setFotoPreview(j.foto_url || null)
     setModal({ mode: 'edit', id: j.id })
   }
+  const [errores, setErrores] = useState({})
+
   const save = async () => {
-    if (!form.nombre.trim()) return
+    const nombreYaExiste = jugadores.some(j =>
+      j.nombre.trim().toLowerCase() === form.nombre.trim().toLowerCase() &&
+      j.id !== modal?.id
+    )
+    if (nombreYaExiste) e.nombre = 'Ya existe un jugador con ese nombre'
+
+    const dorsalYaExiste = jugadores.some(j =>
+      Number(j.dorsal) === Number(form.dorsal) &&
+      j.id !== modal?.id &&
+      Number(form.dorsal) !== 0
+    )
+    if (dorsalYaExiste) e.dorsal = 'Ese dorsal ya está en uso'
+    const e = {}
+    if (!form.nombre.trim()) e.nombre = 'El nombre es obligatorio'
+    if (!form.dorsal || Number(form.dorsal) < 0) e.dorsal = 'El dorsal debe ser 0 o mayor'
+    if (Number(form.dorsal) > 99) e.dorsal = 'El dorsal no puede superar 99'
+    if (Object.keys(e).length) { setErrores(e); return }
+    setErrores({})
     let foto_url = form.foto_url || null
 
     if (fotoArchivo) {
@@ -121,13 +140,21 @@ function PanelJugadores({ jugadores, store }) {
       </div>
       {modal && (
         <Modal title={modal.mode === 'add' ? 'Nuevo jugador' : 'Editar jugador'} onClose={() => setModal(null)}>
-          <div className="form-group"><label className="label">Nombre</label><input className="input" value={form.nombre} onChange={e => set('nombre', e.target.value)} placeholder="Nombre completo" autoFocus /></div>
+          <div className="form-group">
+            <label className="label">Nombre</label>
+            <input className="input" value={form.nombre} onChange={e => { set('nombre', e.target.value); setErrores(er => ({ ...er, nombre: '' })) }} placeholder="Nombre completo" autoFocus />
+            {errores.nombre && <div style={{ color: '#c0392b', fontSize: 12, marginTop: 4 }}>{errores.nombre}</div>}
+          </div>
           <div className="form-group"><label className="label">Posición</label>
             <select className="select" value={form.posicion} onChange={e => set('posicion', e.target.value)}>
               {POSICIONES.map(p => <option key={p}>{p}</option>)}
             </select>
           </div>
-          <div className="form-group"><label className="label">Dorsal</label><input className="input" type="number" value={form.dorsal} onChange={e => set('dorsal', e.target.value)} placeholder="Número de camiseta" /></div>
+          <div className="form-group">
+            <label className="label">Dorsal</label>
+            <input className="input" type="number" min="0" max="99" value={form.dorsal} onChange={e => { set('dorsal', e.target.value); setErrores(er => ({ ...er, dorsal: '' })) }} placeholder="Número de camiseta" />
+            {errores.dorsal && <div style={{ color: '#c0392b', fontSize: 12, marginTop: 4 }}>{errores.dorsal}</div>}
+          </div>
           <div className="form-group">
             <label className="label">Foto de perfil</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
@@ -185,8 +212,35 @@ function PanelPartidos({ partidos, store }) {
 
   const openAdd = () => { setForm(emptyP); setModal({ mode: 'add' }) }
   const openEdit = (p) => { setForm({ jornada: p.jornada, fecha: p.fecha, local: p.local, visitante: p.visitante, campo: p.campo, jugado: p.jugado, goles_local: p.goles_local, goles_visitante: p.goles_visitante }); setModal({ mode: 'edit', id: p.id }) }
+  const [erroresP, setErroresP] = useState({})
+
   const save = () => {
-    if (!form.fecha) return
+    // Jornada duplicada con el mismo rival
+    const jornada = Number(form.jornada)
+    const jornadaDuplicada = partidos.some(p =>
+      p.jornada === jornada &&
+      (p.local === form.visitante || p.visitante === form.visitante) &&
+      p.id !== modal?.id
+    )
+    if (jornadaDuplicada) e.jornada = 'Ya hay un partido en esa jornada contra ese rival'
+
+    // Fecha en el pasado para partidos no jugados
+    if (!form.jugado && form.fecha && new Date(form.fecha) < new Date(new Date().toDateString())) {
+      e.fecha = 'La fecha es anterior a hoy — marca como "jugado" si ya se disputó'
+    }
+
+    // Goles absurdamente altos
+    if (form.jugado && (Number(form.goles_local) > 30 || Number(form.goles_visitante) > 30)) {
+      e.goles = 'Los goles parecen incorrectos (máximo 30)'
+    }
+    const e = {}
+    if (!form.fecha) e.fecha = 'La fecha es obligatoria'
+    if (!form.visitante.trim()) e.visitante = 'El rival es obligatorio'
+    if (!form.jornada || Number(form.jornada) < 1) e.jornada = 'La jornada debe ser mayor que 0'
+    if (form.jugado && Number(form.goles_local) < 0) e.goles = 'Los goles no pueden ser negativos'
+    if (form.jugado && Number(form.goles_visitante) < 0) e.goles = 'Los goles no pueden ser negativos'
+    if (Object.keys(e).length) { setErroresP(e); return }
+    setErroresP({})
     const data = { ...form, jornada: Number(form.jornada) || 0, goles_local: Number(form.goles_local) || 0, goles_visitante: Number(form.goles_visitante) || 0 }
     if (modal.mode === 'add') store.addPartido(data)
     else store.updatePartido(modal.id, data)
@@ -217,11 +271,29 @@ function PanelPartidos({ partidos, store }) {
       </div>
       {modal && (
         <Modal title={modal.mode === 'add' ? 'Nuevo partido' : 'Editar partido'} onClose={() => setModal(null)}>
-          <div className="form-group"><label className="label">Jornada</label><input className="input" type="number" value={form.jornada} onChange={e => set('jornada', e.target.value)} placeholder="Nº jornada" /></div>
-          <div className="form-group"><label className="label">Fecha</label><input className="input" type="date" value={form.fecha} onChange={e => set('fecha', e.target.value)} /></div>
-          <div className="form-group"><label className="label">Equipo local</label><input className="input" value={form.local} onChange={e => set('local', e.target.value)} /></div>
-          <div className="form-group"><label className="label">Equipo visitante</label><input className="input" value={form.visitante} onChange={e => set('visitante', e.target.value)} placeholder="Nombre del rival" /></div>
-          <div className="form-group"><label className="label">Campo</label><input className="input" value={form.campo} onChange={e => set('campo', e.target.value)} /></div>
+          <div className="form-group">
+            <label className="label">Jornada</label>
+            <input className="input" type="number" value={form.jornada} onChange={e => set('jornada', e.target.value)} placeholder="Nº jornada" />
+            {erroresP.jornada && <div style={{ color: '#c0392b', fontSize: 12, marginTop: 4 }}>{erroresP.jornada}</div>}
+          </div>
+          <div className="form-group">
+            <label className="label">Fecha</label>
+            <input className="input" type="date" value={form.fecha} onChange={e => set('fecha', e.target.value)} />
+            {erroresP.fecha && <div style={{ color: '#c0392b', fontSize: 12, marginTop: 4 }}>{erroresP.fecha}</div>}
+          </div>
+          <div className="form-group">
+            <label className="label">Equipo local</label>
+            <input className="input" value={form.local} onChange={e => set('local', e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label className="label">Equipo visitante</label>
+            <input className="input" value={form.visitante} onChange={e => set('visitante', e.target.value)} placeholder="Nombre del rival" />
+            {erroresP.visitante && <div style={{ color: '#c0392b', fontSize: 12, marginTop: 4 }}>{erroresP.visitante}</div>}
+          </div>
+          <div className="form-group">
+            <label className="label">Campo</label>
+            <input className="input" value={form.campo} onChange={e => set('campo', e.target.value)} />
+          </div>
           <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <input type="checkbox" id="jugado" checked={form.jugado} onChange={e => set('jugado', e.target.checked)} style={{ width: 18, height: 18, accentColor: 'var(--verde)' }} />
             <label htmlFor="jugado" className="label" style={{ margin: 0 }}>Partido ya jugado</label>
@@ -230,6 +302,7 @@ function PanelPartidos({ partidos, store }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16, textAlign: 'center' }}>
               <div><div className="label" style={{ textAlign: 'center', marginBottom: 8 }}>Goles {String(form.local).split(' ')[0]}</div><Counter value={Number(form.goles_local) || 0} onChange={v => set('goles_local', v)} /></div>
               <div><div className="label" style={{ textAlign: 'center', marginBottom: 8 }}>Goles {String(form.visitante).split(' ')[0] || 'Visitante'}</div><Counter value={Number(form.goles_visitante) || 0} onChange={v => set('goles_visitante', v)} /></div>
+              {erroresP.goles && <div style={{ color: '#c0392b', fontSize: 12, marginTop: 4, textAlign: 'center' }}>{erroresP.goles}</div>}
             </div>
           )}
           <button onClick={save} className="btn btn-primary btn-block">Guardar</button>
@@ -255,8 +328,59 @@ function PanelStats({ jugadores, partidos, stats, store }) {
 
   const openAdd = () => { setForm(emptyS); setModal({ mode: 'add' }) }
   const openEdit = (s) => { setForm({ jugador_id: String(s.jugador_id), goles: s.goles, asistencias: s.asistencias, tarjetas_amarillas: s.tarjetas_amarillas, tarjetas_rojas: s.tarjetas_rojas, minutos: s.minutos, paradas: s.paradas || 0, goles_encajados: s.goles_encajados || 0 }); setModal({ mode: 'edit', jugador_id: s.jugador_id }) }
+  const [erroresS, setErroresS] = useState({})
+
   const save = () => {
-    if (!form.jugador_id || !partidoSel) return
+    // Jugador ya registrado en ese partido (modo add)
+    if (modal?.mode === 'add') {
+      const yaRegistrado = statsDelPartido.some(s => s.jugador_id === Number(form.jugador_id))
+      if (yaRegistrado) e.jugador = 'Este jugador ya tiene estadísticas en este partido — usa Editar'
+    }
+
+    // Suma de goles del jugador no puede superar goles del equipo
+    const partido = partidos.find(p => p.id === Number(partidoSel))
+    if (partido) {
+      const esLocal = partido.local === EQUIPO_NOMBRE
+      const golesEquipo = esLocal ? partido.goles_local : partido.goles_visitante
+      const golesYaRegistrados = statsDelPartido
+        .filter(s => s.jugador_id !== Number(form.jugador_id))
+        .reduce((a, s) => a + s.goles, 0)
+      if (form.goles + golesYaRegistrados > golesEquipo) {
+        e.goles = `Los goles superan el resultado del partido (${golesEquipo} goles marcados)`
+      }
+    }
+
+    // Asistencias no pueden superar goles del jugador
+    if (form.asistencias > 0 && form.goles === 0) {
+      // esto es válido (asistir sin marcar), no es error
+    }
+
+    // No puede haber más asistencias que goles en el partido
+    if (partido) {
+      const esLocal = partido.local === EQUIPO_NOMBRE
+      const golesEquipo = esLocal ? partido.goles_local : partido.goles_visitante
+      if (form.asistencias > golesEquipo) {
+        e.asistencias = `Las asistencias no pueden superar los goles del equipo (${golesEquipo})`
+      }
+    }
+
+    // No puede tener 2 amarillas y no tener roja
+    if (form.tarjetas_amarillas >= 2 && form.tarjetas_rojas === 0) {
+      e.tarjetas = '2 amarillas conllevan expulsión — añade también tarjeta roja'
+    }
+
+    // Paradas y goles encajados solo para porteros
+    const jugSeleccionado = jugadores.find(j => j.id === Number(form.jugador_id))
+    if (jugSeleccionado && jugSeleccionado.posicion !== 'Portero') {
+      if (form.paradas > 0) e.paradas = 'Las paradas solo aplican a porteros'
+      if (form.goles_encajados > 0) e.goles_encajados = 'Los goles encajados solo aplican a porteros'
+    }
+    const e = {}
+    if (!form.jugador_id) e.jugador = 'Selecciona un jugador'
+    if (!partidoSel) e.partido = 'Selecciona un partido'
+    if (Object.keys(e).length) { setErroresS(e); return }
+    setErroresS({})
+
     store.upsertStat({ jugador_id: Number(form.jugador_id), partido_id: Number(partidoSel), goles: form.goles, asistencias: form.asistencias, tarjetas_amarillas: form.tarjetas_amarillas, tarjetas_rojas: form.tarjetas_rojas, minutos: form.minutos, paradas: form.paradas || 0, goles_encajados: form.goles_encajados || 0 })
     store.updatePartido(Number(partidoSel), { mvp_jugador_id: mvpSel ? Number(mvpSel) : null })
     setModal(null)
@@ -313,6 +437,7 @@ function PanelStats({ jugadores, partidos, stats, store }) {
                 <option value="">Seleccionar...</option>
                 {jugadores.map(j => <option key={j.id} value={j.id}>#{j.dorsal} — {j.nombre}</option>)}
               </select>
+              {erroresS.jugador && <div style={{ color: '#c0392b', fontSize: 12, marginTop: 4 }}>{erroresS.jugador}</div>}
             </div>
           )}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
@@ -335,6 +460,7 @@ function PanelStats({ jugadores, partidos, stats, store }) {
           <div className="form-group">
             <label className="label">Minutos jugados</label>
             <input className="input" type="number" value={form.minutos} onChange={e => set('minutos', Number(e.target.value))} min={0} max={120} />
+            {erroresS.minutos && <div style={{ color: '#c0392b', fontSize: 12, marginTop: 4 }}>{erroresS.minutos}</div>}
           </div>
           <div className="form-group">
             <label className="label">⭐ MVP del partido</label>
@@ -368,7 +494,24 @@ function PanelClasificacion({ clasificacion, store }) {
     .sort((a, b) => b.pts - a.pts || (b.gf - b.gc) - (a.gf - a.gc))
 
   const openEdit = (e) => { setForm({ ...e }); setEditing(e.equipo) }
+  const pj = +form.pj, pg = +form.pg, pe = +form.pe, pp = +form.pp
+  if (pg + pe + pp !== pj && pj > 0) {
+    if (!window.confirm(`PG+PE+PP (${pg + pe + pp}) no coincide con PJ (${pj}). ¿Guardar igualmente?`)) return
+  }
   const save = () => {
+    const pg = +form.pg, pe = +form.pe, pp = +form.pp, pj = +form.pj
+    const gf = +form.gf, gc = +form.gc, pts = +form.pts
+
+    if (pg < 0 || pe < 0 || pp < 0 || gf < 0 || gc < 0 || pts < 0) {
+      alert('Ningún valor puede ser negativo'); return
+    }
+    if (pj > 0 && pg + pe + pp !== pj) {
+      if (!window.confirm(`PG(${pg}) + PE(${pe}) + PP(${pp}) = ${pg + pe + pp}, pero PJ es ${pj}. ¿Guardar igualmente?`)) return
+    }
+    const ptsEsperados = pg * 3 + pe
+    if (pts !== ptsEsperados) {
+      if (!window.confirm(`Los puntos calculados serían ${ptsEsperados} (${pg}V×3 + ${pe}E), pero has puesto ${pts}. ¿Guardar igualmente?`)) return
+    }
     store.updateFilaClasificacion(editing, { ...form, pj: +form.pj, pg: +form.pg, pe: +form.pe, pp: +form.pp, gf: +form.gf, gc: +form.gc, pts: +form.pts, grupo: form.grupo || 'A' })
     setEditing(null)
   }
@@ -394,10 +537,12 @@ function PanelClasificacion({ clasificacion, store }) {
         <div style={{ display: 'flex', gap: 6, overflowX: 'auto', marginBottom: 10, scrollbarWidth: 'none' }}>
           {grupos.map(g => (
             <button key={g} onClick={() => setGrupoFiltro(g)}
-              style={{ padding: '5px 14px', borderRadius: 20, border: '1.5px solid', fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0,
+              style={{
+                padding: '5px 14px', borderRadius: 20, border: '1.5px solid', fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0,
                 background: grupoActivo === g ? 'var(--verde)' : 'white',
                 color: grupoActivo === g ? 'white' : 'var(--verde-mid)',
-                borderColor: grupoActivo === g ? 'var(--verde)' : '#c0d0c0' }}>
+                borderColor: grupoActivo === g ? 'var(--verde)' : '#c0d0c0'
+              }}>
               Grupo {g}
             </button>
           ))}
@@ -485,10 +630,10 @@ export default function Admin() {
             <div style={{ fontSize: 12, color: 'var(--gris-mid)' }}>Tejera Balompié · Liga Verano 2026</div>
           </div>
           <button
-              onClick={handleLogout}
-              style={{ background: 'none', border: '1px solid #c0d0c0', borderRadius: 8, padding: '5px 10px', fontSize: 11, cursor: 'pointer', color: 'var(--gris-mid)' }}>
-              Salir
-            </button>
+            onClick={handleLogout}
+            style={{ background: 'none', border: '1px solid #c0d0c0', borderRadius: 8, padding: '5px 10px', fontSize: 11, cursor: 'pointer', color: 'var(--gris-mid)' }}>
+            Salir
+          </button>
         </div>
 
         {/* Tabs */}

@@ -87,7 +87,14 @@ export default function Jugadores() {
   }
 
   const saveEdit = async () => {
-    if (!form.nombre.trim()) return
+    if (!form.nombre.trim()) {
+      alert('El nombre no puede estar vacío')
+      return
+    }
+    if (Number(form.dorsal) < 0 || Number(form.dorsal) > 99) {
+      alert('El dorsal debe estar entre 0 y 99')
+      return
+    }
     setSaving(true)
     let foto_url = form.foto_url || null
     if (fotoArchivo) {
