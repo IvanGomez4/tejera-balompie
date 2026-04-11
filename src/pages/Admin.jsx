@@ -471,6 +471,18 @@ function PanelStats({ jugadores, partidos, stats, store }) {
               ))}
             </select>
           </div>
+          {(erroresS.jugador || erroresS.partido || erroresS.goles || erroresS.asistencias || erroresS.tarjetas || erroresS.minutos || erroresS.paradas || erroresS.goles_encajados) && (
+            <div style={{ background: '#fde8e8', border: '1px solid #f5c0c0', borderRadius: 10, padding: '10px 14px', marginBottom: 12 }}>
+              {erroresS.jugador && <div style={{ color: '#c0392b', fontSize: 13, marginBottom: 4 }}>⚠️ {erroresS.jugador}</div>}
+              {erroresS.partido && <div style={{ color: '#c0392b', fontSize: 13, marginBottom: 4 }}>⚠️ {erroresS.partido}</div>}
+              {erroresS.goles && <div style={{ color: '#c0392b', fontSize: 13, marginBottom: 4 }}>⚠️ {erroresS.goles}</div>}
+              {erroresS.asistencias && <div style={{ color: '#c0392b', fontSize: 13, marginBottom: 4 }}>⚠️ {erroresS.asistencias}</div>}
+              {erroresS.tarjetas && <div style={{ color: '#c0392b', fontSize: 13, marginBottom: 4 }}>⚠️ {erroresS.tarjetas}</div>}
+              {erroresS.minutos && <div style={{ color: '#c0392b', fontSize: 13, marginBottom: 4 }}>⚠️ {erroresS.minutos}</div>}
+              {erroresS.paradas && <div style={{ color: '#c0392b', fontSize: 13, marginBottom: 4 }}>⚠️ {erroresS.paradas}</div>}
+              {erroresS.goles_encajados && <div style={{ color: '#c0392b', fontSize: 13 }}>⚠️ {erroresS.goles_encajados}</div>}
+            </div>
+          )}
           <button onClick={save} className="btn btn-primary btn-block">Guardar</button>
         </Modal>
       )}
