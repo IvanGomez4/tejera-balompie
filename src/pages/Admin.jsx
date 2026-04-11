@@ -455,13 +455,17 @@ function PanelClasificacion({ clasificacion, store }) {
 }
 
 // ---- Panel Log ----
-function PanelLog({ store, jugadores }) {
+function PanelLog({ store }) {
   const [logs, setLogs] = useState([])
   const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState(false)
   const [filtroJugador, setFiltroJugador] = useState('')
 
   useEffect(() => {
-    store.getLog().then(data => { setLogs(data); setCargando(false) })
+    if (!store.getLog) { setCargando(false); setError(true); return }
+    store.getLog()
+      .then(data => { setLogs(data || []); setCargando(false) })
+      .catch(() => { setCargando(false); setError(true) })
   }, [])
 
   function fmtFecha(str) {
@@ -470,22 +474,28 @@ function PanelLog({ store, jugadores }) {
       ' · ' + d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
   }
 
-  const filtrados = filtroJugador
-    ? logs.filter(l => l.jugador_nombre === filtroJugador)
-    : logs
-
-  const jugadoresLog = [...new Set(logs.map(l => l.jugador_nombre))].sort()
+  const jugadoresLog = [...new Set(logs.map(l => l.jugador_nombre).filter(Boolean))].sort()
+  const filtrados = filtroJugador ? logs.filter(l => l.jugador_nombre === filtroJugador) : logs
 
   const colorEntidad = {
-    'Jugador': '#185fa5',
-    'Partido': '#7a1e30',
-    'Estadísticas': '#856a00',
-    'Clasificación': '#1a7a3a',
-    'Alineación': '#6a1e7a',
-    'Noticia': '#c0392b',
+    'Jugador': '#185fa5', 'Partido': '#7a1e30', 'Estadísticas': '#856a00',
+    'Clasificación': '#1a7a3a', 'Alineación': '#6a1e7a', 'Noticia': '#c0392b',
   }
 
-  if (cargando) return <div className="empty">Cargando log...</div>
+  if (cargando) return (
+    <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--gris-mid)' }}>
+      Cargando log de actividad...
+    </div>
+  )
+
+  if (error) return (
+    <div style={{ textAlign: 'center', padding: '3rem' }}>
+      <div style={{ fontSize: 32, marginBottom: 8 }}>⚠️</div>
+      <div style={{ color: 'var(--gris-mid)', fontSize: 14 }}>
+        El log no está disponible aún. Asegúrate de haber ejecutado el SQL en Supabase y de haber añadido <code>getLog</code> al store.
+      </div>
+    </div>
+  )
 
   return (
     <div>
@@ -506,47 +516,45 @@ function PanelLog({ store, jugadores }) {
         <div className="empty">Sin actividad registrada aún</div>
       )}
 
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        {filtrados.map((l, i) => (
-          <div key={l.id} style={{
-            display: 'flex', alignItems: 'flex-start', gap: 10,
-            padding: '10px 14px',
-            borderBottom: i < filtrados.length - 1 ? '1px solid #f5e8eb' : 'none',
-          }}>
-            {/* Avatar inicial */}
-            <div style={{
-              width: 32, height: 32, borderRadius: '50%',
-              background: 'var(--negro)', color: 'var(--dorado-light)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 11, fontWeight: 700, flexShrink: 0
+      {filtrados.length > 0 && (
+        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          {filtrados.map((l, i) => (
+            <div key={l.id} style={{
+              display: 'flex', alignItems: 'flex-start', gap: 10,
+              padding: '10px 14px',
+              borderBottom: i < filtrados.length - 1 ? '1px solid #f5e8eb' : 'none',
             }}>
-              {l.jugador_nombre?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?'}
-            </div>
-
-            <div style={{ flex: 1, minWidth: 0 }}>
-              {/* Acción + entidad */}
-              <div style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <span>{l.accion}</span>
-                <span style={{
-                  background: colorEntidad[l.entidad] || '#999',
-                  color: 'white', fontSize: 10, fontWeight: 700,
-                  padding: '1px 7px', borderRadius: 20
-                }}>{l.entidad}</span>
+              <div style={{
+                width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
+                background: 'var(--negro)', color: 'var(--dorado-light)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 11, fontWeight: 700,
+              }}>
+                {(l.jugador_nombre || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
               </div>
-              {/* Detalle */}
-              {l.detalle && (
-                <div style={{ fontSize: 12, color: 'var(--gris-mid)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {l.detalle}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  <span>{l.accion}</span>
+                  <span style={{
+                    background: colorEntidad[l.entidad] || '#999',
+                    color: 'white', fontSize: 10, fontWeight: 700,
+                    padding: '2px 8px', borderRadius: 20
+                  }}>{l.entidad}</span>
                 </div>
-              )}
-              {/* Jugador + fecha */}
-              <div style={{ fontSize: 11, color: 'var(--gris-light)', marginTop: 3 }}>
-                {l.jugador_nombre} · {fmtFecha(l.created_at)}
+                {l.detalle && (
+                  <div style={{ fontSize: 12, color: 'var(--gris-mid)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {l.detalle}
+                  </div>
+                )}
+                <div style={{ fontSize: 11, color: 'var(--gris-light)', marginTop: 3 }}>
+                  <strong style={{ color: 'var(--gris-mid)' }}>{l.jugador_nombre || 'Desconocido'}</strong>
+                  {' · '}{fmtFecha(l.created_at)}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

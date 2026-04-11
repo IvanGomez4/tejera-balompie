@@ -42,25 +42,35 @@ function getJugadorActivo() {
 }
 
 async function log(accion, entidad, detalle = '') {
-  const jugador = getJugadorActivo()
+  let jugador = null
+  try {
+    const raw = localStorage.getItem('tj_jugador_activo')
+    if (raw) jugador = JSON.parse(raw)
+  } catch { }
+
+  const entrada = {
+    jugador_id: jugador?.id || null,
+    jugador_nombre: jugador?.nombre || 'Sistema',
+    accion,
+    entidad,
+    detalle: detalle || '',
+  }
+
   if (USE_SUPABASE) {
-    await supabase.from('activity_log').insert({
-      jugador_id: jugador?.id || null,
-      jugador_nombre: jugador?.nombre || 'Desconocido',
-      accion,
-      entidad,
-      detalle,
-    })
+    try {
+      await supabase.from('activity_log').insert(entrada)
+    } catch (e) {
+      console.error('Error guardando log:', e)
+    }
   } else {
-    const logs = load('tj_log', [])
-    save('tj_log', [{
-      id: Date.now(),
-      jugador_nombre: jugador?.nombre || 'Desconocido',
-      accion,
-      entidad,
-      detalle,
-      created_at: new Date().toISOString()
-    }, ...logs].slice(0, 200)) // máximo 200 en local
+    try {
+      const logs = load('tj_log', [])
+      save('tj_log', [{
+        id: Date.now(),
+        ...entrada,
+        created_at: new Date().toISOString()
+      }, ...logs].slice(0, 200))
+    } catch { }
   }
 }
 
