@@ -316,7 +316,7 @@ function PanelPartidos({ partidos, store }) {
 function PanelStats({ jugadores, partidos, stats, store }) {
   const [partidoSel, setPartidoSel] = useState('')
   const [modal, setModal] = useState(null)
-  const emptyS = { jugador_id: '', goles: 0, asistencias: 0, tarjetas_amarillas: 0, tarjetas_rojas: 0, minutos: 90, paradas: 0, goles_encajados: 0 }
+  const emptyS = { jugador_id: '', goles: 0, asistencias: 0, tarjetas_amarillas: 0, tarjetas_rojas: 0, paradas: 0, goles_encajados: 0 }
   const [form, setForm] = useState(emptyS)
   const [mvpSel, setMvpSel] = useState('')
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
@@ -327,7 +327,7 @@ function PanelStats({ jugadores, partidos, stats, store }) {
   const statsDelPartido = stats.filter(s => s.partido_id === Number(partidoSel))
 
   const openAdd = () => { setForm(emptyS); setModal({ mode: 'add' }) }
-  const openEdit = (s) => { setForm({ jugador_id: String(s.jugador_id), goles: s.goles, asistencias: s.asistencias, tarjetas_amarillas: s.tarjetas_amarillas, tarjetas_rojas: s.tarjetas_rojas, minutos: s.minutos, paradas: s.paradas || 0, goles_encajados: s.goles_encajados || 0 }); setModal({ mode: 'edit', jugador_id: s.jugador_id }) }
+  const openEdit = (s) => { setForm({ jugador_id: String(s.jugador_id), goles: s.goles, asistencias: s.asistencias, tarjetas_amarillas: s.tarjetas_amarillas, tarjetas_rojas: s.tarjetas_rojas, paradas: s.paradas || 0, goles_encajados: s.goles_encajados || 0 }); setModal({ mode: 'edit', jugador_id: s.jugador_id }) }
   const [erroresS, setErroresS] = useState({})
 
   const save = () => {
@@ -381,7 +381,7 @@ function PanelStats({ jugadores, partidos, stats, store }) {
     if (Object.keys(e).length) { setErroresS(e); return }
     setErroresS({})
 
-    store.upsertStat({ jugador_id: Number(form.jugador_id), partido_id: Number(partidoSel), goles: form.goles, asistencias: form.asistencias, tarjetas_amarillas: form.tarjetas_amarillas, tarjetas_rojas: form.tarjetas_rojas, minutos: form.minutos, paradas: form.paradas || 0, goles_encajados: form.goles_encajados || 0 })
+    store.upsertStat({ jugador_id: Number(form.jugador_id), partido_id: Number(partidoSel), goles: form.goles, asistencias: form.asistencias, tarjetas_amarillas: form.tarjetas_amarillas, tarjetas_rojas: form.tarjetas_rojas, paradas: form.paradas || 0, goles_encajados: form.goles_encajados || 0 })
     store.updatePartido(Number(partidoSel), { mvp_jugador_id: mvpSel ? Number(mvpSel) : null })
     setModal(null)
   }
@@ -416,7 +416,7 @@ function PanelStats({ jugadores, partidos, stats, store }) {
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 600 }}>{j.nombre}</div>
                     <div style={{ fontSize: 11, color: 'var(--gris-mid)' }}>
-                      ⚽{s.goles} 🅰️{s.asistencias} 🟨{s.tarjetas_amarillas} 🟥{s.tarjetas_rojas} · {s.minutos}'
+                      ⚽{s.goles} 🅰️{s.asistencias} 🟨{s.tarjetas_amarillas} 🟥{s.tarjetas_rojas}'
                       {s.paradas > 0 || s.goles_encajados > 0 ? ` · 🧤${s.paradas} 🥅${s.goles_encajados}` : ''}
                     </div>
                   </div>
@@ -458,11 +458,6 @@ function PanelStats({ jugadores, partidos, stats, store }) {
             ))}
           </div>
           <div className="form-group">
-            <label className="label">Minutos jugados</label>
-            <input className="input" type="number" value={form.minutos} onChange={e => set('minutos', Number(e.target.value))} min={0} max={120} />
-            {erroresS.minutos && <div style={{ color: '#c0392b', fontSize: 12, marginTop: 4 }}>{erroresS.minutos}</div>}
-          </div>
-          <div className="form-group">
             <label className="label">⭐ MVP del partido</label>
             <select className="select" value={mvpSel} onChange={e => setMvpSel(e.target.value)}>
               <option value="">Sin MVP</option>
@@ -471,14 +466,13 @@ function PanelStats({ jugadores, partidos, stats, store }) {
               ))}
             </select>
           </div>
-          {(erroresS.jugador || erroresS.partido || erroresS.goles || erroresS.asistencias || erroresS.tarjetas || erroresS.minutos || erroresS.paradas || erroresS.goles_encajados) && (
+          {(erroresS.jugador || erroresS.partido || erroresS.goles || erroresS.asistencias || erroresS.tarjetas || erroresS.paradas || erroresS.goles_encajados) && (
             <div style={{ background: '#fde8e8', border: '1px solid #f5c0c0', borderRadius: 10, padding: '10px 14px', marginBottom: 12 }}>
               {erroresS.jugador && <div style={{ color: '#c0392b', fontSize: 13, marginBottom: 4 }}>⚠️ {erroresS.jugador}</div>}
               {erroresS.partido && <div style={{ color: '#c0392b', fontSize: 13, marginBottom: 4 }}>⚠️ {erroresS.partido}</div>}
               {erroresS.goles && <div style={{ color: '#c0392b', fontSize: 13, marginBottom: 4 }}>⚠️ {erroresS.goles}</div>}
               {erroresS.asistencias && <div style={{ color: '#c0392b', fontSize: 13, marginBottom: 4 }}>⚠️ {erroresS.asistencias}</div>}
               {erroresS.tarjetas && <div style={{ color: '#c0392b', fontSize: 13, marginBottom: 4 }}>⚠️ {erroresS.tarjetas}</div>}
-              {erroresS.minutos && <div style={{ color: '#c0392b', fontSize: 13, marginBottom: 4 }}>⚠️ {erroresS.minutos}</div>}
               {erroresS.paradas && <div style={{ color: '#c0392b', fontSize: 13, marginBottom: 4 }}>⚠️ {erroresS.paradas}</div>}
               {erroresS.goles_encajados && <div style={{ color: '#c0392b', fontSize: 13 }}>⚠️ {erroresS.goles_encajados}</div>}
             </div>

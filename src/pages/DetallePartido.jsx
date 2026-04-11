@@ -465,7 +465,6 @@ export default function DetallePartido() {
                           <td style={{ textAlign: 'center', fontWeight: 700, color: s.asistencias > 0 ? 'var(--dorado)' : '#ccc' }}>{s.asistencias || '—'}</td>
                           <td style={{ textAlign: 'center' }}>{s.tarjetas_amarillas > 0 ? <span style={{ display: 'inline-block', width: 10, height: 14, background: '#f0c040', borderRadius: 2 }} /> : '—'}</td>
                           <td style={{ textAlign: 'center' }}>{s.tarjetas_rojas > 0 ? <span style={{ display: 'inline-block', width: 10, height: 14, background: '#c0392b', borderRadius: 2 }} /> : '—'}</td>
-                          <td style={{ textAlign: 'center', color: 'var(--gris-mid)', fontSize: 13 }}>{s.minutos}'</td>
                         </tr>
                       )
                     })}
