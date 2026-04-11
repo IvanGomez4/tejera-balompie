@@ -67,10 +67,10 @@ export default function Navbar() {
       <header className="top-header">
         <div style={{ maxWidth: 680, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px' }}>
           <img src={escudo} alt="Escudo" onClick={() => navigate('/')} style={{ width: 42, height: 42, objectFit: 'contain', flexShrink: 0, cursor: 'pointer' }} />          <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: 'Bebas Neue', fontSize: 17, color: '#7dce7d', letterSpacing: '0.06em', lineHeight: 1.1 }}>
+            <div style={{ fontFamily: 'Bebas Neue', fontSize: 17, color: '#e8a0b0', letterSpacing: '0.06em', lineHeight: 1.1 }}>
               Tejera Balompié
             </div>
-            <div style={{ fontSize: 10, color: '#4a6a4a', letterSpacing: '0.07em' }}>
+            <div style={{ fontSize: 10, color: '#6a3a42', letterSpacing: '0.07em' }}>
               LIGA VERANO VILLACAÑAS 2026
             </div>
           </div>
@@ -86,7 +86,7 @@ export default function Navbar() {
                       : jugadorActivo.nombre.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
                     }
                   </div>
-                  <span style={{ fontSize: 12, color: '#7dce7d', fontWeight: 600, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: 12, color: '#e8a0b0', fontWeight: 600, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {jugadorActivo.nombre.split(' ')[0]}
                   </span>
                 </div>
@@ -94,12 +94,12 @@ export default function Navbar() {
               <button onClick={() => navigate('/admin')} style={{ background: 'var(--verde-mid)', color: 'white', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                 ⚙️ Admin
               </button>
-              <button onClick={handleLogout} style={{ background: 'transparent', border: '1px solid #2a4a2a', color: '#4a6a4a', borderRadius: 8, padding: '6px 10px', fontSize: 12, cursor: 'pointer' }}>
+              <button onClick={handleLogout} style={{ background: 'transparent', border: '1px solid #4a1e28', color: '#6a3a42', borderRadius: 8, padding: '6px 10px', fontSize: 12, cursor: 'pointer' }}>
                 Salir
               </button>
             </div>
           ) : (
-            <button onClick={openModal} style={{ background: 'transparent', border: '1px solid #2a4a2a', color: '#4a6a4a', borderRadius: 8, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            <button onClick={openModal} style={{ background: 'transparent', border: '1px solid #4a1e28', color: '#6a3a42', borderRadius: 8, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
               🔒 Acceso equipo
             </button>
           )}
@@ -123,7 +123,7 @@ export default function Navbar() {
             <div style={{ width: 36, height: 4, background: '#ddd', borderRadius: 2, margin: '-0.5rem auto 1.25rem' }} />
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1.25rem' }}>
-              <div style={{ background: 'linear-gradient(135deg,#0d1a0d,#1e4d1e)', borderRadius: '50%', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ background: 'linear-gradient(135deg,#0d0a0b,#5a1520)', borderRadius: '50%', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <img src={escudo} alt="" style={{ width: 42, height: 42, objectFit: 'contain' }} />
               </div>
               <div>

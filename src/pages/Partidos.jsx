@@ -14,9 +14,9 @@ function res(p) {
 function Counter({ value, onChange }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <button type="button" onClick={() => onChange(Math.max(0, value - 1))} style={{ width: 40, height: 40, borderRadius: '50%', border: '1.5px solid #c0d0c0', background: 'white', fontSize: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+      <button type="button" onClick={() => onChange(Math.max(0, value - 1))} style={{ width: 40, height: 40, borderRadius: '50%', border: '1.5px solid #c8aab2', background: 'white', fontSize: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
       <span style={{ fontFamily: 'Bebas Neue', fontSize: 32, color: 'var(--verde)', minWidth: 28, textAlign: 'center', lineHeight: 1 }}>{value}</span>
-      <button type="button" onClick={() => onChange(value + 1)} style={{ width: 40, height: 40, borderRadius: '50%', border: '1.5px solid #c0d0c0', background: 'white', fontSize: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+      <button type="button" onClick={() => onChange(value + 1)} style={{ width: 40, height: 40, borderRadius: '50%', border: '1.5px solid #c8aab2', background: 'white', fontSize: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
     </div>
   )
 }
@@ -36,9 +36,7 @@ export default function Partidos() {
   const proximos = [...nuestros].filter(p => !p.jugado).sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
 
   const handleSave = () => {
-    if (!form.fecha) { alert('La fecha es obligatoria'); return }
-    if (!form.visitante.trim()) { alert('El nombre del rival es obligatorio'); return }
-    if (!form.jornada || Number(form.jornada) < 1) { alert('La jornada debe ser mayor que 0'); return }
+    if (!form.fecha) return
     const data = {
       ...form,
       jornada: Number(form.jornada) || 0,
@@ -73,8 +71,8 @@ export default function Partidos() {
             const rival = p.local === EQUIPO_NOMBRE ? p.visitante : p.local
             const cond = p.local === EQUIPO_NOMBRE ? 'Local' : 'Visitante'
             return (
-              <div key={p.id} onClick={() => nav(`/partido/${p.id}`)} style={{ background: i === 0 ? 'var(--negro-soft)' : 'white', borderRadius: 14, padding: '1rem', flexShrink: 0, minWidth: 180, border: '1px solid', borderColor: i === 0 ? 'var(--verde)' : '#eef2ee', cursor: 'pointer' }}>
-                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4, color: i === 0 ? '#7dce7d' : 'var(--verde-mid)' }}>J{p.jornada} · {cond}</div>
+              <div key={p.id} onClick={() => nav(`/partido/${p.id}`)} style={{ background: i === 0 ? 'var(--negro-soft)' : 'white', borderRadius: 14, padding: '1rem', flexShrink: 0, minWidth: 180, border: '1px solid', borderColor: i === 0 ? 'var(--verde)' : '#f0e8ea', cursor: 'pointer' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4, color: i === 0 ? '#e8a0b0' : 'var(--verde-mid)' }}>J{p.jornada} · {cond}</div>
                 <div style={{ fontSize: 16, fontWeight: 700, color: i === 0 ? 'white' : 'var(--negro)', marginBottom: 4 }}>vs. {rival}</div>
                 <div style={{ fontSize: 12, color: i === 0 ? '#666' : 'var(--gris-mid)' }}>{fmt(p.fecha)}</div>
                 <div style={{ fontSize: 11, color: i === 0 ? '#555' : 'var(--gris-light)', marginTop: 3 }}>📍 {p.campo}</div>
@@ -92,7 +90,7 @@ export default function Partidos() {
           const r = res(p)
           const rival = esL ? p.visitante : p.local
           return (
-            <div key={p.id} onClick={() => nav(`/partido/${p.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderBottom: i < jugados.length - 1 ? '1px solid #f0f4f0' : 'none', cursor: 'pointer', WebkitTapHighlightColor: 'rgba(0,0,0,0.04)' }}>
+            <div key={p.id} onClick={() => nav(`/partido/${p.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderBottom: i < jugados.length - 1 ? '1px solid #f5e8eb' : 'none', cursor: 'pointer', WebkitTapHighlightColor: 'rgba(0,0,0,0.04)' }}>
               <div style={{ width: 4, height: 40, borderRadius: 2, flexShrink: 0, background: r === 'victoria' ? 'var(--verde-mid)' : r === 'derrota' ? '#c0392b' : '#bbb' }} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>vs. {rival}</div>

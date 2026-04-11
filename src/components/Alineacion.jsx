@@ -16,7 +16,7 @@ function CampoVisual({ slots, jugadores, formacion }) {
 
     return (
         <div style={{
-            background: 'linear-gradient(180deg, #2d7a2d 0%, #1e5a1e 50%, #2d7a2d 100%)',
+            background: 'linear-gradient(180deg, #6b1828 0%, #4a1020 50%, #6b1828 100%)',
             borderRadius: 16, padding: '20px 12px',
             position: 'relative', minHeight: 380,
             border: '3px solid #1a4a1a',
@@ -136,7 +136,7 @@ function ModalEditar({ alineacionInicial, formacionInicial, jugadores, onSave, o
                                 fontSize: 13, fontWeight: 600, cursor: 'pointer',
                                 background: formacion === f ? 'var(--verde)' : 'white',
                                 color: formacion === f ? 'white' : 'var(--verde-mid)',
-                                borderColor: formacion === f ? 'var(--verde)' : '#c0d0c0'
+                                borderColor: formacion === f ? 'var(--verde)' : '#c8aab2'
                             }}>{f}</button>
                         ))}
                     </div>
@@ -149,7 +149,7 @@ function ModalEditar({ alineacionInicial, formacionInicial, jugadores, onSave, o
 
                 {/* Campo editable */}
                 <div style={{
-                    background: 'linear-gradient(180deg, #2d7a2d 0%, #1e5a1e 50%, #2d7a2d 100%)',
+                    background: 'linear-gradient(180deg, #6b1828 0%, #4a1020 50%, #6b1828 100%)',
                     borderRadius: 16, padding: '20px 12px',
                     position: 'relative', minHeight: 380,
                     border: '3px solid #1a4a1a',

@@ -28,9 +28,9 @@ function Camiseta({ nombre, dorsal, highlight = false }) {
         <svg viewBox="0 0 100 90" width="56" height="56" xmlns="http://www.w3.org/2000/svg">
           {/* Cuerpo */}
           <path d="M25,10 L10,30 L25,35 L25,80 L75,80 L75,35 L90,30 L75,10 Q63,5 50,8 Q37,5 25,10 Z"
-            fill={highlight ? '#c8a800' : '#1e4d1e'} stroke="#0d1a0d" strokeWidth="3" />
+            fill={highlight ? '#c8a800' : '#5a1520'} stroke="#0d0a0b" strokeWidth="3" />
           {/* Cuello */}
-          <path d="M40,10 Q50,18 60,10" fill="none" stroke="#0d1a0d" strokeWidth="2.5" />
+          <path d="M40,10 Q50,18 60,10" fill="none" stroke="#0d0a0b" strokeWidth="2.5" />
           {/* Dorsal */}
           <text x="50" y="55" textAnchor="middle" fontFamily="Bebas Neue, sans-serif"
             fontSize="28" fill="white" fontWeight="bold">{dorsal || '?'}</text>
@@ -73,10 +73,10 @@ function Campo({ alineacion, jugadores, mvpId, formacion = '1-3-2-1' }) {
 
   return (
     <div style={{
-      background: 'linear-gradient(180deg, #1a5c1a 0%, #1e6e1e 30%, #1a5c1a 70%, #155015 100%)',
+      background: 'linear-gradient(180deg, #481020 0%, #5a1525 30%, #481020 70%, #3a0e1a 100%)',
       borderRadius: 16, padding: '16px 8px',
       position: 'relative', overflow: 'hidden',
-      border: '3px solid #0d3d0d',
+      border: '3px solid #2a0a12',
       minHeight: 360,
     }}>
       {/* Líneas del campo */}
@@ -218,7 +218,7 @@ function VotacionMVP({ partido, jugadores, store }) {
               setVotando(false)
             }} style={{
               display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
-              background: '#f4f7f4', borderRadius: 10, border: '1.5px solid #e0e8e0',
+              background: '#f7f2f3', borderRadius: 10, border: '1.5px solid #e0e8e0',
               cursor: 'pointer', textAlign: 'left', fontSize: 14, fontWeight: 500
             }}>
               <Avatar jugador={j} size="sm" />
@@ -312,22 +312,22 @@ export default function DetallePartido() {
       </button>
 
       {/* Cabecera */}
-      <div style={{ background: 'linear-gradient(135deg,#0d1a0d,#1e4d1e)', borderRadius: 20, padding: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>
-        <div style={{ fontSize: 11, color: '#4a6a4a', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+      <div style={{ background: 'linear-gradient(135deg,#0d0a0b,#5a1520)', borderRadius: 20, padding: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>
+        <div style={{ fontSize: 11, color: '#6a3a42', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
           Jornada {partido.jornada} · {fmt(partido.fecha)}
         </div>
-        <div style={{ fontSize: 13, color: '#7dce7d', marginBottom: 12 }}>📍 {partido.campo}</div>
+        <div style={{ fontSize: 13, color: '#e8a0b0', marginBottom: 12 }}>📍 {partido.campo}</div>
         {partido.jugado ? (
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: 12 }}>
               <div style={{ flex: 1, textAlign: 'right' }}>
-                <div style={{ fontSize: 13, color: esLocal ? '#7dce7d' : '#aaa', fontWeight: esLocal ? 700 : 400 }}>{partido.local}</div>
+                <div style={{ fontSize: 13, color: esLocal ? '#e8a0b0' : '#aaa', fontWeight: esLocal ? 700 : 400 }}>{partido.local}</div>
               </div>
               <div style={{ fontFamily: 'Bebas Neue', fontSize: 48, color: 'white', letterSpacing: '0.05em', background: 'rgba(0,0,0,0.3)', padding: '4px 20px', borderRadius: 12 }}>
                 {partido.goles_local}–{partido.goles_visitante}
               </div>
               <div style={{ flex: 1, textAlign: 'left' }}>
-                <div style={{ fontSize: 13, color: !esLocal ? '#7dce7d' : '#aaa', fontWeight: !esLocal ? 700 : 400 }}>{partido.visitante}</div>
+                <div style={{ fontSize: 13, color: !esLocal ? '#e8a0b0' : '#aaa', fontWeight: !esLocal ? 700 : 400 }}>{partido.visitante}</div>
               </div>
             </div>
             <span className={`tag-${resultado}`} style={{ fontSize: 14, padding: '4px 16px' }}>
@@ -337,7 +337,7 @@ export default function DetallePartido() {
         ) : (
           <>
             <div style={{ fontFamily: 'Bebas Neue', fontSize: 28, color: 'white', marginBottom: 8 }}>vs. {rival}</div>
-            <span style={{ background: 'rgba(255,255,255,0.1)', color: '#7dce7d', padding: '4px 14px', borderRadius: 20, fontSize: 13 }}>Pendiente</span>
+            <span style={{ background: 'rgba(255,255,255,0.1)', color: '#e8a0b0', padding: '4px 14px', borderRadius: 20, fontSize: 13 }}>Pendiente</span>
           </>
         )}
       </div>
@@ -399,7 +399,7 @@ export default function DetallePartido() {
               {goleadores.map(s => {
                 const j = getJugador(s.jugador_id); if (!j) return null
                 return (
-                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid #f0f4f0' }}>
+                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid #f5e8eb' }}>
                     <Avatar jugador={j} size="sm" />
                     <div style={{ flex: 1 }}><div style={{ fontSize: 14, fontWeight: 600 }}>{j.nombre}</div><div style={{ fontSize: 11, color: 'var(--gris-mid)' }}>#{j.dorsal} · {j.posicion}</div></div>
                     <div style={{ display: 'flex', gap: 4 }}>
@@ -418,7 +418,7 @@ export default function DetallePartido() {
               {asistentes.map(s => {
                 const j = getJugador(s.jugador_id); if (!j) return null
                 return (
-                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid #f0f4f0' }}>
+                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid #f5e8eb' }}>
                     <Avatar jugador={j} size="sm" />
                     <div style={{ flex: 1 }}><div style={{ fontSize: 14, fontWeight: 600 }}>{j.nombre}</div></div>
                     <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: 'var(--dorado)' }}>{s.asistencias}</div>
@@ -435,7 +435,7 @@ export default function DetallePartido() {
               {[...amarillas, ...rojas].map((s, idx) => {
                 const j = getJugador(s.jugador_id); if (!j) return null
                 return (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid #f0f4f0' }}>
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid #f5e8eb' }}>
                     <Avatar jugador={j} size="sm" />
                     <div style={{ flex: 1 }}><div style={{ fontSize: 14, fontWeight: 600 }}>{j.nombre}</div></div>
                     <div style={{ display: 'flex', gap: 3 }}>
@@ -454,7 +454,7 @@ export default function DetallePartido() {
               <h2 style={{ fontSize: 18, color: 'var(--verde)', marginBottom: 12 }}>📋 Ficha completa</h2>
               <div style={{ overflowX: 'auto' }}>
                 <table>
-                  <thead><tr><th>Jugador</th><th style={{ textAlign: 'center' }}>⚽</th><th style={{ textAlign: 'center' }}>🅰️</th><th style={{ textAlign: 'center' }}>🟨</th><th style={{ textAlign: 'center' }}>🟥</th><th style={{ textAlign: 'center' }}>Min</th></tr></thead>
+                  <thead><tr><th>Jugador</th><th style={{ textAlign: 'center' }}>⚽</th><th style={{ textAlign: 'center' }}>🅰️</th><th style={{ textAlign: 'center' }}>🟨</th><th style={{ textAlign: 'center' }}>🟥</th></tr></thead>
                   <tbody>
                     {statsPartido.map(s => {
                       const j = getJugador(s.jugador_id); if (!j) return null
@@ -487,10 +487,10 @@ export default function DetallePartido() {
 
           {/* MVP actual */}
           {mvpJugador && (
-            <div style={{ background: 'linear-gradient(135deg,#0d1a0d,#1e4d1e)', borderRadius: 12, padding: '12px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ background: 'linear-gradient(135deg,#0d0a0b,#5a1520)', borderRadius: 12, padding: '12px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ fontSize: 28 }}>⭐</div>
               <div>
-                <div style={{ fontSize: 11, color: '#7dce7d', textTransform: 'uppercase', letterSpacing: '0.08em' }}>MVP — {votos.length} voto{votos.length !== 1 ? 's' : ''}</div>
+                <div style={{ fontSize: 11, color: '#e8a0b0', textTransform: 'uppercase', letterSpacing: '0.08em' }}>MVP — {votos.length} voto{votos.length !== 1 ? 's' : ''}</div>
                 <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: 'white' }}>{mvpJugador.nombre}</div>
               </div>
             </div>
@@ -507,7 +507,7 @@ export default function DetallePartido() {
                   return (
                     <button key={s.id} onClick={() => handleVotar(j.id)} style={{
                       display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
-                      background: 'white', border: '1.5px solid #c0d0c0', borderRadius: 10,
+                      background: 'white', border: '1.5px solid #c8aab2', borderRadius: 10,
                       cursor: 'pointer', textAlign: 'left', width: '100%'
                     }}>
                       <Avatar jugador={j} size="sm" />

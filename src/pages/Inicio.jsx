@@ -60,16 +60,16 @@ export default function Inicio() {
   return (
     <div className="page">
       {/* Hero */}
-      <div style={{ background: 'linear-gradient(135deg,#0d1a0d 0%,#1e4d1e 100%)', borderRadius: 20, padding: '1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <div style={{ background: 'linear-gradient(135deg,#0d0a0b 0%,#5a1520 100%)', borderRadius: 20, padding: '1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <img src={escudo} alt="Escudo" style={{ width: 88, height: 88, objectFit: 'contain', flexShrink: 0 }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: 'Bebas Neue', fontSize: 24, color: 'white', lineHeight: 1.1, letterSpacing: '0.04em' }}>Tejera Balompié</div>
-          <div style={{ color: '#4a6a4a', fontSize: 10, letterSpacing: '0.09em', marginBottom: 10 }}>LIGA VERANO VILLACAÑAS 2026</div>
+          <div style={{ color: '#6a3a42', fontSize: 10, letterSpacing: '0.09em', marginBottom: 10 }}>LIGA VERANO VILLACAÑAS 2026</div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {[[`${nuestro?.pos}º`, 'Posición', '#f0c040'], [`${nuestro?.pts}`, 'Puntos', '#7dce7d'], [`${nuestro?.pg}G`, `${nuestro?.pe}E ${nuestro?.pp}D`, 'white']].map(([v, s, c]) => (
+            {[[`${nuestro?.pos}º`, 'Posición', '#f0c040'], [`${nuestro?.pts}`, 'Puntos', '#e8a0b0'], [`${nuestro?.pg}G`, `${nuestro?.pe}E ${nuestro?.pp}D`, 'white']].map(([v, s, c]) => (
               <div key={s} style={{ background: 'rgba(255,255,255,0.07)', borderRadius: 8, padding: '6px 10px', textAlign: 'center', minWidth: 50 }}>
                 <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: c, lineHeight: 1 }}>{v}</div>
-                <div style={{ fontSize: 9, color: '#4a6a4a', textTransform: 'uppercase', letterSpacing: '0.07em', marginTop: 1 }}>{s}</div>
+                <div style={{ fontSize: 9, color: '#6a3a42', textTransform: 'uppercase', letterSpacing: '0.07em', marginTop: 1 }}>{s}</div>
               </div>
             ))}
           </div>
@@ -98,10 +98,10 @@ export default function Inicio() {
 
         return (
           <div style={{
-            background: 'linear-gradient(135deg, #0d1a0d 0%, #1a3d1a 100%)',
+            background: 'linear-gradient(135deg, #0d0a0b 0%, #3d1020 100%)',
             borderRadius: 20, padding: '1.25rem',
             marginBottom: '1rem',
-            border: '1px solid #2a5a2a',
+            border: '1px solid #7a1e30',
             position: 'relative', overflow: 'hidden'
           }}>
             {/* Fondo decorativo */}
@@ -110,12 +110,12 @@ export default function Inicio() {
 
             {/* Cabecera */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-              <div style={{ fontSize: 10, color: '#4a8a4a', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>
+              <div style={{ fontSize: 10, color: '#9b2a40', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>
                 Próximo partido · J{proximo.jornada}
               </div>
               <div style={{
                 background: esHoy ? 'var(--rojo)' : esMañana ? '#c8a800' : 'rgba(125,206,125,0.15)',
-                color: esHoy ? 'white' : esMañana ? 'var(--negro)' : '#7dce7d',
+                color: esHoy ? 'white' : esMañana ? 'var(--negro)' : '#e8a0b0',
                 borderRadius: 20, padding: '3px 10px', fontSize: 11, fontWeight: 700
               }}>
                 {etiquetaTiempo}
@@ -133,11 +133,11 @@ export default function Inicio() {
                 <span style={{ fontFamily: 'Bebas Neue', fontSize: 52, color: 'var(--verde-light)', lineHeight: 1 }}>
                   {diffDias}
                 </span>
-                <span style={{ fontSize: 14, color: '#4a8a4a', fontWeight: 600 }}>días</span>
+                <span style={{ fontSize: 14, color: '#9b2a40', fontWeight: 600 }}>días</span>
                 {diffHoras > 0 && (
                   <>
-                    <span style={{ fontFamily: 'Bebas Neue', fontSize: 28, color: '#2d5a2d', lineHeight: 1, marginLeft: 4 }}>{diffHoras}</span>
-                    <span style={{ fontSize: 12, color: '#3a6a3a' }}>h</span>
+                    <span style={{ fontFamily: 'Bebas Neue', fontSize: 28, color: '#7a1e30', lineHeight: 1, marginLeft: 4 }}>{diffHoras}</span>
+                    <span style={{ fontSize: 12, color: '#8b2035' }}>h</span>
                   </>
                 )}
               </div>
@@ -147,15 +147,15 @@ export default function Inicio() {
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 <span style={{ fontSize: 13 }}>📅</span>
-                <span style={{ fontSize: 13, color: '#7dce7d' }}>{fmt(proximo.fecha)}</span>
+                <span style={{ fontSize: 13, color: '#e8a0b0' }}>{fmt(proximo.fecha)}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 <span style={{ fontSize: 13 }}>📍</span>
-                <span style={{ fontSize: 13, color: '#7dce7d' }}>{proximo.campo}</span>
+                <span style={{ fontSize: 13, color: '#e8a0b0' }}>{proximo.campo}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 <span style={{ fontSize: 13 }}>🏠</span>
-                <span style={{ fontSize: 13, color: '#7dce7d' }}>{condicion}</span>
+                <span style={{ fontSize: 13, color: '#e8a0b0' }}>{condicion}</span>
               </div>
             </div>
           </div>
@@ -178,7 +178,7 @@ export default function Inicio() {
         {ultimos.map((p, i) => {
           const r = res(p); const rival = p.local === EQUIPO_NOMBRE ? p.visitante : p.local
           return (
-            <div key={p.id} onClick={() => nav(`/partido/${p.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: i < ultimos.length - 1 ? '1px solid #f0f4f0' : 'none', cursor: 'pointer' }}>
+            <div key={p.id} onClick={() => nav(`/partido/${p.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: i < ultimos.length - 1 ? '1px solid #f5e8eb' : 'none', cursor: 'pointer' }}>
               <div style={{ width: 4, height: 36, borderRadius: 2, flexShrink: 0, background: r === 'victoria' ? 'var(--verde-mid)' : r === 'derrota' ? '#c0392b' : '#bbb' }} />
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 600 }}>vs. {rival}</div>
@@ -202,7 +202,7 @@ export default function Inicio() {
         {[...totales].sort((a, b) => b.goles - a.goles).filter(j => j.goles > 0).slice(0, 4).map((j, i) => {
           const maxG = Math.max(...totales.map(x => x.goles), 1)
           return (
-            <div key={j.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: i < 3 ? '1px solid #f0f4f0' : 'none' }}>
+            <div key={j.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: i < 3 ? '1px solid #f5e8eb' : 'none' }}>
               <div style={{ fontFamily: 'Bebas Neue', fontSize: 18, color: ['#c8a800', '#909090', '#a06030', '#ddd'][i], minWidth: 18, textAlign: 'center' }}>{i + 1}</div>
               <Avatar jugador={j} size="sm" />
               <div style={{ flex: 1 }}><div style={{ fontSize: 14, fontWeight: 500 }}>{j.nombre}</div><div style={{ fontSize: 11, color: 'var(--gris-mid)' }}>{j.posicion}</div></div>

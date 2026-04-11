@@ -87,14 +87,7 @@ export default function Jugadores() {
   }
 
   const saveEdit = async () => {
-    if (!form.nombre.trim()) {
-      alert('El nombre no puede estar vacío')
-      return
-    }
-    if (Number(form.dorsal) < 0 || Number(form.dorsal) > 99) {
-      alert('El dorsal debe estar entre 0 y 99')
-      return
-    }
+    if (!form.nombre.trim()) return
     setSaving(true)
     let foto_url = form.foto_url || null
     if (fotoArchivo) {
@@ -110,7 +103,7 @@ export default function Jugadores() {
   return (
     <div className="page">
       {/* Selector de vista */}
-      <div style={{ display: 'flex', background: '#f0f4f0', borderRadius: 12, padding: 4, marginBottom: '1.25rem', gap: 4 }}>
+      <div style={{ display: 'flex', background: '#f5e8eb', borderRadius: 12, padding: 4, marginBottom: '1.25rem', gap: 4 }}>
         {[['plantilla', '👕', 'Plantilla'], ['stats', '📊', 'Estadísticas']].map(([key, icon, label]) => (
           <button
             key={key}
@@ -135,12 +128,12 @@ export default function Jugadores() {
           <h1 className="page-title">Plantilla · {jugadores.length}</h1>
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, marginBottom: '1rem', scrollbarWidth: 'none' }}>
             {posiciones.map(p => (
-              <button key={p} onClick={() => setFiltro(p)} style={{ padding: '7px 14px', borderRadius: 20, whiteSpace: 'nowrap', border: '1.5px solid', fontSize: 13, fontWeight: 600, cursor: 'pointer', flexShrink: 0, minHeight: 36, background: filtro === p ? 'var(--verde)' : 'white', color: filtro === p ? 'white' : 'var(--verde-mid)', borderColor: filtro === p ? 'var(--verde)' : '#c0d0c0' }}>{p}</button>
+              <button key={p} onClick={() => setFiltro(p)} style={{ padding: '7px 14px', borderRadius: 20, whiteSpace: 'nowrap', border: '1.5px solid', fontSize: 13, fontWeight: 600, cursor: 'pointer', flexShrink: 0, minHeight: 36, background: filtro === p ? 'var(--verde)' : 'white', color: filtro === p ? 'white' : 'var(--verde-mid)', borderColor: filtro === p ? 'var(--verde)' : '#c8aab2' }}>{p}</button>
             ))}
           </div>
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
             {filtrados.map((j, i) => (
-              <div key={j.id} onClick={() => setSelected(j.id === selected ? null : j.id)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < filtrados.length - 1 ? '1px solid #f0f4f0' : 'none', background: selected === j.id ? '#f0f9f0' : 'white', cursor: 'pointer' }}>
+              <div key={j.id} onClick={() => setSelected(j.id === selected ? null : j.id)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < filtrados.length - 1 ? '1px solid #f5e8eb' : 'none', background: selected === j.id ? '#f9eff1' : 'white', cursor: 'pointer' }}>
                 <div className="avatar avatar-md" style={{ overflow: 'hidden', padding: 0 }}>
                   {j.foto_url
                     ? <img src={j.foto_url} alt={j.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
@@ -165,7 +158,7 @@ export default function Jugadores() {
                     </div>
                   ))}
                 </div>
-                <div style={{ color: '#c0d0c0', fontSize: 16 }}>›</div>
+                <div style={{ color: '#c8aab2', fontSize: 16 }}>›</div>
               </div>
             ))}
           </div>
@@ -183,14 +176,14 @@ export default function Jugadores() {
           </div>
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, marginBottom: '1rem', scrollbarWidth: 'none' }}>
             {statTabs.map(t => (
-              <button key={t.key} onClick={() => setStatTab(t.key)} style={{ padding: '8px 16px', borderRadius: 20, whiteSpace: 'nowrap', border: '1.5px solid', fontSize: 13, fontWeight: 600, cursor: 'pointer', flexShrink: 0, background: statTab === t.key ? 'var(--verde)' : 'white', color: statTab === t.key ? 'white' : 'var(--verde-mid)', borderColor: statTab === t.key ? 'var(--verde)' : '#c0d0c0' }}>{t.label}</button>
+              <button key={t.key} onClick={() => setStatTab(t.key)} style={{ padding: '8px 16px', borderRadius: 20, whiteSpace: 'nowrap', border: '1.5px solid', fontSize: 13, fontWeight: 600, cursor: 'pointer', flexShrink: 0, background: statTab === t.key ? 'var(--verde)' : 'white', color: statTab === t.key ? 'white' : 'var(--verde-mid)', borderColor: statTab === t.key ? 'var(--verde)' : '#c8aab2' }}>{t.label}</button>
             ))}
           </div>
           <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: '1.25rem' }}>
             {sorted.length === 0 && <div className="empty">Sin datos aún</div>}
             {sorted.map((j, i) => (
-              <div key={j.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < sorted.length - 1 ? '1px solid #f0f4f0' : 'none', background: i === 0 ? '#f0f9f0' : 'white' }}>
-                <div style={{ fontFamily: 'Bebas Neue', fontSize: 20, minWidth: 24, textAlign: 'center', color: ['#c8a800', '#909090', '#a06030', '#c0d0c0'][Math.min(i, 3)] }}>{i + 1}</div>
+              <div key={j.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < sorted.length - 1 ? '1px solid #f5e8eb' : 'none', background: i === 0 ? '#f9eff1' : 'white' }}>
+                <div style={{ fontFamily: 'Bebas Neue', fontSize: 20, minWidth: 24, textAlign: 'center', color: ['#c8a800', '#909090', '#a06030', '#c8aab2'][Math.min(i, 3)] }}>{i + 1}</div>
                 <Avatar jugador={j} size="sm" />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 14, fontWeight: 600 }}>{j.nombre}</div>
@@ -249,7 +242,7 @@ export default function Jugadores() {
                 <div style={{ fontFamily: 'Bebas Neue', fontSize: 26, color: 'var(--verde)', lineHeight: 1 }}>{jugador.nombre}</div>
                 <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
                   <span className={`pos-pill ${posClass[jugador.posicion]}`}>{jugador.posicion}</span>
-                  <span style={{ fontFamily: 'Bebas Neue', fontSize: 20, color: '#c0d0c0' }}>#{jugador.dorsal}</span>
+                  <span style={{ fontFamily: 'Bebas Neue', fontSize: 20, color: '#c8aab2' }}>#{jugador.dorsal}</span>
                 </div>
               </div>
             </div>
@@ -264,14 +257,14 @@ export default function Jugadores() {
                   ['Goles enc.', jugador.goles_encajados || 0, '#c0392b'],
                 ] : [])
               ].map(([l, v, c]) => (
-                <div key={l} style={{ background: '#f4f7f4', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
+                <div key={l} style={{ background: '#f7f2f3', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
                   <div style={{ fontFamily: 'Bebas Neue', fontSize: 28, color: c, lineHeight: 1 }}>{v}</div>
                   <div style={{ fontSize: 10, color: 'var(--gris-mid)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3 }}>{l}</div>
                 </div>
               ))}
             </div>
             {(jugador.goles + jugador.asistencias) > 0 && (
-              <div style={{ background: '#f4f7f4', borderRadius: 12, padding: '12px 14px', marginBottom: '1rem' }}>
+              <div style={{ background: '#f7f2f3', borderRadius: 12, padding: '12px 14px', marginBottom: '1rem' }}>
                 <div style={{ fontSize: 12, color: 'var(--gris-mid)', marginBottom: 6 }}>Participación ofensiva</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div className="bar-wrap"><div className="bar-fill" style={{ width: `${Math.round((jugador.goles + jugador.asistencias) / Math.max(...conTotales.map(j => j.goles + j.asistencias), 1) * 100)}%` }} /></div>
@@ -320,14 +313,14 @@ export default function Jugadores() {
             <div className="form-group">
               <label className="label">Foto de perfil</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                <div style={{ width: 64, height: 64, borderRadius: '50%', overflow: 'hidden', background: 'var(--verde)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '2px solid #c0d0c0' }}>
+                <div style={{ width: 64, height: 64, borderRadius: '50%', overflow: 'hidden', background: 'var(--verde)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '2px solid #c8aab2' }}>
                   {fotoPreview
                     ? <img src={fotoPreview} alt="foto" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    : <span style={{ color: '#7dce7d', fontWeight: 700, fontSize: 20 }}>{form.nombre ? initials(form.nombre) : '?'}</span>
+                    : <span style={{ color: '#e8a0b0', fontWeight: 700, fontSize: 20 }}>{form.nombre ? initials(form.nombre) : '?'}</span>
                   }
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', background: 'white', border: '1.5px solid #c0d0c0', borderRadius: 10, padding: '8px 14px', fontSize: 13, cursor: 'pointer', textAlign: 'center', color: 'var(--verde-mid)', fontWeight: 600 }}>
+                  <label style={{ display: 'block', background: 'white', border: '1.5px solid #c8aab2', borderRadius: 10, padding: '8px 14px', fontSize: 13, cursor: 'pointer', textAlign: 'center', color: 'var(--verde-mid)', fontWeight: 600 }}>
                     📷 {fotoPreview ? 'Cambiar foto' : 'Subir foto'}
                     <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
                       const file = e.target.files[0]
