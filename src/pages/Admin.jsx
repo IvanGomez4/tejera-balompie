@@ -390,10 +390,12 @@ function PanelClasificacion({ clasificacion, store }) {
         <div style={{ display: 'flex', gap: 6, overflowX: 'auto', marginBottom: 10, scrollbarWidth: 'none' }}>
           {grupos.map(g => (
             <button key={g} onClick={() => setGrupoFiltro(g)}
-              style={{ padding: '5px 14px', borderRadius: 20, border: '1.5px solid', fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0,
+              style={{
+                padding: '5px 14px', borderRadius: 20, border: '1.5px solid', fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0,
                 background: grupoActivo === g ? 'var(--verde)' : 'white',
                 color: grupoActivo === g ? 'white' : 'var(--verde-mid)',
-                borderColor: grupoActivo === g ? 'var(--verde)' : '#c8aab2' }}>
+                borderColor: grupoActivo === g ? 'var(--verde)' : '#c8aab2'
+              }}>
               Grupo {g}
             </button>
           ))}
@@ -452,12 +454,110 @@ function PanelClasificacion({ clasificacion, store }) {
   )
 }
 
+// ---- Panel Log ----
+function PanelLog({ store, jugadores }) {
+  const [logs, setLogs] = useState([])
+  const [cargando, setCargando] = useState(true)
+  const [filtroJugador, setFiltroJugador] = useState('')
+
+  useEffect(() => {
+    store.getLog().then(data => { setLogs(data); setCargando(false) })
+  }, [])
+
+  function fmtFecha(str) {
+    const d = new Date(str)
+    return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) +
+      ' · ' + d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+  }
+
+  const filtrados = filtroJugador
+    ? logs.filter(l => l.jugador_nombre === filtroJugador)
+    : logs
+
+  const jugadoresLog = [...new Set(logs.map(l => l.jugador_nombre))].sort()
+
+  const colorEntidad = {
+    'Jugador': '#185fa5',
+    'Partido': '#7a1e30',
+    'Estadísticas': '#856a00',
+    'Clasificación': '#1a7a3a',
+    'Alineación': '#6a1e7a',
+    'Noticia': '#c0392b',
+  }
+
+  if (cargando) return <div className="empty">Cargando log...</div>
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <span style={{ fontSize: 14, color: 'var(--gris-mid)' }}>{filtrados.length} acciones</span>
+        <select
+          className="select"
+          value={filtroJugador}
+          onChange={e => setFiltroJugador(e.target.value)}
+          style={{ maxWidth: 180, fontSize: 13, minHeight: 36, padding: '6px 10px' }}
+        >
+          <option value="">Todos los jugadores</option>
+          {jugadoresLog.map(n => <option key={n} value={n}>{n}</option>)}
+        </select>
+      </div>
+
+      {filtrados.length === 0 && (
+        <div className="empty">Sin actividad registrada aún</div>
+      )}
+
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        {filtrados.map((l, i) => (
+          <div key={l.id} style={{
+            display: 'flex', alignItems: 'flex-start', gap: 10,
+            padding: '10px 14px',
+            borderBottom: i < filtrados.length - 1 ? '1px solid #f5e8eb' : 'none',
+          }}>
+            {/* Avatar inicial */}
+            <div style={{
+              width: 32, height: 32, borderRadius: '50%',
+              background: 'var(--negro)', color: 'var(--dorado-light)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 11, fontWeight: 700, flexShrink: 0
+            }}>
+              {l.jugador_nombre?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?'}
+            </div>
+
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {/* Acción + entidad */}
+              <div style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <span>{l.accion}</span>
+                <span style={{
+                  background: colorEntidad[l.entidad] || '#999',
+                  color: 'white', fontSize: 10, fontWeight: 700,
+                  padding: '1px 7px', borderRadius: 20
+                }}>{l.entidad}</span>
+              </div>
+              {/* Detalle */}
+              {l.detalle && (
+                <div style={{ fontSize: 12, color: 'var(--gris-mid)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {l.detalle}
+                </div>
+              )}
+              {/* Jugador + fecha */}
+              <div style={{ fontSize: 11, color: 'var(--gris-light)', marginTop: 3 }}>
+                {l.jugador_nombre} · {fmtFecha(l.created_at)}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ---- Main Admin ----
 const adminTabs = [
   { key: 'stats', label: '📊 Stats' },
   { key: 'partidos', label: '⚽ Partidos' },
   { key: 'jugadores', label: '👕 Plantilla' },
   { key: 'tabla', label: '🏆 Tabla' },
+  { key: 'log', label: '📋 Log' },
 ]
 
 export default function Admin() {
@@ -481,10 +581,10 @@ export default function Admin() {
             <div style={{ fontSize: 12, color: 'var(--gris-mid)' }}>Tejera Balompié · Liga Verano 2026</div>
           </div>
           <button
-              onClick={handleLogout}
-              style={{ background: 'none', border: '1px solid #c8aab2', borderRadius: 8, padding: '5px 10px', fontSize: 11, cursor: 'pointer', color: 'var(--gris-mid)' }}>
-              Salir
-            </button>
+            onClick={handleLogout}
+            style={{ background: 'none', border: '1px solid #c8aab2', borderRadius: 8, padding: '5px 10px', fontSize: 11, cursor: 'pointer', color: 'var(--gris-mid)' }}>
+            Salir
+          </button>
         </div>
 
         {/* Tabs */}
@@ -500,6 +600,7 @@ export default function Admin() {
         {tab === 'partidos' && <PanelPartidos partidos={partidos} store={store} />}
         {tab === 'stats' && <PanelStats jugadores={jugadores} partidos={partidos} stats={stats} store={store} />}
         {tab === 'tabla' && <PanelClasificacion clasificacion={clasificacion} store={store} />}
+        {tab === 'log' && <PanelLog store={store} jugadores={jugadores} />}
       </div>
     </AdminGuard>
   )

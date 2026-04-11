@@ -36,6 +36,34 @@ async function sbFetch(table, select = '*', filters = {}) {
   return data || []
 }
 
+// ---- Log de actividad ----
+function getJugadorActivo() {
+  try { return JSON.parse(localStorage.getItem('tj_jugador_activo')) } catch { return null }
+}
+
+async function log(accion, entidad, detalle = '') {
+  const jugador = getJugadorActivo()
+  if (USE_SUPABASE) {
+    await supabase.from('activity_log').insert({
+      jugador_id: jugador?.id || null,
+      jugador_nombre: jugador?.nombre || 'Desconocido',
+      accion,
+      entidad,
+      detalle,
+    })
+  } else {
+    const logs = load('tj_log', [])
+    save('tj_log', [{
+      id: Date.now(),
+      jugador_nombre: jugador?.nombre || 'Desconocido',
+      accion,
+      entidad,
+      detalle,
+      created_at: new Date().toISOString()
+    }, ...logs].slice(0, 200)) // máximo 200 en local
+  }
+}
+
 // ---- Store público ----
 export const store = {
   subscribe(fn) {
@@ -98,12 +126,15 @@ export const store = {
       _jugadores = [..._jugadores, { ...j, id }]
       save('tj_jugadores', _jugadores)
     }
+    await log('➕ Añadió', 'Jugador', j.nombre)
     notify()
   },
   async updateJugador(id, data) {
     if (USE_SUPABASE) await supabase.from('jugadores').update({ nombre: data.nombre, posicion: data.posicion, dorsal: data.dorsal, foto_url: data.foto_url || null }).eq('id', id)
     _jugadores = _jugadores.map(j => j.id === id ? { ...j, ...data } : j)
     if (!USE_SUPABASE) save('tj_jugadores', _jugadores)
+    const j = _jugadores.find(x => x.id === id)
+    await log('✏️ Editó', 'Jugador', j?.nombre || String(id))
     notify()
   },
   async deleteJugador(id) {
@@ -111,6 +142,8 @@ export const store = {
     _jugadores = _jugadores.filter(j => j.id !== id)
     _stats = _stats.filter(s => s.jugador_id !== id)
     if (!USE_SUPABASE) { save('tj_jugadores', _jugadores); save('tj_stats', _stats) }
+    const j = _jugadores.find(x => x.id === id)
+    await log('🗑️ Eliminó', 'Jugador', j?.nombre || String(id))
     notify()
   },
 
@@ -126,12 +159,15 @@ export const store = {
       _partidos = [..._partidos, { ...p, id, jugado: false, goles_local: 0, goles_visitante: 0 }]
       save('tj_partidos', _partidos)
     }
+    await log('➕ Añadió', 'Partido', `J${p.jornada} vs ${p.visitante || p.local}`)
     notify()
   },
   async updatePartido(id, data) {
     if (USE_SUPABASE) await supabase.from('partidos').update({ jornada: data.jornada, fecha: data.fecha, local: data.local, visitante: data.visitante, campo: data.campo, jugado: data.jugado, goles_local: data.goles_local, goles_visitante: data.goles_visitante, alineacion: data.alineacion || null, formacion: data.formacion || null }).eq('id', id)
     _partidos = _partidos.map(p => p.id === id ? { ...p, ...data } : p)
     if (!USE_SUPABASE) save('tj_partidos', _partidos)
+    const p = _partidos.find(x => x.id === id)
+    await log('✏️ Editó', 'Partido', `J${p?.jornada} vs ${p?.visitante || p?.local}`)
     notify()
   },
   async deletePartido(id) {
@@ -139,6 +175,8 @@ export const store = {
     _partidos = _partidos.filter(p => p.id !== id)
     _stats = _stats.filter(s => s.partido_id !== id)
     if (!USE_SUPABASE) { save('tj_partidos', _partidos); save('tj_stats', _stats) }
+    const p = _partidos.find(x => x.id === id)
+    await log('🗑️ Eliminó', 'Partido', `J${p?.jornada} vs ${p?.visitante || p?.local}`)
     notify()
   },
 
@@ -157,12 +195,18 @@ export const store = {
       _stats = [..._stats, { ...data, id }]
     }
     if (!USE_SUPABASE) save('tj_stats', _stats)
+    const j = _jugadores.find(x => x.id === data.jugador_id)
+    const p = _partidos.find(x => x.id === data.partido_id)
+    await log('📊 Stats', 'Estadísticas', `${j?.nombre} en J${p?.jornada}`)
     notify()
   },
   async deleteStat(jugador_id, partido_id) {
     if (USE_SUPABASE) await supabase.from('estadisticas').delete().eq('jugador_id', jugador_id).eq('partido_id', partido_id)
     _stats = _stats.filter(s => !(s.jugador_id === jugador_id && s.partido_id === partido_id))
     if (!USE_SUPABASE) save('tj_stats', _stats)
+    const j = _jugadores.find(x => x.id === jugador_id)
+    const p = _partidos.find(x => x.id === partido_id)
+    await log('🗑️ Eliminó', 'Estadísticas', `${j?.nombre} en J${p?.jornada}`)
     notify()
   },
 
@@ -173,6 +217,7 @@ export const store = {
     if (USE_SUPABASE) await supabase.from('clasificacion').update({ pj: data.pj, pg: data.pg, pe: data.pe, pp: data.pp, gf: data.gf, gc: data.gc, pts: data.pts, grupo: data.grupo || null }).eq('equipo', equipo)
     _clasificacion = _clasificacion.map(e => e.equipo === equipo ? { ...e, ...data } : e)
     if (!USE_SUPABASE) save('tj_clasificacion', _clasificacion)
+    await log('✏️ Editó', 'Clasificación', equipo)
     notify()
   },
   async addEquipoClasificacion(data) {
@@ -251,6 +296,8 @@ export const store = {
     } else {
       save('tj_alin_' + partido_id, { partido_id, formacion, jugadores: jugadoresAlin })
     }
+    const p = _partidos.find(x => x.id === partido_id)
+    await log('👕 Alineación', 'Alineación', `J${p?.jornada} — ${formacion}`)
   },
   async subirFotoJugador(jugador_id, archivo) {
     if (!USE_SUPABASE) return null
@@ -303,14 +350,17 @@ export const store = {
         .select()
         .single()
       if (error) throw error
+      await log('📰 Publicó', 'Noticia', titulo)
       return data
     } else {
       // En modo local, imagen_url_local ya es el base64 generado en el componente
       const nueva = { id, titulo, imagen_url: imagen_url_local || null, created_at }
       const noticias = load('tj_noticias', [])
       save('tj_noticias', [nueva, ...noticias])
+      await log('📰 Publicó', 'Noticia', titulo)
       return nueva
     }
+
   },
   async deleteNoticia(id) {
     if (USE_SUPABASE) {
@@ -319,6 +369,18 @@ export const store = {
       const noticias = load('tj_noticias', [])
       save('tj_noticias', noticias.filter(n => n.id !== id))
     }
+    await log('🗑️ Eliminó', 'Noticia', String(id))
+  },
+  async getLog() {
+    if (USE_SUPABASE) {
+      const { data } = await supabase
+        .from('activity_log')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100)
+      return data || []
+    }
+    return load('tj_log', [])
   },
 
   // =====================
