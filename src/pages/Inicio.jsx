@@ -212,6 +212,19 @@ export default function Inicio() {
           )
         })}
       </div>
+      {/* Historial de temporadas */}
+      <div onClick={() => nav('/historial')} style={{ marginTop: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14, padding: '1rem 1.25rem', background: 'white', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', border: '1px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ fontSize: 36 }}>📚</div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontFamily: 'Bebas Neue', fontSize: 20, color: 'var(--verde)', lineHeight: 1 }}>
+            Historial de temporadas
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--gris-mid)', marginTop: 2 }}>
+            Consulta resultados y estadísticas de años anteriores
+          </div>
+        </div>
+        <div style={{ color: 'var(--gris-light)', fontSize: 20 }}>›</div>
+      </div>
     </div>
   )
 }

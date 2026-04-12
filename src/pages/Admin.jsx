@@ -567,6 +567,8 @@ function PanelTemporada({ store }) {
   const [form, setForm] = useState({ nombre: '', año: new Date().getFullYear() + 1 })
   const [cerrando, setCerrando] = useState(false)
   const [confirmando, setConfirmando] = useState(false)
+  const [pwdSuper, setPwdSuper] = useState('')
+  const [errorPwd, setErrorPwd] = useState('')
 
   useEffect(() => {
     store.getTemporadas().then(ts => {
@@ -575,7 +577,12 @@ function PanelTemporada({ store }) {
     })
   }, [])
 
-  const handleCerrar = async () => {
+  const verificarYCerrar = async () => {
+    const superPwd = import.meta.env.VITE_SUPERADMIN_PASSWORD
+    if (!superPwd || pwdSuper !== superPwd) {
+      setErrorPwd('Contraseña incorrecta')
+      return
+    }
     if (!form.nombre.trim()) { alert('Pon nombre a la nueva temporada'); return }
     setCerrando(true)
     await store.cerrarTemporadaYCrearNueva(form.nombre.trim(), Number(form.año))
@@ -584,6 +591,8 @@ function PanelTemporada({ store }) {
     setTemporadaActiva(ts.find(t => t.activa) || null)
     setShowForm(false)
     setConfirmando(false)
+    setPwdSuper('')
+    setErrorPwd('')
     setCerrando(false)
   }
 
@@ -602,70 +611,70 @@ function PanelTemporada({ store }) {
         </div>
       </div>
 
-      {/* Cerrar temporada */}
+      {/* Botón cerrar temporada */}
       {!showForm ? (
-        <button
-          onClick={() => setShowForm(true)}
-          className="btn btn-ghost btn-block"
-          style={{ marginBottom: '1.5rem' }}
-        >
+        <button onClick={() => setShowForm(true)} className="btn btn-ghost btn-block" style={{ marginBottom: '1.5rem' }}>
           🔚 Cerrar temporada y empezar nueva
         </button>
       ) : (
         <div className="card" style={{ marginBottom: '1.5rem', border: '2px solid var(--verde)' }}>
           <h2 style={{ fontSize: 18, color: 'var(--verde)', marginBottom: 14 }}>Nueva temporada</h2>
 
-          <div className="form-group">
-            <label className="label">Nombre de la nueva temporada</label>
-            <input
-              className="input"
-              value={form.nombre}
-              onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
-              placeholder="Ej: Liga Verano Villacañas 2027"
-            />
-          </div>
-          <div className="form-group">
-            <label className="label">Año</label>
-            <input
-              className="input"
-              type="number"
-              value={form.año}
-              onChange={e => setForm(f => ({ ...f, año: e.target.value }))}
-            />
-          </div>
-
           {!confirmando ? (
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => { setShowForm(false); setConfirmando(false) }} className="btn btn-ghost" style={{ flex: 1 }}>
-                Cancelar
-              </button>
-              <button onClick={() => setConfirmando(true)} className="btn btn-primary" style={{ flex: 1 }}>
-                Continuar →
-              </button>
-            </div>
-          ) : (
-            <div>
-              <div style={{ background: '#fde8e8', border: '1px solid #f5c0c0', borderRadius: 10, padding: '12px 14px', marginBottom: 14, fontSize: 13, color: '#c0392b' }}>
-                ⚠️ <strong>Atención:</strong> Al cerrar la temporada <strong>"{temporadaActiva?.nombre}"</strong>, los partidos, estadísticas y clasificación actuales quedarán archivados. Los jugadores de la plantilla se mantienen. Esta acción no se puede deshacer.
+            <>
+              <div className="form-group">
+                <label className="label">Nombre de la nueva temporada</label>
+                <input className="input" value={form.nombre}
+                  onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
+                  placeholder="Ej: Liga Verano Villacañas 2027" />
+              </div>
+              <div className="form-group">
+                <label className="label">Año</label>
+                <input className="input" type="number" value={form.año}
+                  onChange={e => setForm(f => ({ ...f, año: e.target.value }))} />
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
-                <button onClick={() => setConfirmando(false)} className="btn btn-ghost" style={{ flex: 1 }}>
-                  Atrás
-                </button>
+                <button onClick={() => setShowForm(false)} className="btn btn-ghost" style={{ flex: 1 }}>Cancelar</button>
+                <button onClick={() => setConfirmando(true)} className="btn btn-primary" style={{ flex: 1 }}>Continuar →</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ background: '#fde8e8', border: '1px solid #f5c0c0', borderRadius: 10, padding: '12px 14px', marginBottom: 14, fontSize: 13, color: '#c0392b' }}>
+                ⚠️ <strong>Atención:</strong> Al cerrar <strong>"{temporadaActiva?.nombre}"</strong>, los partidos, estadísticas y clasificación quedarán archivados. Los jugadores se mantienen. Esta acción no se puede deshacer.
+              </div>
+
+              {/* Contraseña de superadmin */}
+              <div className="form-group">
+                <label className="label">🔐 Contraseña de superadmin</label>
+                <input
+                  className="input"
+                  type="password"
+                  placeholder="Solo el creador de la app puede hacer esto"
+                  value={pwdSuper}
+                  onChange={e => { setPwdSuper(e.target.value); setErrorPwd('') }}
+                />
+                {errorPwd && (
+                  <div style={{ color: '#c0392b', fontSize: 12, marginTop: 4 }}>⚠️ {errorPwd}</div>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={() => { setConfirmando(false); setPwdSuper(''); setErrorPwd('') }}
+                  className="btn btn-ghost" style={{ flex: 1 }}>Atrás</button>
                 <button
-                  onClick={handleCerrar}
-                  disabled={cerrando}
-                  style={{ flex: 1, background: '#c0392b', color: 'white', border: 'none', borderRadius: 10, padding: '12px', fontWeight: 700, fontSize: 15, cursor: 'pointer', opacity: cerrando ? 0.7 : 1 }}
-                >
+                  onClick={verificarYCerrar}
+                  disabled={cerrando || !pwdSuper}
+                  style={{ flex: 1, background: '#c0392b', color: 'white', border: 'none', borderRadius: 10, padding: '12px', fontWeight: 700, fontSize: 15, cursor: 'pointer', opacity: (cerrando || !pwdSuper) ? 0.5 : 1 }}>
                   {cerrando ? 'Cerrando...' : '🔚 Confirmar y cerrar'}
                 </button>
               </div>
-            </div>
+            </>
           )}
         </div>
       )}
 
-      {/* Historial de temporadas */}
+      {/* Historial */}
       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--gris-mid)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
         Temporadas anteriores
       </div>
@@ -674,10 +683,7 @@ function PanelTemporada({ store }) {
       )}
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         {temporadas.filter(t => !t.activa).map((t, i, arr) => (
-          <div key={t.id} style={{
-            display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
-            borderBottom: i < arr.length - 1 ? '1px solid #f5e8eb' : 'none'
-          }}>
+          <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < arr.length - 1 ? '1px solid #f5e8eb' : 'none' }}>
             <div style={{ fontSize: 24 }}>🏆</div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 14, fontWeight: 600 }}>{t.nombre}</div>

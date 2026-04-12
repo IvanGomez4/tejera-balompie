@@ -10,7 +10,6 @@ const tabs = [
   { to: '/jugadores', label: 'Plantilla', icon: '👕' },
   { to: '/partidos', label: 'Partidos', icon: '⚽' },
   { to: '/noticias', label: 'Noticias', icon: '📰' },
-  { to: '/historial', label: 'Historial', icon: '📚' },
 ]
 
 export default function Navbar() {
