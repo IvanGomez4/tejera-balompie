@@ -390,10 +390,12 @@ function PanelClasificacion({ clasificacion, store }) {
         <div style={{ display: 'flex', gap: 6, overflowX: 'auto', marginBottom: 10, scrollbarWidth: 'none' }}>
           {grupos.map(g => (
             <button key={g} onClick={() => setGrupoFiltro(g)}
-              style={{ padding: '5px 14px', borderRadius: 20, border: '1.5px solid', fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0,
+              style={{
+                padding: '5px 14px', borderRadius: 20, border: '1.5px solid', fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0,
                 background: grupoActivo === g ? 'var(--verde)' : 'white',
                 color: grupoActivo === g ? 'white' : 'var(--verde-mid)',
-                borderColor: grupoActivo === g ? 'var(--verde)' : '#c8aab2' }}>
+                borderColor: grupoActivo === g ? 'var(--verde)' : '#c8aab2'
+              }}>
               Grupo {g}
             </button>
           ))}
@@ -458,6 +460,8 @@ const adminTabs = [
   { key: 'partidos', label: '⚽ Partidos' },
   { key: 'jugadores', label: '👕 Plantilla' },
   { key: 'tabla', label: '🏆 Tabla' },
+  { key: 'temporada', label: '📅 Temporada' },
+  { key: 'log', label: '📋 Actividad' },
 ]
 
 export default function Admin() {
@@ -481,10 +485,10 @@ export default function Admin() {
             <div style={{ fontSize: 12, color: 'var(--gris-mid)' }}>Tejera Balompié · Liga Verano 2026</div>
           </div>
           <button
-              onClick={handleLogout}
-              style={{ background: 'none', border: '1px solid #c8aab2', borderRadius: 8, padding: '5px 10px', fontSize: 11, cursor: 'pointer', color: 'var(--gris-mid)' }}>
-              Salir
-            </button>
+            onClick={handleLogout}
+            style={{ background: 'none', border: '1px solid #c8aab2', borderRadius: 8, padding: '5px 10px', fontSize: 11, cursor: 'pointer', color: 'var(--gris-mid)' }}>
+            Salir
+          </button>
         </div>
 
         {/* Tabs */}
@@ -500,6 +504,8 @@ export default function Admin() {
         {tab === 'partidos' && <PanelPartidos partidos={partidos} store={store} />}
         {tab === 'stats' && <PanelStats jugadores={jugadores} partidos={partidos} stats={stats} store={store} />}
         {tab === 'tabla' && <PanelClasificacion clasificacion={clasificacion} store={store} />}
+        {tab === 'temporada' && <PanelTemporada store={store} />}
+        {tab === 'log' && <PanelLog store={store} jugadores={jugadores} />}
       </div>
     </AdminGuard>
   )
