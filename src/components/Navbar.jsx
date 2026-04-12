@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { adminAuth } from '../lib/adminAuth'
 import { useStore } from '../hooks/useStore'
@@ -12,6 +12,16 @@ const tabs = [
   { to: '/noticias', label: 'Noticias', icon: '📰' },
 ]
 
+const menuLinks = [
+  { to: '/',             label: 'Inicio',       icon: '🏠' },
+  { to: '/clasificacion',label: 'Clasificación', icon: '🏆' },
+  { to: '/jugadores',    label: 'Plantilla',     icon: '👕' },
+  { to: '/partidos',     label: 'Partidos',      icon: '⚽' },
+  { to: '/estadisticas', label: 'Estadísticas',  icon: '📊' },
+  { to: '/noticias',     label: 'Noticias',      icon: '📰' },
+  { to: '/historial',    label: 'Historial',     icon: '📚' },
+]
+
 export default function Navbar() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -20,9 +30,14 @@ export default function Navbar() {
   const [logged, setLogged] = useState(adminAuth.isLogged())
   const [jugadorActivo, setJugadorActivo] = useState(adminAuth.getJugador())
   const [showModal, setShowModal] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
   const [pwd, setPwd] = useState('')
   const [jugadorSel, setJugadorSel] = useState('')
   const [error, setError] = useState('')
+
+  // Swipe desde borde izquierdo
+  const touchStartX = useRef(null)
+  const touchStartY = useRef(null)
 
   useEffect(() => {
     const check = () => {
@@ -33,18 +48,44 @@ export default function Navbar() {
     return () => window.removeEventListener('focus', check)
   }, [])
 
+  // Cerrar menú al cambiar de página
+  useEffect(() => { setShowMenu(false) }, [location.pathname])
+
+  // Swipe handlers — abrir con swipe derecha desde borde izquierdo
+  useEffect(() => {
+    const onTouchStart = (e) => {
+      touchStartX.current = e.touches[0].clientX
+      touchStartY.current = e.touches[0].clientY
+    }
+    const onTouchEnd = (e) => {
+      if (touchStartX.current === null) return
+      const dx = e.changedTouches[0].clientX - touchStartX.current
+      const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current)
+      // Swipe derecha desde borde izquierdo (primeros 30px)
+      if (touchStartX.current < 30 && dx > 60 && dy < 80) setShowMenu(true)
+      // Swipe izquierda para cerrar
+      if (showMenu && dx < -60 && dy < 80) setShowMenu(false)
+      touchStartX.current = null
+    }
+    window.addEventListener('touchstart', onTouchStart, { passive: true })
+    window.addEventListener('touchend', onTouchEnd, { passive: true })
+    return () => {
+      window.removeEventListener('touchstart', onTouchStart)
+      window.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [showMenu])
+
   const openModal = () => {
-    setPwd(''); setJugadorSel(''); setError(''); setShowModal(true)
+    setPwd(''); setJugadorSel(''); setError('')
+    setShowMenu(false)
+    setShowModal(true)
   }
 
   const handleLogin = async (e) => {
     e.preventDefault()
     if (!jugadorSel) { setError('Elige tu nombre'); return }
-
     const isValid = await adminAuth.login(pwd)
-
     if (!isValid) { setError('Contraseña incorrecta'); return }
-
     const jugador = jugadores.find(j => j.id === Number(jugadorSel))
     if (jugador) {
       adminAuth.setJugador(jugador)
@@ -59,14 +100,30 @@ export default function Navbar() {
     adminAuth.logout()
     setLogged(false)
     setJugadorActivo(null)
+    setShowMenu(false)
     if (location.pathname === '/admin') navigate('/')
+  }
+
+  const navegar = (to) => {
+    setShowMenu(false)
+    navigate(to)
   }
 
   return (
     <>
+      {/* ── Header ── */}
       <header className="top-header">
         <div style={{ maxWidth: 680, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px' }}>
-          <img src={escudo} alt="Escudo" onClick={() => navigate('/')} style={{ width: 42, height: 42, objectFit: 'contain', flexShrink: 0, cursor: 'pointer' }} />          <div style={{ flex: 1 }}>
+
+          {/* Escudo — va a home */}
+          <img
+            src={escudo} alt="Escudo"
+            onClick={() => navigate('/')}
+            style={{ width: 42, height: 42, objectFit: 'contain', flexShrink: 0, cursor: 'pointer' }}
+          />
+
+          {/* Título */}
+          <div style={{ flex: 1 }}>
             <div style={{ fontFamily: 'Bebas Neue', fontSize: 17, color: '#e8a0b0', letterSpacing: '0.06em', lineHeight: 1.1 }}>
               Tejera Balompié
             </div>
@@ -75,47 +132,174 @@ export default function Navbar() {
             </div>
           </div>
 
-          {logged ? (
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              {/* Nombre del jugador activo */}
-              {jugadorActivo && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(125,206,125,0.12)', borderRadius: 20, padding: '4px 10px' }}>
-                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--verde)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: 'white', flexShrink: 0, overflow: 'hidden', padding: 0 }}>
-                    {jugadorActivo.foto_url
-                      ? <img src={jugadorActivo.foto_url} alt={jugadorActivo.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
-                      : jugadorActivo.nombre.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-                    }
-                  </div>
-                  <span style={{ fontSize: 12, color: '#e8a0b0', fontWeight: 600, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {jugadorActivo.nombre.split(' ')[0]}
-                  </span>
-                </div>
-              )}
-              <button onClick={() => navigate('/admin')} style={{ background: 'var(--verde-mid)', color: 'white', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                ⚙️ Admin
-              </button>
-              <button onClick={handleLogout} style={{ background: 'transparent', border: '1px solid #4a1e28', color: '#6a3a42', borderRadius: 8, padding: '6px 10px', fontSize: 12, cursor: 'pointer' }}>
-                Salir
-              </button>
+          {/* Jugador activo (solo si logged) */}
+          {logged && jugadorActivo && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(232,160,176,0.1)', borderRadius: 20, padding: '4px 10px' }}>
+              <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--verde)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: 'white', flexShrink: 0, overflow: 'hidden' }}>
+                {jugadorActivo.foto_url
+                  ? <img src={jugadorActivo.foto_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                  : jugadorActivo.nombre.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+                }
+              </div>
+              <span style={{ fontSize: 12, color: '#e8a0b0', fontWeight: 600, maxWidth: 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {jugadorActivo.nombre.split(' ')[0]}
+              </span>
             </div>
-          ) : (
-            <button onClick={openModal} style={{ background: 'transparent', border: '1px solid #4a1e28', color: '#6a3a42', borderRadius: 8, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-              🔒 Acceso equipo
-            </button>
           )}
+
+          {/* Botón hamburguesa */}
+          <button
+            onClick={() => setShowMenu(true)}
+            style={{ background: 'transparent', border: '1px solid #4a1e28', borderRadius: 8, padding: '7px 10px', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}
+            aria-label="Abrir menú"
+          >
+            <span style={{ display: 'block', width: 18, height: 2, background: '#e8a0b0', borderRadius: 2 }} />
+            <span style={{ display: 'block', width: 14, height: 2, background: '#e8a0b0', borderRadius: 2 }} />
+            <span style={{ display: 'block', width: 18, height: 2, background: '#e8a0b0', borderRadius: 2 }} />
+          </button>
         </div>
       </header>
 
+      {/* ── Bottom nav ── */}
       <nav className="bottom-nav">
         {tabs.map(t => (
-          <button key={t.to} className={`bottom-nav-btn ${location.pathname === t.to || location.pathname.startsWith(t.to + '/') ? 'active' : ''}`} onClick={() => navigate(t.to)}>
+          <button
+            key={t.to}
+            className={`bottom-nav-btn ${location.pathname === t.to || (t.to !== '/' && location.pathname.startsWith(t.to)) ? 'active' : ''}`}
+            onClick={() => navigate(t.to)}
+          >
             <span className="nav-icon">{t.icon}</span>
             <span>{t.label}</span>
           </button>
         ))}
       </nav>
 
-      {/* Modal login */}
+      {/* ── Menú lateral ── */}
+      {showMenu && (
+        <>
+          {/* Overlay */}
+          <div
+            onClick={() => setShowMenu(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 800, backdropFilter: 'blur(2px)' }}
+          />
+
+          {/* Panel lateral */}
+          <div style={{
+            position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 900,
+            width: 280, background: '#0d0a0b',
+            display: 'flex', flexDirection: 'column',
+            boxShadow: '4px 0 30px rgba(0,0,0,0.4)',
+            animation: 'slideInLeft 0.22s ease',
+          }}>
+
+            {/* Cabecera del menú */}
+            <div style={{ padding: '1.25rem 1.25rem 1rem', borderBottom: '1px solid #3d1020' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: logged && jugadorActivo ? 14 : 0 }}>
+                <img src={escudo} alt="" style={{ width: 36, height: 36, objectFit: 'contain' }} />
+                <div>
+                  <div style={{ fontFamily: 'Bebas Neue', fontSize: 16, color: '#e8a0b0', letterSpacing: '0.06em', lineHeight: 1 }}>
+                    Tejera Balompié
+                  </div>
+                  <div style={{ fontSize: 9, color: '#6a3a42', letterSpacing: '0.07em' }}>
+                    LIGA VERANO VILLACAÑAS 2026
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowMenu(false)}
+                  style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#6a3a42', fontSize: 20, cursor: 'pointer', lineHeight: 1 }}
+                >✕</button>
+              </div>
+
+              {/* Info jugador activo */}
+              {logged && jugadorActivo && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(122,30,48,0.3)', borderRadius: 12, padding: '10px 12px' }}>
+                  <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--verde)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: 'white', flexShrink: 0, overflow: 'hidden' }}>
+                    {jugadorActivo.foto_url
+                      ? <img src={jugadorActivo.foto_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                      : jugadorActivo.nombre.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+                    }
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {jugadorActivo.nombre}
+                    </div>
+                    <div style={{ fontSize: 11, color: '#e8a0b0' }}>#{jugadorActivo.dorsal} · {jugadorActivo.posicion}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Links de navegación */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem 0' }}>
+              {menuLinks.map(link => {
+                const activo = location.pathname === link.to || (link.to !== '/' && location.pathname.startsWith(link.to))
+                return (
+                  <button
+                    key={link.to}
+                    onClick={() => navegar(link.to)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 14,
+                      width: '100%', padding: '12px 20px',
+                      background: activo ? 'rgba(122,30,48,0.4)' : 'transparent',
+                      border: 'none', borderLeft: activo ? '3px solid var(--verde)' : '3px solid transparent',
+                      cursor: 'pointer', textAlign: 'left',
+                    }}
+                  >
+                    <span style={{ fontSize: 20, width: 24, textAlign: 'center' }}>{link.icon}</span>
+                    <span style={{ fontSize: 15, fontWeight: activo ? 700 : 400, color: activo ? 'white' : '#9a7a82', fontFamily: 'DM Sans, sans-serif' }}>
+                      {link.label}
+                    </span>
+                    {activo && <span style={{ marginLeft: 'auto', color: 'var(--dorado-light)', fontSize: 12 }}>●</span>}
+                  </button>
+                )
+              })}
+
+              {/* Separador */}
+              <div style={{ margin: '8px 20px', height: 1, background: '#3d1020' }} />
+
+              {/* Admin (solo si logged) */}
+              {logged && (
+                <button
+                  onClick={() => navegar('/admin')}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 14,
+                    width: '100%', padding: '12px 20px',
+                    background: location.pathname === '/admin' ? 'rgba(122,30,48,0.4)' : 'transparent',
+                    border: 'none', borderLeft: location.pathname === '/admin' ? '3px solid var(--dorado)' : '3px solid transparent',
+                    cursor: 'pointer', textAlign: 'left',
+                  }}
+                >
+                  <span style={{ fontSize: 20, width: 24, textAlign: 'center' }}>⚙️</span>
+                  <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--dorado-light)', fontFamily: 'DM Sans, sans-serif' }}>
+                    Panel Admin
+                  </span>
+                </button>
+              )}
+            </div>
+
+            {/* Pie del menú — login/logout */}
+            <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid #3d1020' }}>
+              {logged ? (
+                <button
+                  onClick={handleLogout}
+                  style={{ width: '100%', padding: '11px', background: 'rgba(192,57,43,0.15)', border: '1px solid rgba(192,57,43,0.3)', borderRadius: 10, color: '#e07070', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}
+                >
+                  🚪 Cerrar sesión
+                </button>
+              ) : (
+                <button
+                  onClick={openModal}
+                  className="btn btn-primary btn-block"
+                >
+                  🔒 Acceso al equipo
+                </button>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── Modal login ── */}
       {showModal && (
         <>
           <div onClick={() => setShowModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 900 }} />
@@ -167,6 +351,14 @@ export default function Navbar() {
           </div>
         </>
       )}
+
+      {/* Animación slide-in */}
+      <style>{`
+        @keyframes slideInLeft {
+          from { transform: translateX(-100%); opacity: 0.5; }
+          to   { transform: translateX(0);    opacity: 1; }
+        }
+      `}</style>
     </>
   )
 }
