@@ -13,13 +13,13 @@ const tabs = [
 ]
 
 const menuLinks = [
-  { to: '/',             label: 'Inicio',       icon: '🏠' },
-  { to: '/clasificacion',label: 'Clasificación', icon: '🏆' },
-  { to: '/jugadores',    label: 'Plantilla',     icon: '👕' },
-  { to: '/partidos',     label: 'Partidos',      icon: '⚽' },
-  { to: '/estadisticas', label: 'Estadísticas',  icon: '📊' },
-  { to: '/noticias',     label: 'Noticias',      icon: '📰' },
-  { to: '/historial',    label: 'Historial',     icon: '📚' },
+  { to: '/', label: 'Inicio', icon: '🏠' },
+  { to: '/clasificacion', label: 'Clasificación', icon: '🏆' },
+  { to: '/jugadores', label: 'Plantilla', icon: '👕' },
+  { to: '/partidos', label: 'Partidos', icon: '⚽' },
+  { to: '/estadisticas', label: 'Estadísticas', icon: '📊' },
+  { to: '/noticias', label: 'Noticias', icon: '📰' },
+  { to: '/historial', label: 'Temporadas', icon: '📚' },
 ]
 
 export default function Navbar() {

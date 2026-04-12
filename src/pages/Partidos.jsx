@@ -54,8 +54,8 @@ export default function Partidos() {
   }
 
   return (
-    <div className="page">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+    <div className="page anim-fade">
+      <div className="anim-fade-up" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
         <h1 className="page-title" style={{ margin: 0 }}>Partidos</h1>
         {isAdmin && (
           <button onClick={() => setShowForm(true)} className="btn btn-primary btn-sm">

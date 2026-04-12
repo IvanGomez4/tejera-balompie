@@ -22,7 +22,7 @@ export default function Clasificacion() {
 
   if (clasificacion.length === 0) {
     return (
-      <div className="page">
+      <div className="page anim-fade">
         <h1 className="page-title">Clasificación</h1>
         <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
           <div style={{ fontSize: 56, marginBottom: '1rem' }}>🏆</div>
@@ -38,7 +38,7 @@ export default function Clasificacion() {
   }
 
   return (
-    <div className="page">
+    <div className="page anim-fade">
       <h1 className="page-title">Clasificación</h1>
 
       {/* Selector de grupos — solo si hay más de uno */}

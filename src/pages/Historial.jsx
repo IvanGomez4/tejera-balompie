@@ -35,7 +35,7 @@ export default function Historial() {
 
     if (temporadas.length === 0) return (
         <div className="page">
-            <h1 className="page-title">Historial</h1>
+            <h1 className="page-title">Historial de Temporadas</h1>
             <div className="card" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
                 <div style={{ fontSize: 48, marginBottom: 12 }}>🏆</div>
                 <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: 'var(--verde)', marginBottom: 8 }}>

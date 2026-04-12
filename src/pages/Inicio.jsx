@@ -60,7 +60,7 @@ export default function Inicio() {
   return (
     <div className="page">
       {/* Hero */}
-      <div style={{ background: 'linear-gradient(135deg,#0d0a0b 0%,#5a1520 100%)', borderRadius: 20, padding: '1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <div className="anim-scale" style={{ background: 'linear-gradient(135deg,#0d0a0b 0%,#5a1520 100%)', borderRadius: 20, padding: '1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <img src={escudo} alt="Escudo" style={{ width: 88, height: 88, objectFit: 'contain', flexShrink: 0 }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: 'Bebas Neue', fontSize: 24, color: 'white', lineHeight: 1.1, letterSpacing: '0.04em' }}>Tejera Balompié</div>
@@ -163,14 +163,14 @@ export default function Inicio() {
       })()}
 
       {/* Métricas */}
-      <div className="grid-4" style={{ marginBottom: '1rem' }}>
+      <div className="grid-4 anim-fade-up anim-delay-2" style={{ marginBottom: '1rem' }}>
         {[['Goles', totalGoles, `${nuestro?.pj || 0} jornadas`], ['Victorias', nuestro?.pg, `de ${nuestro?.pj} jugados`], ['Goleador', goleador?.goles || 0, goleador?.nombre.split(' ')[0] || '-'], ['Asistente', asistente?.asistencias || 0, asistente?.nombre.split(' ')[0] || '-']].map(([l, v, s]) => (
           <div key={l} className="metric-card"><div className="metric-label">{l}</div><div className="metric-value">{v}</div><div className="metric-sub">{s}</div></div>
         ))}
       </div>
 
       {/* Últimos resultados */}
-      <div className="card" style={{ marginBottom: '1rem' }}>
+      <div className="card anim-fade-up anim-delay-3" style={{ marginBottom: '1rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <h2 style={{ fontSize: 20, color: 'var(--verde)' }}>Últimos partidos</h2>
           <button onClick={() => nav('/partidos')} style={{ background: 'none', border: 'none', color: 'var(--verde-mid)', fontSize: 13, cursor: 'pointer', fontWeight: 700 }}>Ver todos →</button>
@@ -194,7 +194,7 @@ export default function Inicio() {
       </div>
 
       {/* Top goleadores */}
-      <div className="card">
+      <div className="card anim-fade-up anim-delay-4">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <h2 style={{ fontSize: 20, color: 'var(--verde)' }}>Top goleadores</h2>
           <button onClick={() => nav('/estadisticas')} style={{ background: 'none', border: 'none', color: 'var(--verde-mid)', fontSize: 13, cursor: 'pointer', fontWeight: 700 }}>Ver todos →</button>
@@ -211,19 +211,6 @@ export default function Inicio() {
             </div>
           )
         })}
-      </div>
-      {/* Historial de temporadas */}
-      <div onClick={() => nav('/historial')} style={{ marginTop: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14, padding: '1rem 1.25rem', background: 'white', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', border: '1px solid rgba(0,0,0,0.06)' }}>
-        <div style={{ fontSize: 36 }}>📚</div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: 'Bebas Neue', fontSize: 20, color: 'var(--verde)', lineHeight: 1 }}>
-            Historial de temporadas
-          </div>
-          <div style={{ fontSize: 13, color: 'var(--gris-mid)', marginTop: 2 }}>
-            Consulta resultados y estadísticas de años anteriores
-          </div>
-        </div>
-        <div style={{ color: 'var(--gris-light)', fontSize: 20 }}>›</div>
       </div>
     </div>
   )

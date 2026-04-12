@@ -84,7 +84,7 @@ export default function Noticias() {
   }
 
   return (
-    <div className="page">
+    <div className="page anim-fade">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
         <h1 className="page-title" style={{ margin: 0 }}>Noticias 📰</h1>
         {logged && (

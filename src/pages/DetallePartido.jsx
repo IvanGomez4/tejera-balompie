@@ -270,7 +270,7 @@ export default function DetallePartido() {
     })
   }, [partido?.id])
 
-  if (!partido) return <div className="page"><div className="empty">Partido no encontrado</div></div>
+  if (!partido) return <div className="page anim-fade"><div className="empty">Partido no encontrado</div></div>
 
   const handleVotar = async (votado_id) => {
     if (!jugadorActivo) return
@@ -306,7 +306,7 @@ export default function DetallePartido() {
   const mvp = partido.mvp_jugador_id ? jugadores.find(j => j.id === partido.mvp_jugador_id) : null
 
   return (
-    <div className="page">
+    <div className="page anim-fade">
       <button onClick={() => nav('/partidos')} style={{ background: 'none', border: 'none', color: 'var(--verde-mid)', fontSize: 14, cursor: 'pointer', fontWeight: 600, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 4, padding: 0 }}>
         ← Volver
       </button>

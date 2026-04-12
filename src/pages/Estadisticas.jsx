@@ -44,7 +44,7 @@ export default function Estadisticas() {
   const maxPJ = Math.max(...conTotales.map(j => j.partidos), 0)
 
   return (
-    <div className="page">
+    <div className="page anim-fade">
       <h1 className="page-title">Estadísticas</h1>
       <div className="grid-4" style={{ marginBottom: '1.25rem' }}>
         {[['Goles', totGoles, 'var(--verde)'], ['Asistencias', totAsist, 'var(--verde-mid)'], ['Amarillas', totAmar, '#c8a800'], ['Jornadas', maxPJ, 'var(--verde)']].map(([l, v, c]) => (

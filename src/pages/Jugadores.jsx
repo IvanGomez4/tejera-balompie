@@ -101,7 +101,7 @@ export default function Jugadores() {
   }
 
   return (
-    <div className="page">
+    <div className="page anim-fade">
       {/* Selector de vista */}
       <div style={{ display: 'flex', background: '#f5e8eb', borderRadius: 12, padding: 4, marginBottom: '1.25rem', gap: 4 }}>
         {[['plantilla', '👕', 'Plantilla'], ['stats', '📊', 'Estadísticas']].map(([key, icon, label]) => (
