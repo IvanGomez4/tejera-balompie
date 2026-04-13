@@ -12,18 +12,31 @@ async function hashPassword(password) {
 }
 
 export const adminAuth = {
-  isLogged: () => {
-    try { return localStorage.getItem(KEY_AUTH) === 'true' } catch { return false }
-  },
-  // Ahora login es "async" porque calcular el hash toma unos milisegundos
+  // En lugar de guardar 'true', guarda un token con timestamp
   login: async (password) => {
     const hashCalculado = await hashPassword(password)
-
     if (hashCalculado === ADMIN_PASSWORD_HASH) {
-      try { localStorage.setItem(KEY_AUTH, 'true') } catch { }
+      const token = { hash: hashCalculado.slice(0, 16), ts: Date.now() }
+      try { localStorage.setItem(KEY_AUTH, JSON.stringify(token)) } catch { }
       return true
     }
     return false
+  },
+
+  isLogged: () => {
+    try {
+      const raw = localStorage.getItem(KEY_AUTH)
+      if (!raw) return false
+      const token = JSON.parse(raw)
+      // Expirar después de 8 horas
+      if (!token.hash || !token.ts) return false
+      if (Date.now() - token.ts > 8 * 60 * 60 * 1000) {
+        localStorage.removeItem(KEY_AUTH)
+        return false
+      }
+      // Verificar que el hash coincide con el esperado
+      return token.hash === ADMIN_PASSWORD_HASH.slice(0, 16)
+    } catch { return false }
   },
   logout: () => {
     try {
