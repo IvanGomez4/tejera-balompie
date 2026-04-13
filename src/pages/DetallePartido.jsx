@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useStore } from '../hooks/useStore'
 import { adminAuth } from '../lib/adminAuth'
 import { EQUIPO_NOMBRE } from '../lib/mockData'
+import { haptics } from '../lib/haptics'
 import Alineacion from '../components/Alineacion'
 
 function fmt(str) { return new Date(str).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) }
@@ -212,7 +213,7 @@ function VotacionMVP({ partido, jugadores, store }) {
           .sort((a, b) => a.nombre.localeCompare(b.nombre))
           .map(j => (
             <button key={j.id} onClick={async () => {
-              await store.votarMvp(partido.id, jugadorActivo.id, j.id)
+              haptics.success(); await store.votarMvp(partido.id, jugadorActivo.id, j.id)
               setMiVoto(j.id)
               setEnviado(j.id)
               setVotando(false)

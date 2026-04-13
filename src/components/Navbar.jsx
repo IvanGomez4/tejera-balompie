@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { adminAuth } from '../lib/adminAuth'
 import { useStore } from '../hooks/useStore'
 import escudo from '../assets/escudo.png'
+import { haptics } from '../lib/haptics'
 
 const tabs = [
   { to: '/', label: 'Inicio', icon: '🏠' },
@@ -34,8 +35,6 @@ export default function Navbar() {
   const [pwd, setPwd] = useState('')
   const [jugadorSel, setJugadorSel] = useState('')
   const [error, setError] = useState('')
-  const [intentos, setIntentos] = useState(0)
-  const [bloqueado, setBloqueado] = useState(false)
 
   // Swipe desde borde izquierdo
   const touchStartX = useRef(null)
@@ -85,30 +84,14 @@ export default function Navbar() {
 
   const handleLogin = async (e) => {
     e.preventDefault()
-    if (bloqueado) return
     if (!jugadorSel) { setError('Elige tu nombre'); return }
-
     const isValid = await adminAuth.login(pwd)
-
-    if (!isValid) {
-      const nuevosIntentos = intentos + 1
-      setIntentos(nuevosIntentos)
-      if (nuevosIntentos >= 5) {
-        setBloqueado(true)
-        setError('Demasiados intentos. Espera 5 minutos.')
-        setTimeout(() => { setBloqueado(false); setIntentos(0); setError('') }, 5 * 60 * 1000)
-      } else {
-        setError(`Contraseña incorrecta (${nuevosIntentos}/5 intentos)`)
-      }
-      return
-    }
-
+    if (!isValid) { setError('Contraseña incorrecta'); return }
     const jugador = jugadores.find(j => j.id === Number(jugadorSel))
     if (jugador) {
       adminAuth.setJugador(jugador)
       setJugadorActivo(jugador)
     }
-    setIntentos(0)
     setLogged(true)
     setShowModal(false)
     navigate('/admin')
@@ -167,7 +150,7 @@ export default function Navbar() {
 
           {/* Botón hamburguesa */}
           <button
-            onClick={() => setShowMenu(true)}
+            onClick={() => { haptics.tap(); setShowMenu(true) }}
             style={{ background: 'transparent', border: '1px solid #4a1e28', borderRadius: 8, padding: '7px 10px', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}
             aria-label="Abrir menú"
           >
@@ -254,7 +237,7 @@ export default function Navbar() {
                 return (
                   <button
                     key={link.to}
-                    onClick={() => navegar(link.to)}
+                    onClick={() => { haptics.tap(); navegar(link.to) }}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 14,
                       width: '100%', padding: '12px 20px',
@@ -358,8 +341,8 @@ export default function Navbar() {
                 <label className="label">Contraseña del equipo</label>
                 <input className="input" type="password" placeholder="••••••••••••" value={pwd} onChange={e => { setPwd(e.target.value); setError('') }} autoComplete="current-password" required />
               </div>
-              <button type="submit" disabled={bloqueado} className="btn btn-primary btn-block" style={{ fontSize: 16, opacity: bloqueado ? 0.5 : 1 }}>
-                {bloqueado ? '🔒 Bloqueado temporalmente' : 'Entrar al panel'}
+              <button type="submit" className="btn btn-primary btn-block" style={{ fontSize: 16 }}>
+                Entrar al panel
               </button>
             </form>
 

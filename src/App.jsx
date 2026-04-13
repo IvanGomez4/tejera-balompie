@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
+import { PullIndicator } from './components/PullIndicator'
+import { store } from './lib/store'
 import Inicio from './pages/Inicio'
 import Clasificacion from './pages/Clasificacion'
 import Jugadores from './pages/Jugadores'
@@ -101,9 +103,14 @@ function SplashScreen({ onDone }) {
 export default function App() {
   const [showSplash, setShowSplash] = useState(true)
 
+  const handleRefresh = async () => {
+    await store.init()
+  }
+
   return (
     <BrowserRouter>
       {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
+      <PullIndicator onRefresh={handleRefresh} />
       <Navbar />
       <Routes>
         <Route path="/"              element={<Inicio />} />
