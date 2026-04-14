@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useStore } from '../hooks/useStore'
 import { adminAuth } from '../lib/adminAuth'
+import ImageCropper from '../components/ImageCropper'
 
 function initials(n) { return n.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() }
 function Avatar({ jugador, size = 'sm' }) {
@@ -78,6 +79,7 @@ export default function Jugadores() {
   const totAsist = conTotales.reduce((s, j) => s + j.asistencias, 0)
   const totAmar = conTotales.reduce((s, j) => s + j.tarjetas_amarillas, 0)
   const maxPJ = Math.max(...conTotales.map(j => j.partidos), 0)
+  const [cropSrc, setCropSrc] = useState(null)
 
   const openEdit = (j) => {
     setForm({ nombre: j.nombre, posicion: j.posicion, dorsal: j.dorsal, foto_url: j.foto_url || '' })
@@ -325,8 +327,8 @@ export default function Jugadores() {
                     <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
                       const file = e.target.files[0]
                       if (!file) return
-                      setFotoArchivo(file)
-                      setFotoPreview(URL.createObjectURL(file))
+                      const url = URL.createObjectURL(file)
+                      setCropSrc(url)
                     }} />
                   </label>
                   {fotoPreview && (
@@ -338,6 +340,18 @@ export default function Jugadores() {
                 </div>
               </div>
             </div>
+            {cropSrc && (
+              <ImageCropper
+                src={cropSrc}
+                onCrop={(blob) => {
+                  const croppedFile = new File([blob], 'foto.jpg', { type: 'image/jpeg' })
+                  setFotoArchivo(croppedFile)
+                  setFotoPreview(URL.createObjectURL(blob))
+                  setCropSrc(null)
+                }}
+                onCancel={() => setCropSrc(null)}
+              />
+            )}
             <button onClick={saveEdit} disabled={saving} className="btn btn-primary btn-block" style={{ opacity: saving ? 0.7 : 1 }}>
               {saving ? 'Guardando...' : 'Guardar cambios'}
             </button>

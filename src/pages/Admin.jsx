@@ -4,6 +4,7 @@ import { useStore } from '../hooks/useStore'
 import { adminAuth } from '../lib/adminAuth'
 import { EQUIPO_NOMBRE } from '../lib/mockData'
 import { haptics } from '../lib/haptics'
+import ImageCropper from '../components/ImageCropper'
 
 function initials(n) { return n.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() }
 function Avatar({ jugador, size = 'sm' }) {
@@ -73,6 +74,7 @@ function PanelJugadores({ jugadores, store }) {
   const [form, setForm] = useState(empty)
   const [fotoArchivo, setFotoArchivo] = useState(null)
   const [fotoPreview, setFotoPreview] = useState(null)
+  const [cropSrc, setCropSrc] = useState(null)
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const openAdd = () => { setForm(empty); setFotoArchivo(null); setFotoPreview(null); setModal({ mode: 'add' }) }
@@ -153,8 +155,8 @@ function PanelJugadores({ jugadores, store }) {
                     onChange={e => {
                       const file = e.target.files[0]
                       if (!file) return
-                      setFotoArchivo(file)
-                      setFotoPreview(URL.createObjectURL(file))
+                      const url = URL.createObjectURL(file)
+                      setCropSrc(url)
                     }}
                   />
                 </label>
@@ -167,6 +169,18 @@ function PanelJugadores({ jugadores, store }) {
               </div>
             </div>
           </div>
+          {cropSrc && (
+            <ImageCropper
+              src={cropSrc}
+              onCrop={(blob) => {
+                const croppedFile = new File([blob], 'foto.jpg', { type: 'image/jpeg' })
+                setFotoArchivo(croppedFile)
+                setFotoPreview(URL.createObjectURL(blob))
+                setCropSrc(null)
+              }}
+              onCancel={() => setCropSrc(null)}
+            />
+          )}
           <button onClick={save} className="btn btn-primary btn-block">Guardar</button>
         </Modal>
       )}
@@ -473,7 +487,7 @@ function PanelTemporada({ store }) {
     store.getTemporadas().then(ts => {
       setTemporadas(ts)
       setTemporadaActiva(ts.find(t => t.activa) || null)
-    }).catch(() => {})
+    }).catch(() => { })
   }, [])
 
   const verificarYCerrar = async () => {
@@ -625,12 +639,12 @@ function PanelLog({ store }) {
 
 // ---- Main Admin ----
 const adminTabs = [
-  { key: 'stats',      label: '📊 Stats' },
-  { key: 'partidos',   label: '⚽ Partidos' },
-  { key: 'jugadores',  label: '👕 Plantilla' },
-  { key: 'tabla',      label: '🏆 Tabla' },
-  { key: 'temporada',  label: '📅 Temporada' },
-  { key: 'log',        label: '📋 Log' },
+  { key: 'stats', label: '📊 Stats' },
+  { key: 'partidos', label: '⚽ Partidos' },
+  { key: 'jugadores', label: '👕 Plantilla' },
+  { key: 'tabla', label: '🏆 Tabla' },
+  { key: 'temporada', label: '📅 Temporada' },
+  { key: 'log', label: '📋 Log' },
 ]
 
 export default function Admin() {
@@ -669,12 +683,12 @@ export default function Admin() {
           ))}
         </div>
 
-        {tab === 'jugadores'  && <PanelJugadores jugadores={jugadores} store={store} />}
-        {tab === 'partidos'   && <PanelPartidos partidos={partidos} store={store} />}
-        {tab === 'stats'      && <PanelStats jugadores={jugadores} partidos={partidos} stats={stats} store={store} />}
-        {tab === 'tabla'      && <PanelClasificacion clasificacion={clasificacion} store={store} />}
-        {tab === 'temporada'  && <PanelTemporada store={store} />}
-        {tab === 'log'        && <PanelLog store={store} />}
+        {tab === 'jugadores' && <PanelJugadores jugadores={jugadores} store={store} />}
+        {tab === 'partidos' && <PanelPartidos partidos={partidos} store={store} />}
+        {tab === 'stats' && <PanelStats jugadores={jugadores} partidos={partidos} stats={stats} store={store} />}
+        {tab === 'tabla' && <PanelClasificacion clasificacion={clasificacion} store={store} />}
+        {tab === 'temporada' && <PanelTemporada store={store} />}
+        {tab === 'log' && <PanelLog store={store} />}
       </div>
     </AdminGuard>
   )
