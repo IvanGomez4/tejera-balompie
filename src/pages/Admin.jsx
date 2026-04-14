@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../hooks/useStore'
 import { adminAuth } from '../lib/adminAuth'
@@ -93,7 +93,8 @@ function PanelJugadores({ jugadores, store }) {
       foto_url = await store.subirFotoJugador(id, fotoArchivo)
     }
 
-    haptics.success(); if (modal.mode === 'add') store.addJugador({ ...form, dorsal: Number(form.dorsal) || 0, foto_url })
+    haptics.success()
+    if (modal.mode === 'add') store.addJugador({ ...form, dorsal: Number(form.dorsal) || 0, foto_url })
     else store.updateJugador(modal.id, { ...form, dorsal: Number(form.dorsal) || 0, foto_url })
     setFotoArchivo(null)
     setFotoPreview(null)
@@ -189,7 +190,8 @@ function PanelPartidos({ partidos, store }) {
   const save = () => {
     if (!form.fecha) return
     const data = { ...form, jornada: Number(form.jornada) || 0, goles_local: Number(form.goles_local) || 0, goles_visitante: Number(form.goles_visitante) || 0 }
-    haptics.success(); if (modal.mode === 'add') store.addPartido(data)
+    haptics.success()
+    if (modal.mode === 'add') store.addPartido(data)
     else store.updatePartido(modal.id, data)
     setModal(null)
   }
@@ -455,12 +457,180 @@ function PanelClasificacion({ clasificacion, store }) {
   )
 }
 
+// ---- Panel Temporada ----
+function PanelTemporada({ store }) {
+  const [temporadaActiva, setTemporadaActiva] = useState(null)
+  const [temporadas, setTemporadas] = useState([])
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState({ nombre: '', año: new Date().getFullYear() + 1 })
+  const [cerrando, setCerrando] = useState(false)
+  const [confirmando, setConfirmando] = useState(false)
+  const [pwdSuper, setPwdSuper] = useState('')
+  const [errorPwd, setErrorPwd] = useState('')
+
+  useEffect(() => {
+    if (!store.getTemporadas) return
+    store.getTemporadas().then(ts => {
+      setTemporadas(ts)
+      setTemporadaActiva(ts.find(t => t.activa) || null)
+    }).catch(() => {})
+  }, [])
+
+  const verificarYCerrar = async () => {
+    const superPwd = import.meta.env.VITE_SUPERADMIN_PASSWORD
+    if (!superPwd || pwdSuper !== superPwd) { setErrorPwd('Contraseña incorrecta'); return }
+    if (!form.nombre.trim()) { alert('Pon nombre a la nueva temporada'); return }
+    setCerrando(true)
+    await store.cerrarTemporadaYCrearNueva(form.nombre.trim(), Number(form.año))
+    const ts = await store.getTemporadas()
+    setTemporadas(ts)
+    setTemporadaActiva(ts.find(t => t.activa) || null)
+    setShowForm(false); setConfirmando(false); setPwdSuper(''); setErrorPwd(''); setCerrando(false)
+  }
+
+  return (
+    <div>
+      <div className="card" style={{ marginBottom: '1rem', background: 'linear-gradient(135deg,#0d0a0b,#3d1020)' }}>
+        <div style={{ fontSize: 11, color: '#e8a0b0', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Temporada activa</div>
+        <div style={{ fontFamily: 'Bebas Neue', fontSize: 24, color: 'white', lineHeight: 1 }}>{temporadaActiva?.nombre || 'Cargando...'}</div>
+        <div style={{ fontSize: 12, color: '#6a3a42', marginTop: 4 }}>Año {temporadaActiva?.año} · Todos los datos actuales pertenecen a esta temporada</div>
+      </div>
+
+      {!showForm ? (
+        <button onClick={() => setShowForm(true)} className="btn btn-ghost btn-block" style={{ marginBottom: '1.5rem' }}>
+          🔚 Cerrar temporada y empezar nueva
+        </button>
+      ) : (
+        <div className="card" style={{ marginBottom: '1.5rem', border: '2px solid var(--verde)' }}>
+          <h2 style={{ fontSize: 18, color: 'var(--verde)', marginBottom: 14 }}>Nueva temporada</h2>
+          {!confirmando ? (
+            <>
+              <div className="form-group">
+                <label className="label">Nombre de la nueva temporada</label>
+                <input className="input" value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} placeholder="Ej: Liga Verano Villacañas 2027" />
+              </div>
+              <div className="form-group">
+                <label className="label">Año</label>
+                <input className="input" type="number" value={form.año} onChange={e => setForm(f => ({ ...f, año: e.target.value }))} />
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={() => setShowForm(false)} className="btn btn-ghost" style={{ flex: 1 }}>Cancelar</button>
+                <button onClick={() => setConfirmando(true)} className="btn btn-primary" style={{ flex: 1 }}>Continuar →</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ background: '#fde8e8', border: '1px solid #f5c0c0', borderRadius: 10, padding: '12px 14px', marginBottom: 14, fontSize: 13, color: '#c0392b' }}>
+                ⚠️ <strong>Atención:</strong> Al cerrar <strong>"{temporadaActiva?.nombre}"</strong>, los partidos, estadísticas y clasificación quedarán archivados. Los jugadores se mantienen. Esta acción no se puede deshacer.
+              </div>
+              <div className="form-group">
+                <label className="label">🔐 Contraseña de superadmin</label>
+                <input className="input" type="password" placeholder="Solo el creador de la app puede hacer esto" value={pwdSuper} onChange={e => { setPwdSuper(e.target.value); setErrorPwd('') }} />
+                {errorPwd && <div style={{ color: '#c0392b', fontSize: 12, marginTop: 4 }}>⚠️ {errorPwd}</div>}
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={() => { setConfirmando(false); setPwdSuper(''); setErrorPwd('') }} className="btn btn-ghost" style={{ flex: 1 }}>Atrás</button>
+                <button onClick={verificarYCerrar} disabled={cerrando || !pwdSuper} style={{ flex: 1, background: '#c0392b', color: 'white', border: 'none', borderRadius: 10, padding: '12px', fontWeight: 700, fontSize: 15, cursor: 'pointer', opacity: (cerrando || !pwdSuper) ? 0.5 : 1 }}>
+                  {cerrando ? 'Cerrando...' : '🔚 Confirmar y cerrar'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--gris-mid)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Temporadas anteriores</div>
+      {temporadas.filter(t => !t.activa).length === 0 && <div className="empty" style={{ padding: '1.5rem' }}>Esta es la primera temporada</div>}
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        {temporadas.filter(t => !t.activa).map((t, i, arr) => (
+          <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < arr.length - 1 ? '1px solid #f5e8eb' : 'none' }}>
+            <div style={{ fontSize: 24 }}>🏆</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 600 }}>{t.nombre}</div>
+              <div style={{ fontSize: 12, color: 'var(--gris-mid)' }}>Temporada {t.año} · Archivada</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ---- Panel Log ----
+function PanelLog({ store }) {
+  const [logs, setLogs] = useState([])
+  const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState(false)
+  const [filtroJugador, setFiltroJugador] = useState('')
+
+  useEffect(() => {
+    if (!store.getLog) { setCargando(false); setError(true); return }
+    store.getLog()
+      .then(data => { setLogs(data || []); setCargando(false) })
+      .catch(() => { setCargando(false); setError(true) })
+  }, [])
+
+  function fmtFecha(str) {
+    const d = new Date(str)
+    return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) + ' · ' + d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+  }
+
+  const jugadoresLog = [...new Set(logs.map(l => l.jugador_nombre).filter(Boolean))].sort()
+  const filtrados = filtroJugador ? logs.filter(l => l.jugador_nombre === filtroJugador) : logs
+  const colorEntidad = { 'Jugador': '#185fa5', 'Partido': '#7a1e30', 'Estadísticas': '#856a00', 'Clasificación': '#1a7a3a', 'Alineación': '#6a1e7a', 'Noticia': '#c0392b' }
+
+  if (cargando) return <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--gris-mid)' }}>Cargando log de actividad...</div>
+
+  if (error) return (
+    <div style={{ textAlign: 'center', padding: '3rem' }}>
+      <div style={{ fontSize: 32, marginBottom: 8 }}>⚠️</div>
+      <div style={{ color: 'var(--gris-mid)', fontSize: 14 }}>El log no está disponible. Asegúrate de haber creado la tabla en Supabase y añadido <code>getLog</code> al store.</div>
+    </div>
+  )
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <span style={{ fontSize: 14, color: 'var(--gris-mid)' }}>{filtrados.length} acciones</span>
+        <select className="select" value={filtroJugador} onChange={e => setFiltroJugador(e.target.value)} style={{ maxWidth: 180, fontSize: 13, minHeight: 36, padding: '6px 10px' }}>
+          <option value="">Todos los jugadores</option>
+          {jugadoresLog.map(n => <option key={n} value={n}>{n}</option>)}
+        </select>
+      </div>
+      {filtrados.length === 0 && <div className="empty">Sin actividad registrada aún</div>}
+      {filtrados.length > 0 && (
+        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          {filtrados.map((l, i) => (
+            <div key={l.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 14px', borderBottom: i < filtrados.length - 1 ? '1px solid #f5e8eb' : 'none' }}>
+              <div style={{ width: 34, height: 34, borderRadius: '50%', flexShrink: 0, background: 'var(--negro)', color: 'var(--dorado-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>
+                {(l.jugador_nombre || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  <span>{l.accion}</span>
+                  <span style={{ background: colorEntidad[l.entidad] || '#999', color: 'white', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>{l.entidad}</span>
+                </div>
+                {l.detalle && <div style={{ fontSize: 12, color: 'var(--gris-mid)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.detalle}</div>}
+                <div style={{ fontSize: 11, color: 'var(--gris-light)', marginTop: 3 }}>
+                  <strong style={{ color: 'var(--gris-mid)' }}>{l.jugador_nombre || 'Desconocido'}</strong>{' · '}{fmtFecha(l.created_at)}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ---- Main Admin ----
 const adminTabs = [
-  { key: 'stats', label: '📊 Stats' },
-  { key: 'partidos', label: '⚽ Partidos' },
-  { key: 'jugadores', label: '👕 Plantilla' },
-  { key: 'tabla', label: '🏆 Tabla' },
+  { key: 'stats',      label: '📊 Stats' },
+  { key: 'partidos',   label: '⚽ Partidos' },
+  { key: 'jugadores',  label: '👕 Plantilla' },
+  { key: 'tabla',      label: '🏆 Tabla' },
+  { key: 'temporada',  label: '📅 Temporada' },
+  { key: 'log',        label: '📋 Log' },
 ]
 
 export default function Admin() {
@@ -499,10 +669,12 @@ export default function Admin() {
           ))}
         </div>
 
-        {tab === 'jugadores' && <PanelJugadores jugadores={jugadores} store={store} />}
-        {tab === 'partidos' && <PanelPartidos partidos={partidos} store={store} />}
-        {tab === 'stats' && <PanelStats jugadores={jugadores} partidos={partidos} stats={stats} store={store} />}
-        {tab === 'tabla' && <PanelClasificacion clasificacion={clasificacion} store={store} />}
+        {tab === 'jugadores'  && <PanelJugadores jugadores={jugadores} store={store} />}
+        {tab === 'partidos'   && <PanelPartidos partidos={partidos} store={store} />}
+        {tab === 'stats'      && <PanelStats jugadores={jugadores} partidos={partidos} stats={stats} store={store} />}
+        {tab === 'tabla'      && <PanelClasificacion clasificacion={clasificacion} store={store} />}
+        {tab === 'temporada'  && <PanelTemporada store={store} />}
+        {tab === 'log'        && <PanelLog store={store} />}
       </div>
     </AdminGuard>
   )
