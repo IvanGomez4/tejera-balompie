@@ -116,7 +116,7 @@ function ModalEditar({ alineacionInicial, formacionInicial, jugadores, onSave, o
             <div style={{
                 position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 500,
                 background: 'white', borderRadius: '20px 20px 0 0',
-                padding: '1.5rem', paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))',
+                padding: '1.5rem', paddingBottom: 'calc(5.5rem + env(safe-area-inset-bottom))',
                 maxHeight: '92vh', overflowY: 'auto',
                 boxShadow: '0 -4px 30px rgba(0,0,0,0.2)'
             }}>
