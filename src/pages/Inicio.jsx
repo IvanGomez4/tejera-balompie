@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../hooks/useStore'
 import { EQUIPO_NOMBRE } from '../lib/mockData'
-import escudo from '../assets/escudo.png'
 import { useState, useEffect } from 'react'
 
 function initials(n) { return n.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() }
@@ -61,7 +60,7 @@ export default function Inicio() {
     <div className="page">
       {/* Hero */}
       <div className="anim-scale" style={{ background: 'linear-gradient(135deg,#0d0a0b 0%,#5a1520 100%)', borderRadius: 20, padding: '1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <img src={escudo} alt="Escudo" style={{ width: 88, height: 88, objectFit: 'contain', flexShrink: 0 }} />
+        <img src="/escudo.png" alt="Escudo" style={{ width: 88, height: 88, objectFit: 'contain', flexShrink: 0 }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: 'Bebas Neue', fontSize: 24, color: 'white', lineHeight: 1.1, letterSpacing: '0.04em' }}>Tejera Balompié</div>
           <div style={{ color: '#6a3a42', fontSize: 10, letterSpacing: '0.09em', marginBottom: 10 }}>LIGA VERANO VILLACAÑAS 2026</div>

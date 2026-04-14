@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../hooks/useStore'
 import { EQUIPO_NOMBRE } from '../lib/mockData'
-import escudo from '../assets/escudo.png'
 
 const medalColors = ['#c8a800', '#909090', '#a06030']
 
@@ -107,7 +106,7 @@ export default function Clasificacion() {
 
               {/* Nombre equipo */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden' }}>
-                {esN && <img src={escudo} alt="" style={{ width: 18, height: 18, objectFit: 'contain', flexShrink: 0 }} />}
+                {esN && <img src="/escudo.png" alt="Escudo" style={{ width: 18, height: 18, objectFit: 'contain', flexShrink: 0 }} />}
                 <span style={{
                   fontSize: 13, fontWeight: esN ? 700 : 400,
                   color: esN ? 'var(--verde)' : '#333',
