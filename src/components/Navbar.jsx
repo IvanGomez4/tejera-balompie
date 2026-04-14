@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { adminAuth } from '../lib/adminAuth'
 import { useStore } from '../hooks/useStore'
-import escudo from '../public/escudo.png'
 import { haptics } from '../lib/haptics'
 
 const tabs = [
@@ -118,7 +117,7 @@ export default function Navbar() {
 
           {/* Escudo — va a home */}
           <img
-            src={escudo} alt="Escudo"
+            src="/escudo.png" alt="Escudo"
             onClick={() => navigate('/')}
             style={{ width: 42, height: 42, objectFit: 'contain', flexShrink: 0, cursor: 'pointer' }}
           />
@@ -196,7 +195,7 @@ export default function Navbar() {
             {/* Cabecera del menú */}
             <div style={{ padding: '1.25rem 1.25rem 1rem', borderBottom: '1px solid #3d1020' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: logged && jugadorActivo ? 14 : 0 }}>
-                <img src={escudo} alt="" style={{ width: 36, height: 36, objectFit: 'contain' }} />
+                <img src="/escudo.png" alt="Escudo" style={{ width: 36, height: 36, objectFit: 'contain' }} />
                 <div>
                   <div style={{ fontFamily: 'Bebas Neue', fontSize: 16, color: '#e8a0b0', letterSpacing: '0.06em', lineHeight: 1 }}>
                     Tejera Balompié
@@ -309,7 +308,7 @@ export default function Navbar() {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1.25rem' }}>
               <div style={{ background: 'linear-gradient(135deg,#0d0a0b,#5a1520)', borderRadius: '50%', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <img src={escudo} alt="" style={{ width: 42, height: 42, objectFit: 'contain' }} />
+                <img src="/escudo.png" alt="" style={{ width: 42, height: 42, objectFit: 'contain' }} />
               </div>
               <div>
                 <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: 'var(--verde)', lineHeight: 1 }}>
