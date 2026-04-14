@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { adminAuth } from '../lib/adminAuth'
 import { useStore } from '../hooks/useStore'
-import escudo from '../assets/escudo.png'
+import escudo from '../public/escudo.png'
 import { haptics } from '../lib/haptics'
 
 const tabs = [
