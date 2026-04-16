@@ -481,6 +481,43 @@ export const store = {
   },
 
   // =====================
+  // PATROCINADORES
+  // =====================
+  async getPatrocinadores() {
+    if (USE_SUPABASE) {
+      const { data } = await supabase.from('patrocinadores').select('*').order('created_at', { ascending: true })
+      return data || []
+    }
+    return load('tj_patrocinadores', [])
+  },
+  async addPatrocinador(nombre, archivo) {
+    if (USE_SUPABASE) {
+      let imagen_url = null
+      if (archivo) {
+        const ext = archivo.name.split('.').pop()
+        const path = `patrocinador_${Date.now()}.${ext}`
+        await supabase.storage.from('patrocinadores').upload(path, archivo, { upsert: true })
+        const { data } = supabase.storage.from('patrocinadores').getPublicUrl(path)
+        imagen_url = data.publicUrl
+      }
+      const { data } = await supabase.from('patrocinadores').insert({ nombre, imagen_url }).select().single()
+      return data
+    } else {
+      const p = { id: Date.now(), nombre, imagen_url: null, created_at: new Date().toISOString() }
+      const list = load('tj_patrocinadores', [])
+      save('tj_patrocinadores', [...list, p])
+      return p
+    }
+  },
+  async deletePatrocinador(id) {
+    if (USE_SUPABASE) await supabase.from('patrocinadores').delete().eq('id', id)
+    else {
+      const list = load('tj_patrocinadores', [])
+      save('tj_patrocinadores', list.filter(p => p.id !== id))
+    }
+  },
+
+  // =====================
   // RESET
   // =====================
   resetAll() {

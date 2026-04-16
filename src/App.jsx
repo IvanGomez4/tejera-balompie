@@ -13,6 +13,7 @@ import Admin from './pages/Admin'
 import Noticias from './pages/Noticias'
 import Historial from './pages/Historial'
 import escudo from '../public/escudo.png'
+import Patrocinadores from './pages/Patrocinadores'
 
 // ── Splash Screen ──
 function SplashScreen({ onDone }) {
@@ -121,6 +122,7 @@ export default function App() {
         <Route path="/estadisticas" element={<Estadisticas />} />
         <Route path="/noticias" element={<Noticias />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/patrocinadores" element={<Patrocinadores />} />
         <Route path="/historial" element={<Historial />} />
       </Routes>
     </BrowserRouter>

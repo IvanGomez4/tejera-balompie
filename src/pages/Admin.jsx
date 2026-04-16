@@ -564,17 +564,55 @@ function PanelTemporada({ store }) {
 
 // ---- Panel Log ----
 function PanelLog({ store }) {
+  const [desbloqueado, setDesbloqueado] = useState(false)
+  const [pwdInput, setPwdInput] = useState('')
+  const [errorPwd, setErrorPwd] = useState('')
+  const [showPwd, setShowPwd] = useState(false)
   const [logs, setLogs] = useState([])
-  const [cargando, setCargando] = useState(true)
-  const [error, setError] = useState(false)
+  const [cargando, setCargando] = useState(false)
   const [filtroJugador, setFiltroJugador] = useState('')
 
-  useEffect(() => {
-    if (!store.getLog) { setCargando(false); setError(true); return }
+  const verificar = () => {
+    const superPwd = import.meta.env.VITE_SUPERADMIN_PASSWORD
+    if (!superPwd || pwdInput !== superPwd) {
+      setErrorPwd('Contraseña incorrecta')
+      return
+    }
+    setDesbloqueado(true)
+    setCargando(true)
     store.getLog()
       .then(data => { setLogs(data || []); setCargando(false) })
-      .catch(() => { setCargando(false); setError(true) })
-  }, [])
+      .catch(() => setCargando(false))
+  }
+
+  if (!desbloqueado) return (
+    <div className="card" style={{ textAlign: 'center' }}>
+      <div style={{ fontSize: 40, marginBottom: 12 }}>🔐</div>
+      <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: 'var(--verde)', marginBottom: 6 }}>
+        Área restringida
+      </div>
+      <div style={{ fontSize: 13, color: 'var(--gris-mid)', marginBottom: 20 }}>
+        Solo el superadmin puede ver el log de actividad
+      </div>
+      <div style={{ position: 'relative', marginBottom: 12 }}>
+        <input
+          className="input"
+          type={showPwd ? 'text' : 'password'}
+          placeholder="Contraseña de superadmin"
+          value={pwdInput}
+          onChange={e => { setPwdInput(e.target.value); setErrorPwd('') }}
+          onKeyDown={e => e.key === 'Enter' && verificar()}
+          style={{ paddingRight: 48 }}
+        />
+        <button type="button" onClick={() => setShowPwd(v => !v)}
+          style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--gris-mid)' }}>
+          {showPwd ? '🙈' : '👁️'}
+        </button>
+      </div>
+      {errorPwd && <div style={{ color: '#c0392b', fontSize: 13, marginBottom: 10 }}>⚠️ {errorPwd}</div>}
+      <button onClick={verificar} className="btn btn-primary btn-block">Ver log de actividad</button>
+    </div>
+  )
 
   function fmtFecha(str) {
     const d = new Date(str)
@@ -585,14 +623,7 @@ function PanelLog({ store }) {
   const filtrados = filtroJugador ? logs.filter(l => l.jugador_nombre === filtroJugador) : logs
   const colorEntidad = { 'Jugador': '#185fa5', 'Partido': '#7a1e30', 'Estadísticas': '#856a00', 'Clasificación': '#1a7a3a', 'Alineación': '#6a1e7a', 'Noticia': '#c0392b' }
 
-  if (cargando) return <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--gris-mid)' }}>Cargando log de actividad...</div>
-
-  if (error) return (
-    <div style={{ textAlign: 'center', padding: '3rem' }}>
-      <div style={{ fontSize: 32, marginBottom: 8 }}>⚠️</div>
-      <div style={{ color: 'var(--gris-mid)', fontSize: 14 }}>El log no está disponible. Asegúrate de haber creado la tabla en Supabase y añadido <code>getLog</code> al store.</div>
-    </div>
-  )
+  if (cargando) return <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--gris-mid)' }}>Cargando log...</div>
 
   return (
     <div>

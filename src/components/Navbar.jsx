@@ -19,6 +19,7 @@ const menuLinks = [
   { to: '/partidos', label: 'Partidos', icon: '⚽' },
   { to: '/estadisticas', label: 'Estadísticas', icon: '📊' },
   { to: '/noticias', label: 'Noticias', icon: '📰' },
+  { to: '/patrocinadores', label: 'Patrocinadores', icon: '🤝' },
   { to: '/historial', label: 'Temporadas', icon: '📚' },
 ]
 
