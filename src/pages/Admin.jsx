@@ -43,7 +43,7 @@ function Modal({ title, onClose, children }) {
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 400 }} />
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 500, background: 'white', borderRadius: '20px 20px 0 0', padding: '1.5rem', paddingBottom: 'calc(5.5rem + env(safe-area-inset-bottom))', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 -4px 30px rgba(0,0,0,0.2)' }}>
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 500, background: 'white', borderRadius: '20px 20px 0 0', padding: '1.5rem', paddingBottom: 'calc(5.5rem + env(safe-area-inset-bottom))', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 -4px 30px rgba(0,0,0,0.2)', animation: 'slideUpModal 0.3s cubic-bezier(0.32,0.72,0,1)' }}>
         <div style={{ width: 36, height: 4, background: '#ddd', borderRadius: 2, margin: '-0.5rem auto 1rem' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <h2 style={{ fontSize: 22, color: 'var(--verde)' }}>{title}</h2>
@@ -177,7 +177,7 @@ function PanelJugadores({ jugadores, store }) {
 // ---- Panel Partidos ----
 function PanelPartidos({ partidos, store }) {
   const [modal, setModal] = useState(null)
-  const emptyP = { jornada: '', fecha: '', local: EQUIPO_NOMBRE, visitante: '', campo: 'Campo Municipal', jugado: false, goles_local: 0, goles_visitante: 0 }
+  const emptyP = { jornada: '', fecha: '', local: EQUIPO_NOMBRE, visitante: '', campo: 'Campo Municipal', jugado: false, goles_local: 0, goles_visitante: 0, amistoso: false }
   const [form, setForm] = useState(emptyP)
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
@@ -186,7 +186,7 @@ function PanelPartidos({ partidos, store }) {
     .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
 
   const openAdd = () => { setForm(emptyP); setModal({ mode: 'add' }) }
-  const openEdit = (p) => { setForm({ jornada: p.jornada, fecha: p.fecha, local: p.local, visitante: p.visitante, campo: p.campo, jugado: p.jugado, goles_local: p.goles_local, goles_visitante: p.goles_visitante }); setModal({ mode: 'edit', id: p.id }) }
+  const openEdit = (p) => { setForm({ jornada: p.jornada, fecha: p.fecha, local: p.local, visitante: p.visitante, campo: p.campo, jugado: p.jugado, goles_local: p.goles_local, goles_visitante: p.goles_visitante, amistoso: p.amistoso || false }); setModal({ mode: 'edit', id: p.id }) }
   const save = () => {
     if (!form.fecha) return
     const data = { ...form, jornada: Number(form.jornada) || 0, goles_local: Number(form.goles_local) || 0, goles_visitante: Number(form.goles_visitante) || 0 }
@@ -210,8 +210,10 @@ function PanelPartidos({ partidos, store }) {
             <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: i < nuestros.length - 1 ? '1px solid #f5e8eb' : 'none' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>J{p.jornada} · vs. {rival}</div>
-                <div style={{ fontSize: 11, color: 'var(--gris-mid)' }}>{p.fecha} · {p.jugado ? `${p.goles_local}–${p.goles_visitante}` : 'Pendiente'}</div>
-              </div>
+                <div style={{ fontSize: 11, color: 'var(--gris-mid)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span>{p.fecha} · {p.jugado ? `${p.goles_local}–${p.goles_visitante}` : 'Pendiente'}</span>
+                  {p.amistoso && <span style={{ background: '#fff3cd', color: '#856a00', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 10 }}>Amistoso</span>}
+                </div>              </div>
               <button onClick={() => openEdit(p)} style={{ background: 'none', border: '1px solid #c8aab2', borderRadius: 8, padding: '4px 10px', fontSize: 12, cursor: 'pointer', color: 'var(--verde)', flexShrink: 0 }}>Editar</button>
               <button onClick={() => del(p.id)} style={{ background: 'none', border: '1px solid #fcc', borderRadius: 8, padding: '4px 10px', fontSize: 12, cursor: 'pointer', color: '#c0392b', flexShrink: 0 }}>✕</button>
             </div>
@@ -228,6 +230,12 @@ function PanelPartidos({ partidos, store }) {
           <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <input type="checkbox" id="jugado" checked={form.jugado} onChange={e => set('jugado', e.target.checked)} style={{ width: 18, height: 18, accentColor: 'var(--verde)' }} />
             <label htmlFor="jugado" className="label" style={{ margin: 0 }}>Partido ya jugado</label>
+          </div>
+          <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <input type="checkbox" id="amistoso" checked={form.amistoso} onChange={e => set('amistoso', e.target.checked)} style={{ width: 18, height: 18, accentColor: 'var(--dorado)' }} />
+            <label htmlFor="amistoso" className="label" style={{ margin: 0 }}>
+              Partido amistoso <span style={{ fontSize: 11, color: 'var(--gris-mid)', fontWeight: 400 }}>(stats no computan en clasificación)</span>
+            </label>
           </div>
           {form.jugado && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16, textAlign: 'center' }}>

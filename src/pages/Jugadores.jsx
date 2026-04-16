@@ -31,7 +31,7 @@ const statTabs = [
 ]
 
 export default function Jugadores() {
-  const { jugadores, stats, store } = useStore()
+  const { jugadores, stats, partidos, store } = useStore()
   const isAdmin = adminAuth.isLogged()
 
   const [vista, setVista] = useState('plantilla')
@@ -49,7 +49,7 @@ export default function Jugadores() {
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const conTotales = jugadores.map(j => {
-    const ss = stats.filter(s => s.jugador_id === j.id)
+    const ss = stats.filter(s => s.jugador_id === j.id && !partidos.find(p => p.id === s.partido_id)?.amistoso)
     return {
       ...j,
       partidos: ss.length,

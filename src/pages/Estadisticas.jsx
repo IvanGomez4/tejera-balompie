@@ -24,12 +24,12 @@ const tabs = [
 ]
 
 export default function Estadisticas() {
-  const { jugadores, stats } = useStore()
+  const { jugadores, stats, partidos } = useStore()
   const [tab, setTab] = useState('goles')
   const cur = tabs.find(t => t.key === tab)
 
   const conTotales = jugadores.map(j => {
-    const ss = stats.filter(s => s.jugador_id === j.id)
+    const ss = stats.filter(s => s.jugador_id === j.id && !partidos.find(p => p.id === s.partido_id)?.amistoso)
     return { ...j, partidos: ss.length, goles: ss.reduce((a, s) => a + s.goles, 0), asistencias: ss.reduce((a, s) => a + s.asistencias, 0), tarjetas_amarillas: ss.reduce((a, s) => a + s.tarjetas_amarillas, 0), paradas: ss.reduce((a, s) => a + (s.paradas || 0), 0), goles_encajados: ss.reduce((a, s) => a + (s.goles_encajados || 0), 0) }
   })
 

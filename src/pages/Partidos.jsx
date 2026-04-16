@@ -93,7 +93,10 @@ export default function Partidos() {
             <div key={p.id} onClick={() => nav(`/partido/${p.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderBottom: i < jugados.length - 1 ? '1px solid #f5e8eb' : 'none', cursor: 'pointer', WebkitTapHighlightColor: 'rgba(0,0,0,0.04)' }}>
               <div style={{ width: 4, height: 40, borderRadius: 2, flexShrink: 0, background: r === 'victoria' ? 'var(--verde-mid)' : r === 'derrota' ? '#c0392b' : '#bbb' }} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>vs. {rival}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>vs. {rival}</div>
+                  {p.amistoso && <span style={{ background: '#fff3cd', color: '#856a00', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 10, flexShrink: 0 }}>Amistoso</span>}
+                </div>
                 <div style={{ fontSize: 11, color: 'var(--gris-mid)', marginTop: 1 }}>J{p.jornada} · {fmt(p.fecha)} · {esL ? 'Local' : 'Visitante'}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>

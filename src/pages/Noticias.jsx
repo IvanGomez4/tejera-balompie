@@ -160,12 +160,11 @@ export default function Noticias() {
         >
           <div
             onClick={e => e.stopPropagation()}
-            style={{ position: 'relative', maxWidth: 480, width: '100%', borderRadius: 16, overflow: 'hidden', background: 'white', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}
-          >
+            style={{ position: 'relative', maxWidth: 480, width: '100%', maxHeight: '90vh', borderRadius: 16, overflow: 'auto', background: 'white', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}          >
             <img
               src={visor.imagen_url}
               alt={visor.titulo}
-              style={{ width: '100%', display: 'block', maxHeight: '70vh', objectFit: 'contain', background: '#111' }}
+              style={{ width: '100%', display: 'block', objectFit: 'contain', background: '#111' }}
             />
             <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
