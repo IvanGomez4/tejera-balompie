@@ -56,19 +56,19 @@ export default function ImageCropper({ src, onCrop, onCancel }) {
       img.naturalHeight * scale
     )
 
-    // Oscurecer fuera del círculo
+    // Oscurecer SOLO fuera del círculo (no dentro)
     ctx.save()
-    ctx.fillStyle = 'rgba(0,0,0,0.55)'
-    ctx.fillRect(0, 0, SIZE, SIZE)
-    ctx.globalCompositeOperation = 'destination-out'
+    // Crear path del área exterior al círculo
     ctx.beginPath()
-    ctx.arc(SIZE / 2, SIZE / 2, SIZE / 2 - 2, 0, Math.PI * 2)
-    ctx.fill()
+    ctx.rect(0, 0, SIZE, SIZE)
+    ctx.arc(SIZE / 2, SIZE / 2, SIZE / 2 - 2, 0, Math.PI * 2, true) // true = sentido horario inverso = hueco
+    ctx.fillStyle = 'rgba(0,0,0,0.6)'
+    ctx.fill('evenodd')
     ctx.restore()
 
     // Borde del círculo
     ctx.save()
-    ctx.strokeStyle = 'rgba(255,255,255,0.8)'
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)'
     ctx.lineWidth = 2
     ctx.beginPath()
     ctx.arc(SIZE / 2, SIZE / 2, SIZE / 2 - 2, 0, Math.PI * 2)

@@ -4,7 +4,6 @@ import { useStore } from '../hooks/useStore'
 import { adminAuth } from '../lib/adminAuth'
 import { EQUIPO_NOMBRE } from '../lib/mockData'
 import { haptics } from '../lib/haptics'
-import ImageCropper from '../components/ImageCropper'
 
 function initials(n) { return n.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() }
 function Avatar({ jugador, size = 'sm' }) {
@@ -74,7 +73,6 @@ function PanelJugadores({ jugadores, store }) {
   const [form, setForm] = useState(empty)
   const [fotoArchivo, setFotoArchivo] = useState(null)
   const [fotoPreview, setFotoPreview] = useState(null)
-  const [cropSrc, setCropSrc] = useState(null)
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const openAdd = () => { setForm(empty); setFotoArchivo(null); setFotoPreview(null); setModal({ mode: 'add' }) }
@@ -155,8 +153,8 @@ function PanelJugadores({ jugadores, store }) {
                     onChange={e => {
                       const file = e.target.files[0]
                       if (!file) return
-                      const url = URL.createObjectURL(file)
-                      setCropSrc(url)
+                      setFotoArchivo(file)
+                      setFotoPreview(URL.createObjectURL(file))
                     }}
                   />
                 </label>
@@ -169,18 +167,6 @@ function PanelJugadores({ jugadores, store }) {
               </div>
             </div>
           </div>
-          {cropSrc && (
-            <ImageCropper
-              src={cropSrc}
-              onCrop={(blob) => {
-                const croppedFile = new File([blob], 'foto.jpg', { type: 'image/jpeg' })
-                setFotoArchivo(croppedFile)
-                setFotoPreview(URL.createObjectURL(blob))
-                setCropSrc(null)
-              }}
-              onCancel={() => setCropSrc(null)}
-            />
-          )}
           <button onClick={save} className="btn btn-primary btn-block">Guardar</button>
         </Modal>
       )}
@@ -439,7 +425,7 @@ function PanelClasificacion({ clasificacion, store }) {
         <Modal title="Añadir equipo" onClose={() => setShowAdd(false)}>
           <div className="form-group">
             <label className="label">Nombre del equipo</label>
-            <input className="input" value={newEquipo.equipo} onChange={e => setNewEquipo(n => ({ ...n, equipo: e.target.value }))} placeholder="Ej: CD Villacañas" autoFocus />
+            <input className="input" value={newEquipo.equipo} onChange={e => setNewEquipo(n => ({ ...n, equipo: e.target.value }))} autoFocus />
           </div>
           <div className="form-group">
             <label className="label">Grupo</label>
@@ -480,6 +466,7 @@ function PanelTemporada({ store }) {
   const [cerrando, setCerrando] = useState(false)
   const [confirmando, setConfirmando] = useState(false)
   const [pwdSuper, setPwdSuper] = useState('')
+  const [showPwdSuper, setShowPwdSuper] = useState(false)
   const [errorPwd, setErrorPwd] = useState('')
 
   useEffect(() => {
@@ -539,7 +526,12 @@ function PanelTemporada({ store }) {
               </div>
               <div className="form-group">
                 <label className="label">🔐 Contraseña de superadmin</label>
-                <input className="input" type="password" placeholder="Solo el creador de la app puede hacer esto" value={pwdSuper} onChange={e => { setPwdSuper(e.target.value); setErrorPwd('') }} />
+                <div style={{ position: 'relative' }}>
+                  <input className="input" type={showPwdSuper ? 'text' : 'password'} placeholder="Solo el creador de la app puede hacer esto" value={pwdSuper} onChange={e => { setPwdSuper(e.target.value); setErrorPwd('') }} style={{ paddingRight: 48 }} />
+                  <button type="button" onClick={() => setShowPwdSuper(v => !v)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--gris-mid)', padding: 4 }}>
+                    {showPwdSuper ? '🙈' : '👁️'}
+                  </button>
+                </div>
                 {errorPwd && <div style={{ color: '#c0392b', fontSize: 12, marginTop: 4 }}>⚠️ {errorPwd}</div>}
               </div>
               <div style={{ display: 'flex', gap: 10 }}>

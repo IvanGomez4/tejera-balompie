@@ -32,8 +32,11 @@ export default function Navbar() {
   const [showModal, setShowModal] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [pwd, setPwd] = useState('')
+  const [showPwd, setShowPwd] = useState(false)
   const [jugadorSel, setJugadorSel] = useState('')
   const [error, setError] = useState('')
+  const [intentos, setIntentos] = useState(0)
+  const [bloqueado, setBloqueado] = useState(false)
 
   // Swipe desde borde izquierdo
   const touchStartX = useRef(null)
@@ -76,21 +79,34 @@ export default function Navbar() {
   }, [showMenu])
 
   const openModal = () => {
-    setPwd(''); setJugadorSel(''); setError('')
+    setPwd(''); setJugadorSel(''); setError(''); setShowPwd(false)
     setShowMenu(false)
     setShowModal(true)
   }
 
   const handleLogin = async (e) => {
     e.preventDefault()
+    if (bloqueado) return
     if (!jugadorSel) { setError('Elige tu nombre'); return }
     const isValid = await adminAuth.login(pwd)
-    if (!isValid) { setError('Contraseña incorrecta'); return }
+    if (!isValid) {
+      const nuevosIntentos = intentos + 1
+      setIntentos(nuevosIntentos)
+      if (nuevosIntentos >= 5) {
+        setBloqueado(true)
+        setError('Demasiados intentos. Espera 5 minutos.')
+        setTimeout(() => { setBloqueado(false); setIntentos(0); setError('') }, 5 * 60 * 1000)
+      } else {
+        setError(`Contraseña incorrecta (${nuevosIntentos}/5 intentos)`)
+      }
+      return
+    }
     const jugador = jugadores.find(j => j.id === Number(jugadorSel))
     if (jugador) {
       adminAuth.setJugador(jugador)
       setJugadorActivo(jugador)
     }
+    setIntentos(0)
     setLogged(true)
     setShowModal(false)
     navigate('/admin')
@@ -117,7 +133,7 @@ export default function Navbar() {
 
           {/* Escudo — va a home */}
           <img
-            src="/escudo.png" alt="Escudo"
+            src={"/escudo.png"} alt="Escudo"
             onClick={() => navigate('/')}
             style={{ width: 42, height: 42, objectFit: 'contain', flexShrink: 0, cursor: 'pointer' }}
           />
@@ -195,7 +211,7 @@ export default function Navbar() {
             {/* Cabecera del menú */}
             <div style={{ padding: '1.25rem 1.25rem 1rem', borderBottom: '1px solid #3d1020' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: logged && jugadorActivo ? 14 : 0 }}>
-                <img src="/escudo.png" alt="Escudo" style={{ width: 36, height: 36, objectFit: 'contain' }} />
+                <img src={"/escudo.png"} alt="" style={{ width: 36, height: 36, objectFit: 'contain' }} />
                 <div>
                   <div style={{ fontFamily: 'Bebas Neue', fontSize: 16, color: '#e8a0b0', letterSpacing: '0.06em', lineHeight: 1 }}>
                     Tejera Balompié
@@ -308,7 +324,7 @@ export default function Navbar() {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1.25rem' }}>
               <div style={{ background: 'linear-gradient(135deg,#0d0a0b,#5a1520)', borderRadius: '50%', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <img src="/escudo.png" alt="" style={{ width: 42, height: 42, objectFit: 'contain' }} />
+                <img src={"/escudo.png"} alt="" style={{ width: 42, height: 42, objectFit: 'contain' }} />
               </div>
               <div>
                 <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: 'var(--verde)', lineHeight: 1 }}>
@@ -338,10 +354,15 @@ export default function Navbar() {
               </div>
               <div className="form-group">
                 <label className="label">Contraseña del equipo</label>
-                <input className="input" type="password" placeholder="••••••••••••" value={pwd} onChange={e => { setPwd(e.target.value); setError('') }} autoComplete="current-password" required />
+                <div style={{ position: 'relative' }}>
+                  <input className="input" type={showPwd ? 'text' : 'password'} placeholder="••••••••••••" value={pwd} onChange={e => { setPwd(e.target.value); setError('') }} autoComplete="current-password" required style={{ paddingRight: 48 }} />
+                  <button type="button" onClick={() => setShowPwd(v => !v)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--gris-mid)', padding: 4 }}>
+                    {showPwd ? '🙈' : '👁️'}
+                  </button>
+                </div>
               </div>
-              <button type="submit" className="btn btn-primary btn-block" style={{ fontSize: 16 }}>
-                Entrar al panel
+              <button type="submit" disabled={bloqueado} className="btn btn-primary btn-block" style={{ fontSize: 16, opacity: bloqueado ? 0.5 : 1 }}>
+                {bloqueado ? '🔒 Bloqueado temporalmente' : 'Entrar al panel'}
               </button>
             </form>
 
