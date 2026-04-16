@@ -209,8 +209,7 @@ function PanelPartidos({ partidos, store }) {
           return (
             <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: i < nuestros.length - 1 ? '1px solid #f5e8eb' : 'none' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>J{p.jornada} · vs. {rival}</div>
-                <div style={{ fontSize: 11, color: 'var(--gris-mid)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.amistoso ? 'Amistoso' : `J${p.jornada}`} vs {rival}</div>                <div style={{ fontSize: 11, color: 'var(--gris-mid)', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span>{p.fecha} · {p.jugado ? `${p.goles_local}–${p.goles_visitante}` : 'Pendiente'}</span>
                   {p.amistoso && <span style={{ background: '#fff3cd', color: '#856a00', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 10 }}>Amistoso</span>}
                 </div>              </div>
@@ -222,7 +221,10 @@ function PanelPartidos({ partidos, store }) {
       </div>
       {modal && (
         <Modal title={modal.mode === 'add' ? 'Nuevo partido' : 'Editar partido'} onClose={() => setModal(null)}>
-          <div className="form-group"><label className="label">Jornada</label><input className="input" type="number" value={form.jornada} onChange={e => set('jornada', e.target.value)} placeholder="Nº jornada" /></div>
+          <div className="form-group">
+            <label className="label">Jornada</label>
+            <input className="input" type="number" value={form.amistoso ? '' : form.jornada} onChange={e => set('jornada', e.target.value)} placeholder={form.amistoso ? 'No aplica (amistoso)' : 'Nº jornada'} disabled={form.amistoso} style={{ opacity: form.amistoso ? 0.5 : 1 }} />
+          </div>
           <div className="form-group"><label className="label">Fecha</label><input className="input" type="date" value={form.fecha} onChange={e => set('fecha', e.target.value)} /></div>
           <div className="form-group"><label className="label">Equipo local</label><input className="input" value={form.local} onChange={e => set('local', e.target.value)} /></div>
           <div className="form-group"><label className="label">Equipo visitante</label><input className="input" value={form.visitante} onChange={e => set('visitante', e.target.value)} placeholder="Nombre del rival" /></div>
@@ -282,7 +284,7 @@ function PanelStats({ jugadores, partidos, stats, store }) {
           <option value="">Elige un partido...</option>
           {jugados.map(p => {
             const rival = p.local === EQUIPO_NOMBRE ? p.visitante : p.local
-            return <option key={p.id} value={p.id}>J{p.jornada} · vs {rival} ({p.goles_local}–{p.goles_visitante}) · {p.fecha}</option>
+            return <option key={p.id} value={p.id}>{p.amistoso ? 'Amistoso' : `J${p.jornada}`} vs {rival} ({p.goles_local}–{p.goles_visitante}) · {p.fecha}</option>
           })}
         </select>
       </div>

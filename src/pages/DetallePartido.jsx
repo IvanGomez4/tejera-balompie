@@ -315,7 +315,7 @@ export default function DetallePartido() {
       {/* Cabecera */}
       <div style={{ background: 'linear-gradient(135deg,#0d0a0b,#5a1520)', borderRadius: 20, padding: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>
         <div style={{ fontSize: 11, color: '#6a3a42', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
-          Jornada {partido.jornada} · {fmt(partido.fecha)}
+          {partido.amistoso ? 'Amistoso' : `Jornada ${partido.jornada}`} · {fmt(partido.fecha)}
         </div>
         <div style={{ fontSize: 13, color: '#e8a0b0', marginBottom: 12 }}>📍 {partido.campo}</div>
         {partido.jugado ? (

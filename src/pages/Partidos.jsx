@@ -72,7 +72,7 @@ export default function Partidos() {
             const cond = p.local === EQUIPO_NOMBRE ? 'Local' : 'Visitante'
             return (
               <div key={p.id} onClick={() => nav(`/partido/${p.id}`)} style={{ background: i === 0 ? 'var(--negro-soft)' : 'white', borderRadius: 14, padding: '1rem', flexShrink: 0, minWidth: 180, border: '1px solid', borderColor: i === 0 ? 'var(--verde)' : '#f0e8ea', cursor: 'pointer' }}>
-                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4, color: i === 0 ? '#e8a0b0' : 'var(--verde-mid)' }}>J{p.jornada} · {cond}</div>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4, color: i === 0 ? '#e8a0b0' : 'var(--verde-mid)' }}>{p.amistoso ? 'Amistoso' : `J${p.jornada}`} · {cond}</div>
                 <div style={{ fontSize: 16, fontWeight: 700, color: i === 0 ? 'white' : 'var(--negro)', marginBottom: 4 }}>vs. {rival}</div>
                 <div style={{ fontSize: 12, color: i === 0 ? '#666' : 'var(--gris-mid)' }}>{fmt(p.fecha)}</div>
                 <div style={{ fontSize: 11, color: i === 0 ? '#555' : 'var(--gris-light)', marginTop: 3 }}>📍 {p.campo}</div>
@@ -97,7 +97,7 @@ export default function Partidos() {
                   <div style={{ fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>vs. {rival}</div>
                   {p.amistoso && <span style={{ background: '#fff3cd', color: '#856a00', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 10, flexShrink: 0 }}>Amistoso</span>}
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--gris-mid)', marginTop: 1 }}>J{p.jornada} · {fmt(p.fecha)} · {esL ? 'Local' : 'Visitante'}</div>
+                <div style={{ fontSize: 11, color: 'var(--gris-mid)', marginTop: 1 }}>{p.amistoso ? 'Amistoso' : `J${p.jornada}`} · {fmt(p.fecha)}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>

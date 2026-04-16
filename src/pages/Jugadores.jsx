@@ -240,9 +240,9 @@ export default function Jugadores() {
               </div>
               <div>
                 <div style={{ fontFamily: 'Bebas Neue', fontSize: 26, color: 'var(--verde)', lineHeight: 1 }}>{jugador.nombre}</div>
-                <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
                   <span className={`pos-pill ${posClass[jugador.posicion]}`}>{jugador.posicion}</span>
-                  <span style={{ fontFamily: 'Bebas Neue', fontSize: 20, color: '#c8aab2' }}>#{jugador.dorsal}</span>
+                  <span style={{ fontFamily: 'Bebas Neue', fontSize: 20, color: '#c8aab2', lineHeight: 1 }}>#{jugador.dorsal}</span>
                 </div>
               </div>
             </div>

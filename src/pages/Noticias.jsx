@@ -156,11 +156,10 @@ export default function Noticias() {
       {visor && (
         <div
           onClick={() => setVisor(null)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 500, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
-        >
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 500, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '1rem', paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
           <div
             onClick={e => e.stopPropagation()}
-            style={{ position: 'relative', maxWidth: 480, width: '100%', maxHeight: '90vh', borderRadius: 16, overflow: 'auto', background: 'white', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}          >
+            style={{ position: 'relative', maxWidth: 480, width: '100%', margin: '0 auto', borderRadius: 16, overflow: 'hidden', background: 'white', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}>
             <img
               src={visor.imagen_url}
               alt={visor.titulo}

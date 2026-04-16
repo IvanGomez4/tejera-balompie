@@ -29,11 +29,13 @@ export default function Inicio() {
   const { jugadores, partidos, stats, clasificacion } = useStore()
 
   const nuestro = clasificacion.find(e => e.equipo === EQUIPO_NOMBRE)
-  const totalGoles = stats.reduce((s, x) => s + x.goles, 0)
+  const idsAmistosos = new Set(partidos.filter(p => p.amistoso).map(p => p.id))
+  const statsCompeticion = stats.filter(s => !idsAmistosos.has(s.partido_id))
+  const totalGoles = statsCompeticion.reduce((s, x) => s + x.goles, 0)
 
   // Totales por jugador
   const totales = jugadores.map(j => {
-    const ss = stats.filter(s => s.jugador_id === j.id)
+    const ss = statsCompeticion.filter(s => s.jugador_id === j.id)
     return { ...j, goles: ss.reduce((a, s) => a + s.goles, 0), asistencias: ss.reduce((a, s) => a + s.asistencias, 0) }
   })
   const goleador = [...totales].sort((a, b) => b.goles - a.goles)[0]
@@ -181,7 +183,7 @@ export default function Inicio() {
               <div style={{ width: 4, height: 36, borderRadius: 2, flexShrink: 0, background: r === 'victoria' ? 'var(--verde-mid)' : r === 'derrota' ? '#c0392b' : '#bbb' }} />
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 600 }}>vs. {rival}</div>
-                <div style={{ fontSize: 11, color: 'var(--gris-mid)' }}>J{p.jornada} · {fmt(p.fecha)}</div>
+                <div style={{ fontSize: 11, color: 'var(--gris-mid)' }}>{p.amistoso ? 'Amistoso' : `J${p.jornada}`} · {fmt(p.fecha)}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span className="score-box">{p.goles_local}–{p.goles_visitante}</span>
