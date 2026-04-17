@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useStore } from '../hooks/useStore'
 import { adminAuth } from '../lib/adminAuth'
-import { pushSoportado, pushPermiso, suscribirPush, desuscribirPush, enviarNotificacion } from '../lib/push'
+import { pushSoportado, esIOSsinInstalar, pushPermiso, suscribirPush, desuscribirPush, enviarNotificacion } from '../lib/push'
 
 function formatFecha(iso) {
   const d = new Date(iso)
@@ -105,15 +105,17 @@ export default function Noticias() {
   }
 
   const togglePush = async () => {
+    if (pushCargando) return
     setPushCargando(true)
     if (pushActivo) {
       await desuscribirPush()
       setPushActivo(false)
     } else {
+      // suscribirPush ya llama a requestPermission como primer paso
       const ok = await suscribirPush()
       setPushActivo(ok)
       if (!ok && pushPermiso() === 'denied') {
-        alert('Las notificaciones están bloqueadas en tu navegador. Actívalas desde los ajustes del sitio.')
+        alert('Las notificaciones están bloqueadas. Actívalas en Ajustes del dispositivo.')
       }
     }
     setPushCargando(false)
@@ -149,7 +151,24 @@ export default function Noticias() {
         </div>
       </div>
 
-      {/* Banner de invitación — solo si aún no ha respondido */}
+      {/* Banner iOS sin instalar — les explicamos que tienen que instalarla */}
+      {esIOSsinInstalar() && (
+        <div style={{
+          display: 'flex', alignItems: 'flex-start', gap: 10,
+          background: '#fff8e6', border: '1px solid #f0c040',
+          borderRadius: 12, padding: '10px 14px', marginBottom: '1rem',
+        }}>
+          <span style={{ fontSize: 22, flexShrink: 0 }}>📲</span>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#856a00' }}>Instala la app para recibir avisos</div>
+            <div style={{ fontSize: 11, color: '#a08030', marginTop: 2 }}>
+              En Safari pulsa <strong>Compartir →</strong> <strong>Añadir a pantalla de inicio</strong>. Después activa las notificaciones desde la app.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Banner normal — solo si push soportado y no ha respondido aún */}
       {pushSoportado() && !pushActivo && pushPermiso() === 'default' && (
         <div
           onClick={togglePush}
@@ -164,7 +183,10 @@ export default function Noticias() {
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--verde)' }}>Activa las notificaciones</div>
             <div style={{ fontSize: 11, color: 'var(--gris-mid)' }}>Recibe un aviso cuando se suba una nueva portada</div>
           </div>
-          <span style={{ color: 'var(--verde)', fontSize: 18 }}>›</span>
+          {pushCargando
+            ? <span style={{ fontSize: 13, color: 'var(--gris-mid)' }}>...</span>
+            : <span style={{ color: 'var(--verde)', fontSize: 18 }}>›</span>
+          }
         </div>
       )}
 
