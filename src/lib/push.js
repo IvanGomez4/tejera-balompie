@@ -34,11 +34,13 @@ export async function suscribirPush() {
   }
 
   try {
-    const reg = await navigator.serviceWorker.ready
-
-    // Pedir permiso (si ya está concedido no vuelve a preguntar)
+    // 🚨 CAMBIO VITAL PARA iOS: 
+    // Pedir el permiso INMEDIATAMENTE al hacer clic, antes de cualquier "await" al Service Worker.
     const permiso = await Notification.requestPermission()
     if (permiso !== 'granted') return false
+
+    // Una vez dado el permiso, YA PODEMOS esperar al Service Worker tranquilamente
+    const reg = await navigator.serviceWorker.ready
 
     // Crear o recuperar suscripción existente
     const subscription = await reg.pushManager.subscribe({

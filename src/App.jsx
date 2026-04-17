@@ -104,6 +104,18 @@ function SplashScreen({ onDone }) {
 export default function App() {
   const [showSplash, setShowSplash] = useState(true)
 
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => {
+          console.log('Service Worker registrado con éxito:', reg.scope);
+        })
+        .catch(err => {
+          console.error('Fallo al registrar Service Worker:', err);
+        });
+    }
+  }, [])
+
   const handleRefresh = async () => {
     await store.init()
   }
