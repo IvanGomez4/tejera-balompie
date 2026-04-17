@@ -21,6 +21,7 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return
   if (e.request.url.includes('supabase')) return
+
   e.respondWith(
     fetch(e.request)
       .then(res => {
@@ -28,7 +29,19 @@ self.addEventListener('fetch', e => {
         caches.open(CACHE).then(c => c.put(e.request, clone))
         return res
       })
-      .catch(() => caches.match(e.request))
+      .catch(() => {
+        return caches.match(e.request).then(cachedRes => {
+          // Si está en la caché, lo devolvemos. 
+          if (cachedRes) return cachedRes;
+
+          // Si no está en caché ni hay red, devolvemos una respuesta genérica 503 
+          // para evitar que el Service Worker colapse con un TypeError.
+          return new Response('Sin conexión a internet y recurso no cacheado', {
+            status: 503,
+            statusText: 'Service Unavailable'
+          });
+        });
+      })
   )
 })
 
