@@ -92,14 +92,18 @@ export async function enviarNotificacion({ titulo, imagen_url }) {
   try {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
     const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-    await fetch(`${supabaseUrl}/functions/v1/send-push`, {
+
+    const res = await fetch(`${supabaseUrl}/functions/v1/send-push`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${anonKey}`,
+        'apikey': anonKey,
+        'Authorization': `Bearer ${anonKey}`,
       },
       body: JSON.stringify({ titulo, imagen_url }),
     })
+    const data = await res.json()
+    console.log('[push] Respuesta send-push:', data)
   } catch (err) {
     console.error('[push] Error enviando notificación:', err)
   }
