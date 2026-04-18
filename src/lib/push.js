@@ -91,20 +91,17 @@ export async function desuscribirPush() {
 export async function enviarNotificacion({ titulo, imagen_url }) {
   try {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
     const res = await fetch(`${supabaseUrl}/functions/v1/send-push`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': anonKey,
-        'Authorization': `Bearer ${anonKey}`,
+        'x-push-secret': 'tejera2026push',
       },
       body: JSON.stringify({ titulo, imagen_url }),
     })
     const data = await res.json()
-    console.log('[push] Respuesta send-push:', data)
+    console.log('[push] Respuesta:', data)
   } catch (err) {
-    console.error('[push] Error enviando notificación:', err)
+    console.error('[push] Error:', err)
   }
 }
