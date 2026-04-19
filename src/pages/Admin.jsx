@@ -177,7 +177,7 @@ function PanelJugadores({ jugadores, store }) {
 // ---- Panel Partidos ----
 function PanelPartidos({ partidos, store }) {
   const [modal, setModal] = useState(null)
-  const emptyP = { jornada: '', fecha: '', local: EQUIPO_NOMBRE, visitante: '', campo: 'Campo Municipal', jugado: false, goles_local: 0, goles_visitante: 0, amistoso: false }
+  const emptyP = { jornada: '', fecha: '', hora: '', local: EQUIPO_NOMBRE, visitante: '', campo: 'Campo Municipal', jugado: false, goles_local: 0, goles_visitante: 0, amistoso: false }
   const [form, setForm] = useState(emptyP)
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
@@ -186,10 +186,11 @@ function PanelPartidos({ partidos, store }) {
     .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
 
   const openAdd = () => { setForm(emptyP); setModal({ mode: 'add' }) }
-  const openEdit = (p) => { setForm({ jornada: p.jornada, fecha: p.fecha, local: p.local, visitante: p.visitante, campo: p.campo, jugado: p.jugado, goles_local: p.goles_local, goles_visitante: p.goles_visitante, amistoso: p.amistoso || false }); setModal({ mode: 'edit', id: p.id }) }
+  const openEdit = (p) => { setForm({ jornada: p.jornada, fecha: p.fecha, hora: p.hora || '', local: p.local, visitante: p.visitante, campo: p.campo, jugado: p.jugado, goles_local: p.goles_local, goles_visitante: p.goles_visitante, amistoso: p.amistoso || false }); setModal({ mode: 'edit', id: p.id }) }
   const save = () => {
     if (!form.fecha) return
-    const data = { ...form, jornada: Number(form.jornada) || 0, goles_local: Number(form.goles_local) || 0, goles_visitante: Number(form.goles_visitante) || 0 }
+    const esFuturo = form.fecha && new Date(form.fecha) > new Date()
+    const data = { ...form, jornada: Number(form.jornada) || 0, goles_local: Number(form.goles_local) || 0, goles_visitante: Number(form.goles_visitante) || 0, jugado: esFuturo ? false : form.jugado }
     haptics.success()
     if (modal.mode === 'add') store.addPartido(data)
     else store.updatePartido(modal.id, data)
@@ -210,7 +211,7 @@ function PanelPartidos({ partidos, store }) {
             <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: i < nuestros.length - 1 ? '1px solid #f5e8eb' : 'none' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.amistoso ? 'Amistoso' : `J${p.jornada}`} vs {rival}</div>                <div style={{ fontSize: 11, color: 'var(--gris-mid)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span>{p.fecha} · {p.jugado ? `${p.goles_local}–${p.goles_visitante}` : 'Pendiente'}</span>
+                  <span>{p.fecha} · {p.hora} · {p.jugado ? `${p.goles_local}–${p.goles_visitante}` : 'Pendiente'}</span>
                   {p.amistoso && <span style={{ background: '#fff3cd', color: '#856a00', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 10 }}>Amistoso</span>}
                 </div>              </div>
               <button onClick={() => openEdit(p)} style={{ background: 'none', border: '1px solid #c8aab2', borderRadius: 8, padding: '4px 10px', fontSize: 12, cursor: 'pointer', color: 'var(--verde)', flexShrink: 0 }}>Editar</button>
@@ -225,14 +226,24 @@ function PanelPartidos({ partidos, store }) {
             <label className="label">Jornada</label>
             <input className="input" type="number" value={form.amistoso ? '' : form.jornada} onChange={e => set('jornada', e.target.value)} placeholder={form.amistoso ? 'No aplica (amistoso)' : 'Nº jornada'} disabled={form.amistoso} style={{ opacity: form.amistoso ? 0.5 : 1 }} />
           </div>
-          <div className="form-group"><label className="label">Fecha</label><input className="input" type="date" value={form.fecha} onChange={e => set('fecha', e.target.value)} /></div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div className="form-group"><label className="label">Fecha</label><input className="input" type="date" value={form.fecha} onChange={e => set('fecha', e.target.value)} /></div>
+            <div className="form-group"><label className="label">Hora</label><input className="input" type="time" value={form.hora} onChange={e => set('hora', e.target.value)} placeholder="HH:MM" /></div>
+          </div>
           <div className="form-group"><label className="label">Equipo local</label><input className="input" value={form.local} onChange={e => set('local', e.target.value)} /></div>
           <div className="form-group"><label className="label">Equipo visitante</label><input className="input" value={form.visitante} onChange={e => set('visitante', e.target.value)} placeholder="Nombre del rival" /></div>
           <div className="form-group"><label className="label">Campo</label><input className="input" value={form.campo} onChange={e => set('campo', e.target.value)} /></div>
-          <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <input type="checkbox" id="jugado" checked={form.jugado} onChange={e => set('jugado', e.target.checked)} style={{ width: 18, height: 18, accentColor: 'var(--verde)' }} />
-            <label htmlFor="jugado" className="label" style={{ margin: 0 }}>Partido ya jugado</label>
-          </div>
+          {(() => {
+            const esFuturo = form.fecha && new Date(form.fecha) > new Date()
+            return (
+              <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 10, opacity: esFuturo ? 0.4 : 1 }}>
+                <input type="checkbox" id="jugado" checked={esFuturo ? false : form.jugado} onChange={e => !esFuturo && set('jugado', e.target.checked)} disabled={esFuturo} style={{ width: 18, height: 18, accentColor: 'var(--verde)' }} />
+                <label htmlFor="jugado" className="label" style={{ margin: 0 }}>
+                  Partido ya jugado {esFuturo && <span style={{ fontSize: 11, color: 'var(--gris-mid)', fontWeight: 400 }}>(fecha futura)</span>}
+                </label>
+              </div>
+            )
+          })()}
           <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <input type="checkbox" id="amistoso" checked={form.amistoso} onChange={e => set('amistoso', e.target.checked)} style={{ width: 18, height: 18, accentColor: 'var(--dorado)' }} />
             <label htmlFor="amistoso" className="label" style={{ margin: 0 }}>
@@ -260,6 +271,15 @@ function PanelStats({ jugadores, partidos, stats, store }) {
   const [form, setForm] = useState(emptyS)
   const [mvpSel, setMvpSel] = useState('')
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const partidoId = params.get('partido')
+    if (partidoId && partidos.length > 0) {
+      const p = partidos.find(x => x.id === Number(partidoId))
+      if (p) setPartidoSel(p.id)
+    }
+  }, [partidos])
 
   const jugados = partidos
     .filter(p => p.jugado && (p.local === EQUIPO_NOMBRE || p.visitante === EQUIPO_NOMBRE))
@@ -682,7 +702,10 @@ const adminTabs = [
 
 export default function Admin() {
   const { jugadores, partidos, stats, clasificacion, store } = useStore()
-  const [tab, setTab] = useState('stats')
+  const [tab, setTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search)
+    return params.get('tab') || 'stats'
+  })
   const navigate = useNavigate()
 
   const handleLogout = () => {

@@ -245,6 +245,8 @@ export default function DetallePartido() {
   const nav = useNavigate()
   const { partidos, jugadores, stats, store } = useStore()  // ← una sola llamada
   const [editandoAlin, setEditandoAlin] = useState(false)
+  const [editandoPartido, setEditandoPartido] = useState(false)
+  const [formPartido, setFormPartido] = useState(null)
   const isAdmin = adminAuth.isLogged()
   const [votos, setVotos] = useState([])
   const [miVoto, setMiVoto] = useState(null)
@@ -539,9 +541,123 @@ export default function DetallePartido() {
       )}
 
       {isAdmin && (
-        <button onClick={() => nav('/admin')} className="btn btn-ghost btn-block" style={{ marginTop: '0.5rem' }}>
-          ✏️ Editar este partido
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: '0.5rem' }}>
+          <button
+            onClick={() => nav('/admin?tab=stats&partido=' + partido.id)}
+            className="btn btn-primary btn-block"
+          >
+            📊 Añadir estadísticas
+          </button>
+          <button
+            onClick={() => {
+              setFormPartido({
+                jornada: partido.jornada,
+                fecha: partido.fecha,
+                hora: partido.hora || '',
+                local: partido.local,
+                visitante: partido.visitante,
+                campo: partido.campo,
+                jugado: partido.jugado,
+                goles_local: partido.goles_local,
+                goles_visitante: partido.goles_visitante,
+                amistoso: partido.amistoso || false,
+              })
+              setEditandoPartido(true)
+            }}
+            className="btn btn-ghost btn-block"
+          >
+            ✏️ Editar este partido
+          </button>
+        </div>
+      )}
+      {/* Modal editar partido */}
+      {editandoPartido && formPartido && (
+        <>
+          <div onClick={() => setEditandoPartido(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 400 }} />
+          <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 500, background: 'white', borderRadius: '20px 20px 0 0', padding: '1.5rem', paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))', maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 -4px 30px rgba(0,0,0,0.2)', animation: 'slideUpModal 0.3s cubic-bezier(0.32,0.72,0,1)' }}>
+            <div style={{ width: 36, height: 4, background: '#ddd', borderRadius: 2, margin: '-0.5rem auto 1rem' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h2 style={{ fontSize: 22, color: 'var(--verde)', fontFamily: 'Bebas Neue' }}>Editar partido</h2>
+              <button onClick={() => setEditandoPartido(false)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#aaa' }}>✕</button>
+            </div>
+
+            {/* Jornada */}
+            <div className="form-group">
+              <label className="label">Jornada</label>
+              <input className="input" type="number" value={formPartido.amistoso ? '' : formPartido.jornada} onChange={e => setFormPartido(f => ({ ...f, jornada: e.target.value }))} placeholder={formPartido.amistoso ? 'No aplica (amistoso)' : 'Nº jornada'} disabled={formPartido.amistoso} style={{ opacity: formPartido.amistoso ? 0.5 : 1 }} />
+            </div>
+
+            {/* Fecha y hora */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div className="form-group"><label className="label">Fecha</label><input className="input" type="date" value={formPartido.fecha} onChange={e => setFormPartido(f => ({ ...f, fecha: e.target.value }))} /></div>
+              <div className="form-group"><label className="label">Hora</label><input className="input" type="time" value={formPartido.hora} onChange={e => setFormPartido(f => ({ ...f, hora: e.target.value }))} /></div>
+            </div>
+
+            {/* Local / Visitante / Campo */}
+            <div className="form-group"><label className="label">Equipo local</label><input className="input" value={formPartido.local} onChange={e => setFormPartido(f => ({ ...f, local: e.target.value }))} /></div>
+            <div className="form-group"><label className="label">Equipo visitante</label><input className="input" value={formPartido.visitante} onChange={e => setFormPartido(f => ({ ...f, visitante: e.target.value }))} /></div>
+            <div className="form-group"><label className="label">Campo</label><input className="input" value={formPartido.campo} onChange={e => setFormPartido(f => ({ ...f, campo: e.target.value }))} /></div>
+
+            {/* Jugado — bloqueado si fecha futura */}
+            {(() => {
+              const esFuturo = formPartido.fecha && new Date(formPartido.fecha) > new Date()
+              return (
+                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 10, opacity: esFuturo ? 0.4 : 1 }}>
+                  <input type="checkbox" id="jugado-detalle" checked={esFuturo ? false : formPartido.jugado} onChange={e => !esFuturo && setFormPartido(f => ({ ...f, jugado: e.target.checked }))} disabled={esFuturo} style={{ width: 18, height: 18, accentColor: 'var(--verde)' }} />
+                  <label htmlFor="jugado-detalle" className="label" style={{ margin: 0 }}>
+                    Partido ya jugado {esFuturo && <span style={{ fontSize: 11, color: 'var(--gris-mid)', fontWeight: 400 }}>(fecha futura)</span>}
+                  </label>
+                </div>
+              )
+            })()}
+
+            {/* Amistoso */}
+            <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <input type="checkbox" id="amistoso-detalle" checked={formPartido.amistoso} onChange={e => setFormPartido(f => ({ ...f, amistoso: e.target.checked }))} style={{ width: 18, height: 18, accentColor: 'var(--dorado)' }} />
+              <label htmlFor="amistoso-detalle" className="label" style={{ margin: 0 }}>Partido amistoso</label>
+            </div>
+
+            {/* Resultado si jugado */}
+            {formPartido.jugado && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16, textAlign: 'center' }}>
+                <div>
+                  <div className="label" style={{ textAlign: 'center', marginBottom: 8 }}>Goles {String(formPartido.local).split(' ')[0]}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' }}>
+                    <button type="button" onClick={() => setFormPartido(f => ({ ...f, goles_local: Math.max(0, f.goles_local - 1) }))} style={{ width: 40, height: 40, borderRadius: '50%', border: '1.5px solid #c8aab2', background: 'white', fontSize: 20, cursor: 'pointer' }}>−</button>
+                    <span style={{ fontFamily: 'Bebas Neue', fontSize: 32, color: 'var(--verde)', minWidth: 28, textAlign: 'center' }}>{formPartido.goles_local}</span>
+                    <button type="button" onClick={() => setFormPartido(f => ({ ...f, goles_local: f.goles_local + 1 }))} style={{ width: 40, height: 40, borderRadius: '50%', border: '1.5px solid #c8aab2', background: 'white', fontSize: 20, cursor: 'pointer' }}>+</button>
+                  </div>
+                </div>
+                <div>
+                  <div className="label" style={{ textAlign: 'center', marginBottom: 8 }}>Goles {String(formPartido.visitante).split(' ')[0] || 'Visitante'}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' }}>
+                    <button type="button" onClick={() => setFormPartido(f => ({ ...f, goles_visitante: Math.max(0, f.goles_visitante - 1) }))} style={{ width: 40, height: 40, borderRadius: '50%', border: '1.5px solid #c8aab2', background: 'white', fontSize: 20, cursor: 'pointer' }}>−</button>
+                    <span style={{ fontFamily: 'Bebas Neue', fontSize: 32, color: 'var(--verde)', minWidth: 28, textAlign: 'center' }}>{formPartido.goles_visitante}</span>
+                    <button type="button" onClick={() => setFormPartido(f => ({ ...f, goles_visitante: f.goles_visitante + 1 }))} style={{ width: 40, height: 40, borderRadius: '50%', border: '1.5px solid #c8aab2', background: 'white', fontSize: 20, cursor: 'pointer' }}>+</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={async () => {
+                const esFuturo = formPartido.fecha && new Date(formPartido.fecha) > new Date()
+                await store.updatePartido(partido.id, {
+                  ...formPartido,
+                  jornada: Number(formPartido.jornada) || 0,
+                  goles_local: Number(formPartido.goles_local) || 0,
+                  goles_visitante: Number(formPartido.goles_visitante) || 0,
+                  jugado: esFuturo ? false : formPartido.jugado,
+                })
+                setEditandoPartido(false)
+                window.location.reload()
+              }}
+              className="btn btn-primary btn-block"
+            >
+              Guardar cambios
+            </button>
+          </div>
+        </>
       )}
     </div>
   )

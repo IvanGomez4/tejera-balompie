@@ -172,7 +172,7 @@ export const store = {
   // =====================
   async addPartido(p) {
     if (USE_SUPABASE) {
-      const { data } = await supabase.from('partidos').insert({ jornada: p.jornada, fecha: p.fecha, local: p.local, visitante: p.visitante, campo: p.campo, jugado: p.jugado || false, goles_local: p.goles_local || 0, goles_visitante: p.goles_visitante || 0, temporada_id: _temporadaActiva?.id || null, amistoso: p.amistoso || false }).select().single()
+      const { data } = await supabase.from('partidos').insert({ jornada: p.jornada, fecha: p.fecha, hora: p.hora || null, local: p.local, visitante: p.visitante, campo: p.campo, jugado: p.jugado || false, goles_local: p.goles_local || 0, goles_visitante: p.goles_visitante || 0, temporada_id: _temporadaActiva?.id || null, amistoso: p.amistoso || false }).select().single()
       if (data) { _partidos = [..._partidos, data] }
     } else {
       const id = Math.max(0, ..._partidos.map(x => x.id)) + 1
@@ -183,7 +183,7 @@ export const store = {
     notify()
   },
   async updatePartido(id, data) {
-    if (USE_SUPABASE) await supabase.from('partidos').update({ jornada: data.jornada, fecha: data.fecha, local: data.local, visitante: data.visitante, campo: data.campo, jugado: data.jugado, goles_local: data.goles_local, goles_visitante: data.goles_visitante, alineacion: data.alineacion || null, formacion: data.formacion || null, amistoso: data.amistoso || false }).eq('id', id)
+    if (USE_SUPABASE) await supabase.from('partidos').update({ jornada: data.jornada, fecha: data.fecha, hora: data.hora || null, local: data.local, visitante: data.visitante, campo: data.campo, jugado: data.jugado, goles_local: data.goles_local, goles_visitante: data.goles_visitante, alineacion: data.alineacion || null, formacion: data.formacion || null, amistoso: data.amistoso || false }).eq('id', id)
     _partidos = _partidos.map(p => p.id === id ? { ...p, ...data } : p)
     if (!USE_SUPABASE) save('tj_partidos', _partidos)
     const p = _partidos.find(x => x.id === id)

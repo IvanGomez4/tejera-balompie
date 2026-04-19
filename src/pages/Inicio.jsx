@@ -183,10 +183,10 @@ export default function Inicio() {
               <div style={{ width: 4, height: 36, borderRadius: 2, flexShrink: 0, background: r === 'victoria' ? 'var(--verde-mid)' : r === 'derrota' ? '#c0392b' : '#bbb' }} />
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 600 }}>vs. {rival}</div>
-                <div style={{ fontSize: 11, color: 'var(--gris-mid)' }}>{p.amistoso ? 'Amistoso' : `J${p.jornada}`} · {fmt(p.fecha)}</div>
+                <div style={{ fontSize: 11, color: 'var(--gris-mid)' }}>{p.amistoso ? 'Amistoso' : `J${p.jornada}`} · {fmt(p.fecha)} · {p.hora}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span className="score-box">{p.goles_local}–{p.goles_visitante}</span>
+                <span className="score-box" style={{ background: '#3d1020', color: '#f0c141' }}>{p.goles_local}–{p.goles_visitante}</span>
                 <span className={`tag-${r}`}>{r === 'victoria' ? 'V' : r === 'derrota' ? 'D' : 'E'}</span>
               </div>
             </div>
