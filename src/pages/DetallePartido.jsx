@@ -174,70 +174,6 @@ function EditorAlineacion({ partido, jugadores, store, onClose }) {
   )
 }
 
-// ── Votación MVP ──
-function VotacionMVP({ partido, jugadores, store }) {
-  const jugadorActivo = adminAuth.getJugador()
-  const [miVoto, setMiVoto] = useState(null)
-  const [votando, setVotando] = useState(false)
-  const [enviado, setEnviado] = useState(false)
-
-  useEffect(() => {
-    if (jugadorActivo) {
-      store.getVotoMvp(partido.id, jugadorActivo.id).then(v => setMiVoto(v))
-    }
-  }, [partido.id, jugadorActivo])
-
-  if (!jugadorActivo) return (
-    <div style={{ textAlign: 'center', padding: '0.5rem', fontSize: 13, color: 'var(--gris-mid)' }}>
-      Identifícate para votar al MVP
-    </div>
-  )
-
-  if (enviado || miVoto) {
-    const votado = jugadores.find(j => j.id === (enviado || miVoto))
-    return (
-      <div style={{ textAlign: 'center', padding: '0.5rem', fontSize: 13, color: 'var(--verde-mid)' }}>
-        ✅ Has votado a <strong>{votado?.nombre || '—'}</strong>
-      </div>
-    )
-  }
-
-  if (votando) return (
-    <div>
-      <p style={{ fontSize: 13, color: 'var(--gris-mid)', marginBottom: 10 }}>
-        Vota al mejor jugador del partido:
-      </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {[...jugadores]
-          .filter(j => j.id !== jugadorActivo.id)
-          .sort((a, b) => a.nombre.localeCompare(b.nombre))
-          .map(j => (
-            <button key={j.id} onClick={async () => {
-              haptics.success(); await store.votarMvp(partido.id, jugadorActivo.id, j.id)
-              setMiVoto(j.id)
-              setEnviado(j.id)
-              setVotando(false)
-            }} style={{
-              display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
-              background: '#f7f2f3', borderRadius: 10, border: '1.5px solid #e0e8e0',
-              cursor: 'pointer', textAlign: 'left', fontSize: 14, fontWeight: 500
-            }}>
-              <Avatar jugador={j} size="sm" />
-              <span>{j.nombre}</span>
-              <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--gris-mid)' }}>#{j.dorsal}</span>
-            </button>
-          ))}
-        <button onClick={() => setVotando(false)} style={{ background: 'none', border: 'none', color: 'var(--gris-mid)', fontSize: 13, cursor: 'pointer', marginTop: 4 }}>Cancelar</button>
-      </div>
-    </div>
-  )
-
-  return (
-    <button onClick={() => setVotando(true)} className="btn btn-ghost btn-block" style={{ marginTop: 4 }}>
-      ⭐ Votar al MVP
-    </button>
-  )
-}
 
 // ── Página principal ──
 export default function DetallePartido() {
@@ -306,7 +242,6 @@ export default function DetallePartido() {
   const rivales = esLocal ? partido.goles_visitante : partido.goles_local
   const resultado = nuestros > rivales ? 'victoria' : nuestros < rivales ? 'derrota' : 'empate'
   const rival = esLocal ? partido.visitante : partido.local
-  const mvp = partido.mvp_jugador_id ? jugadores.find(j => j.id === partido.mvp_jugador_id) : null
 
   return (
     <div className="page anim-fade">
@@ -370,31 +305,6 @@ export default function DetallePartido() {
             </div>
           )}
 
-          {/* MVP */}
-          <div className="card" style={{ marginBottom: '1rem' }}>
-            <h2 style={{ fontSize: 18, color: 'var(--verde)', marginBottom: 12 }}>⭐ MVP del partido</h2>
-            {mvp ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', marginBottom: 12 }}>
-                <div style={{ width: 48, height: 48, borderRadius: '50%', overflow: 'hidden', background: 'linear-gradient(135deg,#c8a800,#f0c040)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: 'white', flexShrink: 0 }}>
-                  {mvp.foto_url
-                    ? <img src={mvp.foto_url} alt={mvp.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
-                    : initials(mvp.nombre)
-                  }
-                </div>
-                <div>
-                  <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: 'var(--negro)', lineHeight: 1 }}>{mvp.nombre}</div>
-                  <div style={{ fontSize: 12, color: 'var(--gris-mid)' }}>{mvp.posicion} · #{mvp.dorsal}</div>
-                </div>
-                <div style={{ marginLeft: 'auto', fontSize: 28 }}>⭐</div>
-              </div>
-            ) : (
-              <div style={{ color: 'var(--gris-mid)', fontSize: 13, textAlign: 'center', padding: '0.5rem 0', marginBottom: 8 }}>
-                Sin MVP aún — sé el primero en votar
-              </div>
-            )}
-            <VotacionMVP partido={partido} jugadores={jugadores} store={store} />
-          </div>
-
           {/* Goleadores */}
           {goleadores.length > 0 && (
             <div className="card" style={{ marginBottom: '1rem' }}>
@@ -424,7 +334,7 @@ export default function DetallePartido() {
                   <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid #f5e8eb' }}>
                     <Avatar jugador={j} size="sm" />
                     <div style={{ flex: 1 }}><div style={{ fontSize: 14, fontWeight: 600 }}>{j.nombre}</div></div>
-                    <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: 'var(--dorado)' }}>{s.asistencias}</div>
+                    <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: 'var(--verde)' }}>{s.asistencias}</div>
                   </div>
                 )
               })}
@@ -465,7 +375,7 @@ export default function DetallePartido() {
                         <tr key={s.id}>
                           <td><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Avatar jugador={j} size="sm" /><span style={{ fontSize: 13, fontWeight: 600 }}>{j.nombre}</span></div></td>
                           <td style={{ textAlign: 'center', fontWeight: 700, color: s.goles > 0 ? 'var(--verde)' : '#ccc' }}>{s.goles || '—'}</td>
-                          <td style={{ textAlign: 'center', fontWeight: 700, color: s.asistencias > 0 ? 'var(--dorado)' : '#ccc' }}>{s.asistencias || '—'}</td>
+                          <td style={{ textAlign: 'center', fontWeight: 700, color: s.asistencias > 0 ? 'var(--verde)' : '#ccc' }}>{s.asistencias || '—'}</td>
                           <td style={{ textAlign: 'center' }}>{s.tarjetas_amarillas > 0 ? <span style={{ display: 'inline-block', width: 10, height: 14, background: '#f0c040', borderRadius: 2 }} /> : '—'}</td>
                           <td style={{ textAlign: 'center' }}>{s.tarjetas_rojas > 0 ? <span style={{ display: 'inline-block', width: 10, height: 14, background: '#c0392b', borderRadius: 2 }} /> : '—'}</td>
                         </tr>
@@ -483,24 +393,36 @@ export default function DetallePartido() {
         <div className="card"><div className="empty">El partido aún no se ha jugado.</div></div>
       )}
 
-      {/* MVP y votación */}
-      {partido.jugado && statsPartido.length > 0 && (
+      {/* MVP y votación */}      {partido.jugado && (
         <div className="card" style={{ marginBottom: '1rem' }}>
           <h2 style={{ fontSize: 18, color: 'var(--verde)', marginBottom: 14 }}>⭐ MVP del partido</h2>
 
-          {/* MVP actual */}
-          {mvpJugador && (
+          {/* MVP ganador por votos */}
+          {mvpJugador ? (
             <div style={{ background: 'linear-gradient(135deg,#0d0a0b,#5a1520)', borderRadius: 12, padding: '12px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ fontSize: 28 }}>⭐</div>
-              <div>
-                <div style={{ fontSize: 11, color: '#e8a0b0', textTransform: 'uppercase', letterSpacing: '0.08em' }}>MVP — {votos.length} voto{votos.length !== 1 ? 's' : ''}</div>
-                <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: 'white' }}>{mvpJugador.nombre}</div>
+              <div style={{ width: 48, height: 48, borderRadius: '50%', overflow: 'hidden', background: 'linear-gradient(135deg,#c8a800,#f0c040)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: 'white', flexShrink: 0 }}>
+                {mvpJugador.foto_url
+                  ? <img src={mvpJugador.foto_url} alt={mvpJugador.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                  : initials(mvpJugador.nombre)
+                }
               </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, color: '#e8a0b0', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  MVP — {votos.length} voto{votos.length !== 1 ? 's' : ''}
+                </div>
+                <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: 'white', lineHeight: 1.1 }}>{mvpJugador.nombre}</div>
+                <div style={{ fontSize: 11, color: '#6a3a42' }}>{mvpJugador.posicion} · #{mvpJugador.dorsal}</div>
+              </div>
+              <div style={{ fontSize: 28 }}>⭐</div>
+            </div>
+          ) : (
+            <div style={{ color: 'var(--gris-mid)', fontSize: 13, textAlign: 'center', padding: '0.5rem 0', marginBottom: 12 }}>
+              Sin votos aún — sé el primero
             </div>
           )}
 
-          {/* Votar */}
-          {jugadorActivo && !miVoto && (
+          {/* Votación */}
+          {jugadorActivo && !miVoto && statsPartido.length > 0 && (
             <div>
               <div style={{ fontSize: 13, color: 'var(--gris-mid)', marginBottom: 10 }}>Vota al mejor del partido:</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -508,7 +430,7 @@ export default function DetallePartido() {
                   const j = jugadores.find(x => x.id === s.jugador_id)
                   if (!j || j.id === jugadorActivo.id) return null
                   return (
-                    <button key={s.id} onClick={() => handleVotar(j.id)} style={{
+                    <button key={s.id} onClick={() => { haptics.light(); handleVotar(j.id) }} style={{
                       display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
                       background: 'white', border: '1.5px solid #c8aab2', borderRadius: 10,
                       cursor: 'pointer', textAlign: 'left', width: '100%'

@@ -210,8 +210,8 @@ function PanelPartidos({ partidos, store }) {
           return (
             <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: i < nuestros.length - 1 ? '1px solid #f5e8eb' : 'none' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.amistoso ? 'Amistoso' : `J${p.jornada}`} vs {rival}</div>                <div style={{ fontSize: 11, color: 'var(--gris-mid)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span>{p.fecha} · {p.hora} · {p.jugado ? `${p.goles_local}–${p.goles_visitante}` : 'Pendiente'}</span>
+                <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.amistoso ? 'Amistoso' : `J${p.jornada}`} vs {rival} · {p.jugado ? `${p.goles_local} – ${p.goles_visitante}` : 'Pendiente'}</div>                <div style={{ fontSize: 11, color: 'var(--gris-mid)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span>{p.fecha} · {p.hora}</span>
                   {p.amistoso && <span style={{ background: '#fff3cd', color: '#856a00', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 10 }}>Amistoso</span>}
                 </div>              </div>
               <button onClick={() => openEdit(p)} style={{ background: 'none', border: '1px solid #c8aab2', borderRadius: 8, padding: '4px 10px', fontSize: 12, cursor: 'pointer', color: 'var(--verde)', flexShrink: 0 }}>Editar</button>
@@ -593,7 +593,7 @@ function PanelTemporada({ store }) {
 }
 
 // ---- Panel Log ----
-function PanelLog({ store }) {
+function PanelLog({ store, jugadores }) {
   const [desbloqueado, setDesbloqueado] = useState(false)
   const [pwdInput, setPwdInput] = useState('')
   const [errorPwd, setErrorPwd] = useState('')
@@ -601,13 +601,11 @@ function PanelLog({ store }) {
   const [logs, setLogs] = useState([])
   const [cargando, setCargando] = useState(false)
   const [filtroJugador, setFiltroJugador] = useState('')
+  const [filtroFecha, setFiltroFecha] = useState('')
 
   const verificar = () => {
     const superPwd = import.meta.env.VITE_SUPERADMIN_PASSWORD
-    if (!superPwd || pwdInput !== superPwd) {
-      setErrorPwd('Contraseña incorrecta')
-      return
-    }
+    if (!superPwd || pwdInput !== superPwd) { setErrorPwd('Contraseña incorrecta'); return }
     setDesbloqueado(true)
     setCargando(true)
     store.getLog()
@@ -618,22 +616,12 @@ function PanelLog({ store }) {
   if (!desbloqueado) return (
     <div className="card" style={{ textAlign: 'center' }}>
       <div style={{ fontSize: 40, marginBottom: 12 }}>🔐</div>
-      <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: 'var(--verde)', marginBottom: 6 }}>
-        Área restringida
-      </div>
-      <div style={{ fontSize: 13, color: 'var(--gris-mid)', marginBottom: 20 }}>
-        Solo el superadmin puede ver el log de actividad
-      </div>
+      <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: 'var(--verde)', marginBottom: 6 }}>Área restringida</div>
+      <div style={{ fontSize: 13, color: 'var(--gris-mid)', marginBottom: 20 }}>Solo el superadmin puede ver el log de actividad</div>
       <div style={{ position: 'relative', marginBottom: 12 }}>
-        <input
-          className="input"
-          type={showPwd ? 'text' : 'password'}
-          placeholder="Contraseña de superadmin"
-          value={pwdInput}
-          onChange={e => { setPwdInput(e.target.value); setErrorPwd('') }}
-          onKeyDown={e => e.key === 'Enter' && verificar()}
-          style={{ paddingRight: 48 }}
-        />
+        <input className="input" type={showPwd ? 'text' : 'password'} placeholder="Contraseña de superadmin"
+          value={pwdInput} onChange={e => { setPwdInput(e.target.value); setErrorPwd('') }}
+          onKeyDown={e => e.key === 'Enter' && verificar()} style={{ paddingRight: 48 }} />
         <button type="button" onClick={() => setShowPwd(v => !v)}
           style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--gris-mid)' }}>
           {showPwd ? '🙈' : '👁️'}
@@ -650,40 +638,80 @@ function PanelLog({ store }) {
   }
 
   const jugadoresLog = [...new Set(logs.map(l => l.jugador_nombre).filter(Boolean))].sort()
-  const filtrados = filtroJugador ? logs.filter(l => l.jugador_nombre === filtroJugador) : logs
+
+  // Fechas únicas disponibles (solo día, sin hora)
+  const fechasLog = [...new Set(logs.map(l => l.created_at?.substring(0, 10)).filter(Boolean))].sort().reverse()
+
+  const filtrados = logs.filter(l => {
+    const porJugador = !filtroJugador || l.jugador_nombre === filtroJugador
+    const porFecha = !filtroFecha || l.created_at?.startsWith(filtroFecha)
+    return porJugador && porFecha
+  })
+
   const colorEntidad = { 'Jugador': '#185fa5', 'Partido': '#7a1e30', 'Estadísticas': '#856a00', 'Clasificación': '#1a7a3a', 'Alineación': '#6a1e7a', 'Noticia': '#c0392b' }
 
   if (cargando) return <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--gris-mid)' }}>Cargando log...</div>
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <span style={{ fontSize: 14, color: 'var(--gris-mid)' }}>{filtrados.length} acciones</span>
-        <select className="select" value={filtroJugador} onChange={e => setFiltroJugador(e.target.value)} style={{ maxWidth: 180, fontSize: 13, minHeight: 36, padding: '6px 10px' }}>
+      {/* Filtros */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+        <select className="select" value={filtroJugador} onChange={e => setFiltroJugador(e.target.value)}
+          style={{ flex: 1, minWidth: 130, fontSize: 13, minHeight: 36, padding: '6px 10px' }}>
           <option value="">Todos los jugadores</option>
           {jugadoresLog.map(n => <option key={n} value={n}>{n}</option>)}
         </select>
+        <select className="select" value={filtroFecha} onChange={e => setFiltroFecha(e.target.value)}
+          style={{ flex: 1, minWidth: 130, fontSize: 13, minHeight: 36, padding: '6px 10px' }}>
+          <option value="">Todas las fechas</option>
+          {fechasLog.map(f => (
+            <option key={f} value={f}>
+              {new Date(f + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
+            </option>
+          ))}
+        </select>
       </div>
-      {filtrados.length === 0 && <div className="empty">Sin actividad registrada aún</div>}
+
+      <div style={{ fontSize: 13, color: 'var(--gris-mid)', marginBottom: 10 }}>
+        {filtrados.length} {filtrados.length === 1 ? 'acción' : 'acciones'}
+        {(filtroJugador || filtroFecha) && (
+          <button onClick={() => { setFiltroJugador(''); setFiltroFecha('') }}
+            style={{ marginLeft: 8, background: 'none', border: 'none', color: 'var(--verde)', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>
+            ✕ Limpiar filtros
+          </button>
+        )}
+      </div>
+
+      {filtrados.length === 0 && <div className="empty">Sin actividad para este filtro</div>}
+
       {filtrados.length > 0 && (
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          {filtrados.map((l, i) => (
-            <div key={l.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 14px', borderBottom: i < filtrados.length - 1 ? '1px solid #f5e8eb' : 'none' }}>
-              <div style={{ width: 34, height: 34, borderRadius: '50%', flexShrink: 0, background: 'var(--negro)', color: 'var(--dorado-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>
-                {(l.jugador_nombre || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                  <span>{l.accion}</span>
-                  <span style={{ background: colorEntidad[l.entidad] || '#999', color: 'white', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>{l.entidad}</span>
+          {filtrados.map((l, i) => {
+            // Buscar foto del jugador
+            const jugador = jugadores.find(j => j.id === l.jugador_id)
+            const initials = (l.jugador_nombre || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+            return (
+              <div key={l.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 14px', borderBottom: i < filtrados.length - 1 ? '1px solid #f5e8eb' : 'none' }}>
+                {/* Avatar con foto o inicial */}
+                <div style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: 'var(--negro)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {jugador?.foto_url
+                    ? <img src={jugador.foto_url} alt={jugador.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : <span style={{ color: 'var(--dorado-light)', fontSize: 11, fontWeight: 700 }}>{initials}</span>
+                  }
                 </div>
-                {l.detalle && <div style={{ fontSize: 12, color: 'var(--gris-mid)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.detalle}</div>}
-                <div style={{ fontSize: 11, color: 'var(--gris-light)', marginTop: 3 }}>
-                  <strong style={{ color: 'var(--gris-mid)' }}>{l.jugador_nombre || 'Desconocido'}</strong>{' · '}{fmtFecha(l.created_at)}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <span>{l.accion}</span>
+                    <span style={{ background: colorEntidad[l.entidad] || '#999', color: 'white', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>{l.entidad}</span>
+                  </div>
+                  {l.detalle && <div style={{ fontSize: 12, color: 'var(--gris-mid)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.detalle}</div>}
+                  <div style={{ fontSize: 11, color: 'var(--gris-light)', marginTop: 3 }}>
+                    <strong style={{ color: 'var(--gris-mid)' }}>{l.jugador_nombre || 'Desconocido'}</strong>{' · '}{fmtFecha(l.created_at)}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
@@ -697,7 +725,7 @@ const adminTabs = [
   { key: 'jugadores', label: '👕 Plantilla' },
   { key: 'tabla', label: '🏆 Tabla' },
   { key: 'temporada', label: '📅 Temporada' },
-  { key: 'log', label: '📋 Log' },
+  { key: 'log', label: '📋 Actividad' },
 ]
 
 export default function Admin() {
@@ -744,7 +772,7 @@ export default function Admin() {
         {tab === 'stats' && <PanelStats jugadores={jugadores} partidos={partidos} stats={stats} store={store} />}
         {tab === 'tabla' && <PanelClasificacion clasificacion={clasificacion} store={store} />}
         {tab === 'temporada' && <PanelTemporada store={store} />}
-        {tab === 'log' && <PanelLog store={store} />}
+        {tab === 'log' && <PanelLog store={store} jugadores={jugadores} />}
       </div>
     </AdminGuard>
   )
