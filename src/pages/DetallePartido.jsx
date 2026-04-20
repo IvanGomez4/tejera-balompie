@@ -510,9 +510,15 @@ export default function DetallePartido() {
             </div>
 
             {/* Fecha y hora */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <div className="form-group"><label className="label">Fecha</label><input className="input" type="date" value={formPartido.fecha} onChange={e => setFormPartido(f => ({ ...f, fecha: e.target.value }))} /></div>
-              <div className="form-group"><label className="label">Hora</label><input className="input" type="time" value={formPartido.hora} onChange={e => setFormPartido(f => ({ ...f, hora: e.target.value }))} /></div>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <div className="form-group" style={{ flex: '1 1 140px', minWidth: 0 }}>
+                <label className="label">Fecha</label>
+                <input className="input" type="date" value={formPartido.fecha} onChange={e => set('fecha', e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
+              </div>
+              <div className="form-group" style={{ flex: '1 1 100px', minWidth: 0 }}>
+                <label className="label">Hora</label>
+                <input className="input" type="time" value={formPartido.hora} onChange={e => set('hora', e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
+              </div>
             </div>
 
             {/* Local / Visitante / Campo */}
