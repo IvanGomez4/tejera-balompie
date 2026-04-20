@@ -26,7 +26,7 @@ export default function Partidos() {
   const { partidos, store } = useStore()
   const isAdmin = adminAuth.isLogged()
 
-  const emptyForm = { jornada: '', fecha: '', local: EQUIPO_NOMBRE, visitante: '', campo: 'Campo Municipal', jugado: false, goles_local: 0, goles_visitante: 0 }
+  const emptyForm = { jornada: '', fecha: '', hora: '', local: EQUIPO_NOMBRE, visitante: '', campo: 'Campo Municipal', jugado: false, goles_local: 0, goles_visitante: 0, amistoso: false }
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(emptyForm)
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
@@ -37,11 +37,21 @@ export default function Partidos() {
 
   const handleSave = () => {
     if (!form.fecha) return
+
+    // Calcular si el partido ya debería estar marcado como jugado
+    // Combina fecha + hora para comparar con el momento actual
+    const fechaHoraStr = form.hora
+      ? `${form.fecha}T${form.hora}:00`
+      : `${form.fecha}T23:59:00`
+    const fechaHora = new Date(fechaHoraStr)
+    const yaJugado = fechaHora < new Date()
+
     const data = {
       ...form,
-      jornada: Number(form.jornada) || 0,
+      jornada: Number(form.amistoso ? 0 : form.jornada) || 0,
       goles_local: Number(form.goles_local) || 0,
       goles_visitante: Number(form.goles_visitante) || 0,
+      jugado: yaJugado ? true : form.jugado,
     }
     store.addPartido(data)
     setForm(emptyForm)
@@ -124,13 +134,29 @@ export default function Partidos() {
               <button onClick={cancelForm} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#aaa' }}>✕</button>
             </div>
 
+            {/* Jornada — bloqueada si amistoso */}
             <div className="form-group">
               <label className="label">Jornada</label>
-              <input className="input" type="number" value={form.jornada} onChange={e => set('jornada', e.target.value)} placeholder="Nº jornada" />
+              <input
+                className="input" type="number"
+                value={form.amistoso ? '' : form.jornada}
+                onChange={e => set('jornada', e.target.value)}
+                placeholder={form.amistoso ? 'No aplica (amistoso)' : 'Nº jornada'}
+                disabled={form.amistoso}
+                style={{ opacity: form.amistoso ? 0.5 : 1 }}
+              />
             </div>
-            <div className="form-group">
-              <label className="label">Fecha</label>
-              <input className="input" type="date" value={form.fecha} onChange={e => set('fecha', e.target.value)} />
+
+            {/* Fecha y hora */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div className="form-group">
+                <label className="label">Fecha</label>
+                <input className="input" type="date" value={form.fecha} onChange={e => set('fecha', e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label className="label">Hora</label>
+                <input className="input" type="time" value={form.hora} onChange={e => set('hora', e.target.value)} />
+              </div>
             </div>
             <div className="form-group">
               <label className="label">Equipo local</label>
@@ -144,11 +170,40 @@ export default function Partidos() {
               <label className="label">Campo</label>
               <input className="input" value={form.campo} onChange={e => set('campo', e.target.value)} />
             </div>
+
+            {/* Amistoso */}
             <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <input type="checkbox" id="jugado" checked={form.jugado} onChange={e => set('jugado', e.target.checked)} style={{ width: 18, height: 18, accentColor: 'var(--verde)' }} />
-              <label htmlFor="jugado" className="label" style={{ margin: 0 }}>Partido ya jugado</label>
+              <input type="checkbox" id="amistoso" checked={form.amistoso} onChange={e => set('amistoso', e.target.checked)} style={{ width: 18, height: 18, accentColor: 'var(--dorado)' }} />
+              <label htmlFor="amistoso" className="label" style={{ margin: 0 }}>
+                Partido amistoso <span style={{ fontSize: 11, color: 'var(--gris-mid)', fontWeight: 400 }}>(stats no computan en clasificación)</span>
+              </label>
             </div>
-            {form.jugado && (
+
+            {/* Jugado — auto-calculado, bloqueado si fecha futura */}
+            {(() => {
+              const fechaHoraStr = form.hora ? `${form.fecha}T${form.hora}:00` : `${form.fecha}T23:59:00`
+              const esFuturo = form.fecha && new Date(fechaHoraStr) > new Date()
+              const autoJugado = form.fecha && new Date(fechaHoraStr) < new Date()
+              return (
+                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 10, opacity: esFuturo ? 0.4 : 1 }}>
+                  <input
+                    type="checkbox" id="jugado"
+                    checked={autoJugado || form.jugado}
+                    onChange={e => !esFuturo && set('jugado', e.target.checked)}
+                    disabled={esFuturo || autoJugado}
+                    style={{ width: 18, height: 18, accentColor: 'var(--verde)' }}
+                  />
+                  <label htmlFor="jugado" className="label" style={{ margin: 0 }}>
+                    Partido ya jugado
+                    {esFuturo && <span style={{ fontSize: 11, color: 'var(--gris-mid)', fontWeight: 400 }}> (fecha futura)</span>}
+                    {autoJugado && <span style={{ fontSize: 11, color: 'var(--verde)', fontWeight: 400 }}> (marcado automáticamente)</span>}
+                  </label>
+                </div>
+              )
+            })()}
+
+            {/* Resultado si jugado */}
+            {(form.jugado || (() => { const fh = form.hora ? `${form.fecha}T${form.hora}:00` : `${form.fecha}T23:59:00`; return form.fecha && new Date(fh) < new Date() })()) && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16, textAlign: 'center' }}>
                 <div>
                   <div className="label" style={{ textAlign: 'center', marginBottom: 8 }}>Goles {String(form.local).split(' ')[0]}</div>

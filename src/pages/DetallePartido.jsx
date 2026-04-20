@@ -520,24 +520,30 @@ export default function DetallePartido() {
             <div className="form-group"><label className="label">Equipo visitante</label><input className="input" value={formPartido.visitante} onChange={e => setFormPartido(f => ({ ...f, visitante: e.target.value }))} /></div>
             <div className="form-group"><label className="label">Campo</label><input className="input" value={formPartido.campo} onChange={e => setFormPartido(f => ({ ...f, campo: e.target.value }))} /></div>
 
-            {/* Jugado — bloqueado si fecha futura */}
+            {/* Amistoso */}
+            <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <input type="checkbox" id="amistoso-detalle" checked={formPartido.amistoso} onChange={e => setFormPartido(f => ({ ...f, amistoso: e.target.checked }))} style={{ width: 18, height: 18, accentColor: 'var(--dorado)' }} />
+              <label htmlFor="amistoso-detalle" className="label" style={{ margin: 0 }}>
+                Partido amistoso <span style={{ fontSize: 11, color: 'var(--gris-mid)', fontWeight: 400 }}>(stats no computan en clasificación)</span>
+              </label>
+            </div>
+
+            {/* Jugado — auto-calculado, bloqueado si fecha futura */}
             {(() => {
-              const esFuturo = formPartido.fecha && new Date(formPartido.fecha) > new Date()
+              const fechaHoraStr = formPartido.hora ? `${formPartido.fecha}T${formPartido.hora}:00` : `${form.fecha}T23:59:00`
+              const esFuturo = formPartido.fecha && new Date(fechaHoraStr) > new Date()
+              const autoJugado = formPartido.fecha && new Date(fechaHoraStr) < new Date()
               return (
                 <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 10, opacity: esFuturo ? 0.4 : 1 }}>
-                  <input type="checkbox" id="jugado-detalle" checked={esFuturo ? false : formPartido.jugado} onChange={e => !esFuturo && setFormPartido(f => ({ ...f, jugado: e.target.checked }))} disabled={esFuturo} style={{ width: 18, height: 18, accentColor: 'var(--verde)' }} />
+                  <input type="checkbox" id="jugado-detalle" checked={autoJugado || formPartido.jugado} onChange={e => !esFuturo && setFormPartido(f => ({ ...f, jugado: e.target.checked }))} disabled={esFuturo || autoJugado} style={{ width: 18, height: 18, accentColor: 'var(--verde)' }} />
                   <label htmlFor="jugado-detalle" className="label" style={{ margin: 0 }}>
-                    Partido ya jugado {esFuturo && <span style={{ fontSize: 11, color: 'var(--gris-mid)', fontWeight: 400 }}>(fecha futura)</span>}
+                    Partido ya jugado
+                    {esFuturo && <span style={{ fontSize: 11, color: 'var(--gris-mid)', fontWeight: 400 }}> (fecha futura)</span>}
+                    {autoJugado && <span style={{ fontSize: 11, color: 'var(--verde)', fontWeight: 400 }}> (marcado automáticamente)</span>}
                   </label>
                 </div>
               )
             })()}
-
-            {/* Amistoso */}
-            <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <input type="checkbox" id="amistoso-detalle" checked={formPartido.amistoso} onChange={e => setFormPartido(f => ({ ...f, amistoso: e.target.checked }))} style={{ width: 18, height: 18, accentColor: 'var(--dorado)' }} />
-              <label htmlFor="amistoso-detalle" className="label" style={{ margin: 0 }}>Partido amistoso</label>
-            </div>
 
             {/* Resultado si jugado */}
             {formPartido.jugado && (
