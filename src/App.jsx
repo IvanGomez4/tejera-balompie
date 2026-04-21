@@ -12,7 +12,7 @@ import Estadisticas from './pages/Estadisticas'
 import Admin from './pages/Admin'
 import Noticias from './pages/Noticias'
 import Historial from './pages/Historial'
-import escudo from '../public/escudo.png'
+import escudo from '/escudo.png'
 import Patrocinadores from './pages/Patrocinadores'
 
 // ── Splash Screen ──
