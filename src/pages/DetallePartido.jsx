@@ -140,7 +140,7 @@ function EditorAlineacion({ partido, jugadores, store, onClose }) {
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 400 }} />
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 500, background: 'white', borderRadius: '20px 20px 0 0', padding: '1.5rem', paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))', maxHeight: '90vh', overflowY: 'auto' }}>
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 500, background: 'white', borderRadius: '20px 20px 0 0', padding: '1.5rem', paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))', maxHeight: '85vh', overflowY: 'scroll', overflowX: 'hidden', WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain', boxShadow: '0 -4px 30px rgba(0,0,0,0.2)', animation: 'slideUpModal 0.3s cubic-bezier(0.32,0.72,0,1)' }}>
         <div style={{ width: 36, height: 4, background: '#ddd', borderRadius: 2, margin: '-0.5rem auto 1rem' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <h2 style={{ fontSize: 20, color: 'var(--verde)' }}>✏️ Editar alineación</h2>
@@ -496,7 +496,7 @@ export default function DetallePartido() {
       {editandoPartido && formPartido && (
         <>
           <div onClick={() => setEditandoPartido(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 400 }} />
-          <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 500, background: 'white', borderRadius: '20px 20px 0 0', padding: '1.5rem', paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))', maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 -4px 30px rgba(0,0,0,0.2)', animation: 'slideUpModal 0.3s cubic-bezier(0.32,0.72,0,1)' }}>
+          <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 500, background: 'white', borderRadius: '20px 20px 0 0', padding: '1.5rem', paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))', maxHeight: '85vh', overflowY: 'scroll', overflowX: 'hidden', WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain', boxShadow: '0 -4px 30px rgba(0,0,0,0.2)', animation: 'slideUpModal 0.3s cubic-bezier(0.32,0.72,0,1)' }}>
             <div style={{ width: 36, height: 4, background: '#ddd', borderRadius: 2, margin: '-0.5rem auto 1rem' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h2 style={{ fontSize: 22, color: 'var(--verde)', fontFamily: 'Bebas Neue' }}>Editar partido</h2>
@@ -510,14 +510,16 @@ export default function DetallePartido() {
             </div>
 
             {/* Fecha y hora */}
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <div className="form-group" style={{ flex: '1 1 140px', minWidth: 0 }}>
+            <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <label className="label">Fecha</label>
-                <input className="input" type="date" value={formPartido.fecha} onChange={e => set('fecha', e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
+                <input className="input" type="date" value={formPartido.fecha} onChange={e => setFormPartido(f => ({ ...f, fecha: e.target.value }))}
+                  style={{ width: '100%', minWidth: 0, boxSizing: 'border-box' }} />
               </div>
-              <div className="form-group" style={{ flex: '1 1 100px', minWidth: 0 }}>
+              <div style={{ flex: '0 0 110px', minWidth: 0 }}>
                 <label className="label">Hora</label>
-                <input className="input" type="time" value={formPartido.hora} onChange={e => set('hora', e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
+                <input className="input" type="time" value={formPartido.hora} onChange={e => setFormPartido(f => ({ ...f, hora: e.target.value }))}
+                  style={{ width: '100%', minWidth: 0, boxSizing: 'border-box' }} />
               </div>
             </div>
 

@@ -233,13 +233,17 @@ function PanelPartidos({ partidos, store }) {
           </div>
 
           {/* Fecha y hora */}
-          <div className="form-group">
-            <label className="label">Fecha</label>
-            <input className="input" type="date" value={form.fecha} onChange={e => set('fecha', e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label className="label">Hora</label>
-            <input className="input" type="time" value={form.hora} onChange={e => set('hora', e.target.value)} />
+          <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <label className="label">Fecha</label>
+              <input className="input" type="date" value={form.fecha} onChange={e => set('fecha', e.target.value)}
+                style={{ width: '100%', minWidth: 0, boxSizing: 'border-box' }} />
+            </div>
+            <div style={{ flex: '0 0 110px', minWidth: 0 }}>
+              <label className="label">Hora</label>
+              <input className="input" type="time" value={form.hora} onChange={e => set('hora', e.target.value)}
+                style={{ width: '100%', minWidth: 0, boxSizing: 'border-box' }} />
+            </div>
           </div>
           <div className="form-group">
             <label className="label">Equipo local</label>
