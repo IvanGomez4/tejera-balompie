@@ -208,6 +208,7 @@ tr.highlight td {
 
 .input {
   width: 100%;
+  max-width: 100%;
   padding: 12px 14px;
   border-radius: var(--radius-md);
   border: 1.5px solid #d0b8be;
@@ -216,10 +217,23 @@ tr.highlight td {
   transition: border-color 0.15s;
   background: white;
   min-height: 48px;
+  box-sizing: border-box;
+  display: block;
 }
 
 .input:focus {
   border-color: var(--verde-mid);
+}
+
+/* Fix iOS date/time inputs overflow */
+input[type="date"],
+input[type="time"] {
+  max-width: 100%;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .select {
