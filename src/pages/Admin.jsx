@@ -4,6 +4,7 @@ import { useStore } from '../hooks/useStore'
 import { adminAuth } from '../lib/adminAuth'
 import { EQUIPO_NOMBRE } from '../lib/mockData'
 import { haptics } from '../lib/haptics'
+import { enviarNotificacionResultado } from '../lib/push'
 
 function initials(n) { return n.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() }
 function Avatar({ jugador, size = 'sm' }) {
@@ -191,6 +192,22 @@ function PanelPartidos({ partidos, store }) {
     haptics.success()
     if (modal.mode === 'add') store.addPartido(data)
     else store.updatePartido(modal.id, data)
+
+    // Enviar notificación solo si el partido PASA de pendiente a jugado en esta edición
+    const eraJugadoAntes = modal.mode === 'edit' && partidos.find(p => p.id === modal.id)?.jugado
+    if (data.jugado && !eraJugadoAntes) {
+      const esLocal = data.local === EQUIPO_NOMBRE
+      const rival = esLocal ? data.visitante : data.local
+      const nuestros = esLocal ? data.goles_local : data.goles_visitante
+      const rivales = esLocal ? data.goles_visitante : data.goles_local
+      const resTexto = nuestros > rivales ? `Victoria ${nuestros}-${rivales}` : nuestros < rivales ? `Derrota ${nuestros}-${rivales}` : `Empate ${nuestros}-${rivales}`
+      enviarNotificacionResultado({
+        partido_id: modal.id || null,
+        rival,
+        resultado: resTexto,
+      })
+    }
+
     setModal(null)
   }
   const del = (id) => { if (window.confirm('¿Eliminar partido y sus estadísticas?')) store.deletePartido(id) }

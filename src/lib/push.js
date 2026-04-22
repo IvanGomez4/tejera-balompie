@@ -91,17 +91,31 @@ export async function desuscribirPush() {
 export async function enviarNotificacion({ titulo, imagen_url }) {
   try {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-    const res = await fetch(`${supabaseUrl}/functions/v1/send-push`, {
+    await fetch(`${supabaseUrl}/functions/v1/send-push`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-push-secret': 'tejera2026push',
       },
-      body: JSON.stringify({ titulo, imagen_url }),
+      body: JSON.stringify({ tipo: 'portada', titulo, imagen_url }),
     })
-    const data = await res.json()
-    console.log('[push] Respuesta:', data)
   } catch (err) {
-    console.error('[push] Error:', err)
+    console.error('[push] Error enviando notificación:', err)
+  }
+}
+
+export async function enviarNotificacionResultado({ partido_id, rival, resultado }) {
+  try {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    await fetch(`${supabaseUrl}/functions/v1/send-push`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-push-secret': 'tejera2026push',
+      },
+      body: JSON.stringify({ tipo: 'resultado', partido_id, rival, resultado }),
+    })
+  } catch (err) {
+    console.error('[push] Error enviando notificación resultado:', err)
   }
 }

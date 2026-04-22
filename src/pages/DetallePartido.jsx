@@ -5,6 +5,7 @@ import { adminAuth } from '../lib/adminAuth'
 import { EQUIPO_NOMBRE } from '../lib/mockData'
 import { haptics } from '../lib/haptics'
 import Alineacion from '../components/Alineacion'
+import { enviarNotificacionResultado } from '../lib/push'
 
 function fmt(str) { return new Date(str).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) }
 function initials(n) { return n.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() }
@@ -578,13 +579,26 @@ export default function DetallePartido() {
             <button
               onClick={async () => {
                 const esFuturo = formPartido.fecha && new Date(formPartido.fecha) > new Date()
-                await store.updatePartido(partido.id, {
+                const dataGuardar = {
                   ...formPartido,
                   jornada: Number(formPartido.jornada) || 0,
                   goles_local: Number(formPartido.goles_local) || 0,
                   goles_visitante: Number(formPartido.goles_visitante) || 0,
                   jugado: esFuturo ? false : formPartido.jugado,
-                })
+                }
+                await store.updatePartido(partido.id, dataGuardar)
+
+                // Notificación solo si pasa de pendiente a jugado
+                const eraJugadoAntes = partido.jugado
+                if (dataGuardar.jugado && !eraJugadoAntes) {
+                  const esLocal = dataGuardar.local === EQUIPO_NOMBRE
+                  const rival = esLocal ? dataGuardar.visitante : dataGuardar.local
+                  const nuestros = esLocal ? dataGuardar.goles_local : dataGuardar.goles_visitante
+                  const rivales = esLocal ? dataGuardar.goles_visitante : dataGuardar.goles_local
+                  const resTexto = nuestros > rivales ? `Victoria ${nuestros}-${rivales}` : nuestros < rivales ? `Derrota ${nuestros}-${rivales}` : `Empate ${nuestros}-${rivales}`
+                  enviarNotificacionResultado({ partido_id: partido.id, rival, resultado: resTexto })
+                }
+
                 setEditandoPartido(false)
                 window.location.reload()
               }}

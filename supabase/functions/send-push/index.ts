@@ -12,7 +12,7 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
-  // Verificar secreto propio
+  // Verificar secreto propio — evita el problema del JWT format de Supabase
   const secret = req.headers.get('x-push-secret')
   if (secret !== Deno.env.get('PUSH_SECRET')) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -22,9 +22,10 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { titulo, imagen_url } = await req.json()
+    // tipo: 'portada' | 'resultado'
+    const { tipo, titulo, imagen_url, partido_id, rival, resultado } = await req.json()
 
-    const VAPID_PUBLIC = Deno.env.get('VAPID_PUBLIC_KEY')!
+    const VAPID_PUBLIC  = Deno.env.get('VAPID_PUBLIC_KEY')!
     const VAPID_PRIVATE = Deno.env.get('VAPID_PRIVATE_KEY')!
     const VAPID_SUBJECT = Deno.env.get('VAPID_SUBJECT') || 'mailto:admin@tejerabalompie.com'
 
@@ -43,31 +44,38 @@ Deno.serve(async (req) => {
       })
     }
 
-    const payload = JSON.stringify({
-      title: '📰 Nueva portada',
-      body: titulo,
-      icon: '/escudo.png',
-      badge: '/escudo.png',
-      image: imagen_url || undefined,
-      url: '/noticias',
-    })
+    // Construir payload según el tipo
+    let payload: string
+    if (tipo === 'resultado') {
+      payload = JSON.stringify({
+        title: `⚽ Resultado: vs ${rival}`,
+        body: `${resultado} · ¡Vota al MVP del partido!`,
+        icon: '/escudo.png',
+        badge: '/escudo.png',
+        url: partido_id ? `/partido/${partido_id}` : '/',
+      })
+    } else {
+      // tipo === 'portada' (default)
+      payload = JSON.stringify({
+        title: '📰 Nueva portada',
+        body: titulo,
+        icon: '/escudo.png',
+        badge: '/escudo.png',
+        image: imagen_url || undefined,
+        url: '/noticias',
+      })
+    }
 
     let sent = 0
     const toDelete: string[] = []
 
     await Promise.all(subs.map(async (sub) => {
       try {
-        const subscription = {
-          endpoint: sub.endpoint,
-          keys: {
-            p256dh: sub.p256dh,
-            auth: sub.auth,
-          },
-        }
-
-        await webpush.sendNotification(subscription, payload, {
-          TTL: 86400,
-        })
+        await webpush.sendNotification(
+          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+          payload,
+          { TTL: 86400 }
+        )
         sent++
       } catch (e: any) {
         console.error(`Error enviando a ${sub.endpoint.substring(0, 50)}:`, e?.statusCode, e?.body)
@@ -81,7 +89,7 @@ Deno.serve(async (req) => {
       await supabase.from('push_subscriptions').delete().in('id', toDelete)
     }
 
-    console.log(`Enviadas: ${sent}, eliminadas: ${toDelete.length}`)
+    console.log(`[${tipo}] Enviadas: ${sent}, eliminadas: ${toDelete.length}`)
 
     return new Response(JSON.stringify({ sent, deleted: toDelete.length }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
