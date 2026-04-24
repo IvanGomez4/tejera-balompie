@@ -84,9 +84,15 @@ export default function Noticias() {
       setShowForm(false)
     } catch (e) {
       console.error(e)
-      setError('Error al guardar la portada. Inténtalo de nuevo.')
+      const msg = e?.message || String(e)
+      if (msg.includes('exceeded') || msg.includes('limit') || msg.includes('413') || msg.includes('too large') || msg.includes('Payload')) {
+        setError('La portada supera 1 MB. Comprime la imagen e inténtalo de nuevo.')
+      } else {
+        setError('Error al guardar la portada. Inténtalo de nuevo.')
+      }
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
   }
 
   const handleDelete = async (id) => {
@@ -263,10 +269,10 @@ export default function Noticias() {
               {preview
                 ? <img src={preview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 : <div style={{ textAlign: 'center', color: 'var(--gris-mid)' }}>
-                    <div style={{ fontSize: 36, marginBottom: 8 }}>🖼️</div>
-                    <div style={{ fontSize: 14, fontWeight: 600 }}>Toca para elegir imagen</div>
-                    <div style={{ fontSize: 12, marginTop: 4 }}>JPG, PNG, WebP...</div>
-                  </div>
+                  <div style={{ fontSize: 36, marginBottom: 8 }}>🖼️</div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>Toca para elegir imagen</div>
+                  <div style={{ fontSize: 12, marginTop: 4 }}>JPG, PNG, WebP...</div>
+                </div>
               }
             </div>
             <input id="input-portada" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleArchivo} />
