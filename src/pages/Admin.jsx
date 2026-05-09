@@ -586,8 +586,11 @@ function PanelTemporada({ store }) {
   }, [])
 
   const verificarYCerrar = async () => {
-    const superPwd = import.meta.env.VITE_SUPERADMIN_PASSWORD
-    if (!superPwd || pwdSuper !== superPwd) { setErrorPwd('Contraseña incorrecta'); return }
+    // Si es superadmin por contraseña, no necesita verificar de nuevo
+    if (!adminAuth.isSuperAdmin()) {
+      const superPwd = import.meta.env.VITE_SUPERADMIN_PASSWORD
+      if (!superPwd || pwdSuper !== superPwd) { setErrorPwd('Contraseña incorrecta'); return }
+    }
     if (!form.nombre.trim()) { alert('Pon nombre a la nueva temporada'); return }
     setCerrando(true)
     await store.cerrarTemporadaYCrearNueva(form.nombre.trim(), Number(form.año))
@@ -632,16 +635,22 @@ function PanelTemporada({ store }) {
               <div style={{ background: '#fde8e8', border: '1px solid #f5c0c0', borderRadius: 10, padding: '12px 14px', marginBottom: 14, fontSize: 13, color: '#c0392b' }}>
                 ⚠️ <strong>Atención:</strong> Al cerrar <strong>"{temporadaActiva?.nombre}"</strong>, los partidos, estadísticas y clasificación quedarán archivados. Los jugadores se mantienen. Esta acción no se puede deshacer.
               </div>
-              <div className="form-group">
-                <label className="label">🔐 Contraseña de superadmin</label>
-                <div style={{ position: 'relative' }}>
-                  <input className="input" type={showPwdSuper ? 'text' : 'password'} placeholder="Solo el creador de la app puede hacer esto" value={pwdSuper} onChange={e => { setPwdSuper(e.target.value); setErrorPwd('') }} style={{ paddingRight: 48 }} />
-                  <button type="button" onClick={() => setShowPwdSuper(v => !v)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--gris-mid)', padding: 4 }}>
-                    {showPwdSuper ? '🙈' : '👁️'}
-                  </button>
+              {!adminAuth.isSuperAdmin() && (
+                <div className="form-group">
+                  <label className="label">🔐 Contraseña de superadmin</label>
+                  <div style={{ position: 'relative' }}>
+                    <input className="input" type={showPwdSuper ? 'text' : 'password'}
+                      placeholder="Solo el creador de la app puede hacer esto"
+                      value={pwdSuper} onChange={e => { setPwdSuper(e.target.value); setErrorPwd('') }}
+                      style={{ paddingRight: 48 }} />
+                    <button type="button" onClick={() => setShowPwdSuper(v => !v)}
+                      style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--gris-mid)' }}>
+                      {showPwdSuper ? '🙈' : '👁️'}
+                    </button>
+                  </div>
+                  {errorPwd && <div style={{ color: '#c0392b', fontSize: 12, marginTop: 4 }}>⚠️ {errorPwd}</div>}
                 </div>
-                {errorPwd && <div style={{ color: '#c0392b', fontSize: 12, marginTop: 4 }}>⚠️ {errorPwd}</div>}
-              </div>
+              )}
               <div style={{ display: 'flex', gap: 10 }}>
                 <button onClick={() => { setConfirmando(false); setPwdSuper(''); setErrorPwd('') }} className="btn btn-ghost" style={{ flex: 1 }}>Atrás</button>
                 <button onClick={verificarYCerrar} disabled={cerrando || !pwdSuper} style={{ flex: 1, background: '#c0392b', color: 'white', border: 'none', borderRadius: 10, padding: '12px', fontWeight: 700, fontSize: 15, cursor: 'pointer', opacity: (cerrando || !pwdSuper) ? 0.5 : 1 }}>
@@ -672,7 +681,8 @@ function PanelTemporada({ store }) {
 
 // ---- Panel Log ----
 function PanelLog({ store, jugadores }) {
-  const [desbloqueado, setDesbloqueado] = useState(false)
+  const esSuperAdmin = adminAuth.isSuperAdmin()
+  const [desbloqueado, setDesbloqueado] = useState(esSuperAdmin)
   const [pwdInput, setPwdInput] = useState('')
   const [errorPwd, setErrorPwd] = useState('')
   const [showPwd, setShowPwd] = useState(false)
@@ -681,9 +691,17 @@ function PanelLog({ store, jugadores }) {
   const [filtroJugador, setFiltroJugador] = useState('')
   const [filtroFecha, setFiltroFecha] = useState('')
 
+  useEffect(() => {
+    if (esSuperAdmin) {
+      setCargando(true)
+      store.getLog()
+        .then(data => { setLogs(data || []); setCargando(false) })
+        .catch(() => setCargando(false))
+    }
+  }, [])
+
   const verificar = () => {
-    const superPwd = import.meta.env.VITE_SUPERADMIN_PASSWORD
-    if (!superPwd || pwdInput !== superPwd) { setErrorPwd('Contraseña incorrecta'); return }
+    if (!adminAuth.isSuperAdmin()) { setErrorPwd('Contraseña incorrecta'); return }
     setDesbloqueado(true)
     setCargando(true)
     store.getLog()

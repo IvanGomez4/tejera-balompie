@@ -384,12 +384,32 @@ export const store = {
   },
   async deleteNoticia(id) {
     if (USE_SUPABASE) {
+      // Obtener la URL de la imagen antes de borrar la fila
+      const noticia = _noticias.find(n => n.id === id)
+
+      // Borrar la fila de la tabla
       await supabase.from('noticias').delete().eq('id', id)
+
+      // Borrar el archivo del bucket si existe
+      if (noticia?.imagen_url) {
+        try {
+          // Extraer el path del archivo desde la URL pública
+          // La URL tiene formato: .../storage/v1/object/public/noticias/FILENAME
+          const url = noticia.imagen_url
+          const bucketPath = url.split('/storage/v1/object/public/noticias/')[1]
+          if (bucketPath) {
+            await supabase.storage.from('noticias').remove([decodeURIComponent(bucketPath)])
+          }
+        } catch (e) {
+          console.error('Error borrando imagen del bucket:', e)
+        }
+      }
     } else {
-      const noticias = load('tj_noticias', [])
-      save('tj_noticias', noticias.filter(n => n.id !== id))
+      _noticias = _noticias.filter(n => n.id !== id)
+      save('tj_noticias', _noticias)
     }
-    await log('🗑️ Eliminó', 'Noticia', String(id))
+    _noticias = _noticias.filter(n => n.id !== id)
+    notify()
   },
   async getLog() {
     if (USE_SUPABASE) {
