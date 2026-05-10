@@ -343,10 +343,18 @@ export default function Navbar() {
               </div>
             )}
 
-            <form onSubmit={handleLogin}>
+            <form
+              onSubmit={handleLogin}
+              autoComplete="on"
+            >
               <div className="form-group">
                 <label className="label">Tu nombre</label>
-                <select className="select" value={jugadorSel} onChange={e => { setJugadorSel(e.target.value); setError('') }}>
+                <select
+                  className="select"
+                  value={jugadorSel}
+                  onChange={e => { setJugadorSel(e.target.value); setError('') }}
+                  autoComplete="username"
+                >
                   <option value="">Selecciona tu nombre...</option>
                   {[...jugadores].sort((a, b) => a.nombre.localeCompare(b.nombre)).map(j => (
                     <option key={j.id} value={j.id}>{j.nombre} — #{j.dorsal}</option>
@@ -356,13 +364,28 @@ export default function Navbar() {
               <div className="form-group">
                 <label className="label">Contraseña del equipo</label>
                 <div style={{ position: 'relative' }}>
-                  <input className="input" type={showPwd ? 'text' : 'password'} placeholder="••••••••••••" value={pwd} onChange={e => { setPwd(e.target.value); setError('') }} autoComplete="current-password" required style={{ paddingRight: 48 }} />
-                  <button type="button" onClick={() => setShowPwd(v => !v)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--gris-mid)', padding: 4 }}>
+                  <input
+                    className="input"
+                    type={showPwd ? 'text' : 'password'}
+                    placeholder="••••••••••••"
+                    value={pwd}
+                    onChange={e => { setPwd(e.target.value); setError('') }}
+                    autoComplete="current-password"
+                    required
+                    style={{ paddingRight: 48 }}
+                  />
+                  <button type="button" onClick={() => setShowPwd(v => !v)}
+                    style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--gris-mid)', padding: 4 }}>
                     {showPwd ? '🙈' : '👁️'}
                   </button>
                 </div>
               </div>
-              <button type="submit" disabled={bloqueado} className="btn btn-primary btn-block" style={{ fontSize: 16, opacity: bloqueado ? 0.5 : 1 }}>
+              <button
+                type="submit"
+                disabled={bloqueado}
+                className="btn btn-primary btn-block"
+                style={{ fontSize: 16, opacity: bloqueado ? 0.5 : 1 }}
+              >
                 {bloqueado ? '🔒 Bloqueado temporalmente' : 'Entrar al panel'}
               </button>
             </form>
