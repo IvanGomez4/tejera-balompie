@@ -728,14 +728,9 @@ function PanelLog({ store, jugadores }) {
     </div>
   )
 
-  function fmtFecha(str) {
-    const d = new Date(str)
-    return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) + ' · ' + d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
-  }
+  if (cargando) return <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--gris-mid)' }}>Cargando log...</div>
 
   const jugadoresLog = [...new Set(logs.map(l => l.jugador_nombre).filter(Boolean))].sort()
-
-  // Fechas únicas disponibles (solo día, sin hora)
   const fechasLog = [...new Set(logs.map(l => l.created_at?.substring(0, 10)).filter(Boolean))].sort().reverse()
 
   const filtrados = logs.filter(l => {
@@ -744,9 +739,45 @@ function PanelLog({ store, jugadores }) {
     return porJugador && porFecha
   })
 
-  const colorEntidad = { 'Jugador': '#185fa5', 'Partido': '#7a1e30', 'Estadísticas': '#856a00', 'Clasificación': '#1a7a3a', 'Alineación': '#6a1e7a', 'Noticia': '#c0392b' }
+  const colorAccion = (accion) => {
+    if (!accion) return { bg: '#f5f5f5', color: '#666' }
+    const a = accion.toLowerCase()
+    if (a.includes('añad')) return { bg: '#eaf5e9', color: '#1a7a3a' }
+    if (a.includes('elimin')) return { bg: '#fde8e8', color: '#c0392b' }
+    if (a.includes('public')) return { bg: '#e8f0fe', color: '#185fa5' }
+    if (a.includes('edit') || a.includes('actuali')) return { bg: '#fff8e6', color: '#856a00' }
+    return { bg: '#f5f5f5', color: '#666' }
+  }
 
-  if (cargando) return <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--gris-mid)' }}>Cargando log...</div>
+  const colorEntidad = {
+    'Jugador': { bg: '#e8f0fe', color: '#185fa5' },
+    'Partido': { bg: '#f5e8eb', color: '#7a1e30' },
+    'Estadísticas': { bg: '#fef9e7', color: '#856a00' },
+    'Clasificación': { bg: '#e8f5e9', color: '#1a7a3a' },
+    'Alineación': { bg: '#f3e8fe', color: '#6a1e7a' },
+    'Noticia': { bg: '#fde8e8', color: '#c0392b' },
+  }
+
+  const logsPorFecha = filtrados.reduce((acc, l) => {
+    const dia = l.created_at?.substring(0, 10) || 'sin-fecha'
+    if (!acc[dia]) acc[dia] = []
+    acc[dia].push(l)
+    return acc
+  }, {})
+
+  function fmtDia(str) {
+    if (str === 'sin-fecha') return 'Sin fecha'
+    const d = new Date(str + 'T12:00:00')
+    const hoy = new Date()
+    const ayer = new Date(); ayer.setDate(hoy.getDate() - 1)
+    if (d.toDateString() === hoy.toDateString()) return 'Hoy'
+    if (d.toDateString() === ayer.toDateString()) return 'Ayer'
+    return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })
+  }
+
+  function fmtHora(str) {
+    return new Date(str).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+  }
 
   return (
     <div>
@@ -768,48 +799,101 @@ function PanelLog({ store, jugadores }) {
         </select>
       </div>
 
-      <div style={{ fontSize: 13, color: 'var(--gris-mid)', marginBottom: 10 }}>
-        {filtrados.length} {filtrados.length === 1 ? 'acción' : 'acciones'}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <span style={{ fontSize: 13, color: 'var(--gris-mid)' }}>
+          {filtrados.length} {filtrados.length === 1 ? 'acción' : 'acciones'}
+        </span>
         {(filtroJugador || filtroFecha) && (
           <button onClick={() => { setFiltroJugador(''); setFiltroFecha('') }}
-            style={{ marginLeft: 8, background: 'none', border: 'none', color: 'var(--verde)', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>
+            style={{ background: 'none', border: 'none', color: 'var(--verde)', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>
             ✕ Limpiar filtros
           </button>
         )}
       </div>
 
-      {filtrados.length === 0 && <div className="empty">Sin actividad para este filtro</div>}
-
-      {filtrados.length > 0 && (
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          {filtrados.map((l, i) => {
-            // Buscar foto del jugador
-            const jugador = jugadores.find(j => j.id === l.jugador_id)
-            const initials = (l.jugador_nombre || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-            return (
-              <div key={l.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 14px', borderBottom: i < filtrados.length - 1 ? '1px solid #f5e8eb' : 'none' }}>
-                {/* Avatar con foto o inicial */}
-                <div style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: 'var(--negro)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {jugador?.foto_url
-                    ? <img src={jugador.foto_url} alt={jugador.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    : <span style={{ color: 'var(--dorado-light)', fontSize: 11, fontWeight: 700 }}>{initials}</span>
-                  }
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                    <span>{l.accion}</span>
-                    <span style={{ background: colorEntidad[l.entidad] || '#999', color: 'white', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>{l.entidad}</span>
-                  </div>
-                  {l.detalle && <div style={{ fontSize: 12, color: 'var(--gris-mid)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.detalle}</div>}
-                  <div style={{ fontSize: 11, color: 'var(--gris-light)', marginTop: 3 }}>
-                    <strong style={{ color: 'var(--gris-mid)' }}>{l.jugador_nombre || 'Desconocido'}</strong>{' · '}{fmtFecha(l.created_at)}
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+      {filtrados.length === 0 && (
+        <div className="empty">Sin actividad para este filtro</div>
       )}
+
+      {Object.entries(logsPorFecha).map(([dia, items]) => (
+        <div key={dia} style={{ marginBottom: 8 }}>
+          <div style={{
+            fontSize: 11, fontWeight: 700, color: 'var(--gris-mid)',
+            textTransform: 'uppercase', letterSpacing: '0.07em',
+            padding: '8px 0 6px',
+          }}>
+            {fmtDia(dia)}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {items.map(l => {
+              const jugador = jugadores.find(j => j.id === l.jugador_id)
+              const initials = (l.jugador_nombre || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+              const accionStyle = colorAccion(l.accion)
+              const entidadStyle = colorEntidad[l.entidad] || { bg: '#eee', color: '#666' }
+              const verbo = l.accion?.replace(/[^\wáéíóúñÁÉÍÓÚÑ\s]/gi, '').trim().toLowerCase() || ''
+
+              return (
+                <div key={l.id} style={{
+                  background: 'white',
+                  border: '1px solid #f0e8ea',
+                  borderRadius: 12,
+                  padding: '10px 14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                }}>
+                  {/* Avatar */}
+                  <div style={{
+                    width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+                    overflow: 'hidden', background: 'var(--negro)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    {jugador?.foto_url
+                      ? <img src={jugador.foto_url} alt={jugador.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : <span style={{ color: 'var(--dorado-light)', fontSize: 11, fontWeight: 700 }}>{initials}</span>
+                    }
+                  </div>
+
+                  {/* Contenido */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap', marginBottom: 2 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--negro)' }}>
+                        {l.jugador_nombre || 'Desconocido'}
+                      </span>
+                      <span style={{
+                        fontSize: 11, fontWeight: 600, padding: '1px 8px', borderRadius: 20,
+                        background: accionStyle.bg, color: accionStyle.color,
+                      }}>
+                        {verbo}
+                      </span>
+                      <span style={{
+                        fontSize: 11, fontWeight: 600, padding: '1px 8px', borderRadius: 20,
+                        background: entidadStyle.bg, color: entidadStyle.color,
+                      }}>
+                        {l.entidad}
+                      </span>
+                    </div>
+                    {l.detalle && (
+                      <div style={{
+                        fontSize: 12, color: 'var(--gris-mid)',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>
+                        {l.detalle}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Hora */}
+                  <span style={{ fontSize: 11, color: 'var(--gris-light)', flexShrink: 0 }}>
+                    {fmtHora(l.created_at)}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
