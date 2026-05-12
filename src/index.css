@@ -303,6 +303,7 @@ input[type="time"] {
   max-width: 680px;
   margin: 0 auto;
   padding: 1rem 0.85rem 5rem;
+  padding-top: calc(64px + env(safe-area-inset-top));
 }
 
 .page-title {
@@ -472,10 +473,13 @@ input[type="time"] {
 
 .top-header {
   background: var(--negro);
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 90;
   border-bottom: 2px solid var(--verde);
+  padding-top: env(safe-area-inset-top);
 }
 
 .pos-pill {
