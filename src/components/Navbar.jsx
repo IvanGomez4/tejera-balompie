@@ -207,10 +207,11 @@ export default function Navbar() {
             display: 'flex', flexDirection: 'column',
             boxShadow: '4px 0 30px rgba(0,0,0,0.4)',
             animation: 'slideInLeft 0.22s ease',
+            paddingTop: 'env(safe-area-inset-top)',
           }}>
 
             {/* Cabecera del menú */}
-            <div style={{ padding: '1.25rem 1.25rem 1rem', borderBottom: '1px solid #3d1020' }}>
+            <div style={{ padding: '1rem 1.25rem 1rem', borderBottom: '1px solid #3d1020' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: logged && jugadorActivo ? 14 : 0 }}>
                 <img src={"/escudo.png"} alt="" style={{ width: 36, height: 36, objectFit: 'contain' }} />
                 <div>

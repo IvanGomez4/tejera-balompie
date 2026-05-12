@@ -302,8 +302,8 @@ input[type="time"] {
 .page {
   max-width: 680px;
   margin: 0 auto;
-  padding: 1rem 0.85rem 5rem;
-  padding-top: calc(64px + env(safe-area-inset-top));
+  padding: 1.5rem 0.85rem 5rem;
+  padding-top: calc(80px + env(safe-area-inset-top));
 }
 
 .page-title {
