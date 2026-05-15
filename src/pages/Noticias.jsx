@@ -57,16 +57,19 @@ export default function Noticias() {
       document.body.style.position = 'fixed'
       document.body.style.top = `-${scrollYRef.current}px`
       document.body.style.width = '100%'
+      document.body.style.touchAction = 'none'
     } else {
       document.body.style.position = ''
       document.body.style.top = ''
       document.body.style.width = ''
+      document.body.style.touchAction = ''
       window.scrollTo(0, scrollYRef.current)
     }
     return () => {
       document.body.style.position = ''
       document.body.style.top = ''
       document.body.style.width = ''
+      document.body.style.touchAction = ''
     }
   }, [visor, showForm])
 
@@ -243,11 +246,12 @@ export default function Noticias() {
       {visor && (
         <div
           style={{
-            position: 'fixed', inset: 0, zIndex: 500,
+            position: 'fixed', inset: 0, zIndex: 1000,
             background: 'rgba(0,0,0,0.88)',
             overflowY: 'scroll',
             WebkitOverflowScrolling: 'touch',
             overscrollBehavior: 'contain',
+            touchAction: 'pan-y',
             paddingTop: 'calc(4rem + env(safe-area-inset-top))',
             paddingLeft: '1rem',
             paddingRight: '1rem',
