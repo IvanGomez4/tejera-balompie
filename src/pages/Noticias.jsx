@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useStore } from '../hooks/useStore'
 import { adminAuth } from '../lib/adminAuth'
 import { pushSoportado, esIOSsinInstalar, pushPermiso, suscribirPush, desuscribirPush, enviarNotificacion } from '../lib/push'
@@ -49,16 +49,23 @@ export default function Noticias() {
     }
   }, [])
 
+  const scrollYRef = useRef(0)
+
   useEffect(() => {
     if (visor || showForm) {
+      scrollYRef.current = window.scrollY
       document.body.style.position = 'fixed'
+      document.body.style.top = `-${scrollYRef.current}px`
       document.body.style.width = '100%'
     } else {
       document.body.style.position = ''
+      document.body.style.top = ''
       document.body.style.width = ''
+      window.scrollTo(0, scrollYRef.current)
     }
     return () => {
       document.body.style.position = ''
+      document.body.style.top = ''
       document.body.style.width = ''
     }
   }, [visor, showForm])
@@ -241,7 +248,7 @@ export default function Noticias() {
             overflowY: 'scroll',
             WebkitOverflowScrolling: 'touch',
             overscrollBehavior: 'contain',
-            paddingTop: 'calc(1.5rem + env(safe-area-inset-top))',
+            paddingTop: 'calc(4rem + env(safe-area-inset-top))',
             paddingLeft: '1rem',
             paddingRight: '1rem',
             paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))',
