@@ -54,22 +54,16 @@ export default function Noticias() {
   useEffect(() => {
     if (visor || showForm) {
       scrollYRef.current = window.scrollY
-      document.body.style.position = 'fixed'
-      document.body.style.top = `-${scrollYRef.current}px`
-      document.body.style.width = '100%'
-      document.body.style.touchAction = 'none'
+      document.body.style.overflow = 'hidden'
+      document.body.style.height = '100vh'
     } else {
-      document.body.style.position = ''
-      document.body.style.top = ''
-      document.body.style.width = ''
-      document.body.style.touchAction = ''
-      window.scrollTo(0, scrollYRef.current)
+      document.body.style.overflow = ''
+      document.body.style.height = ''
+      if (scrollYRef.current) window.scrollTo(0, scrollYRef.current)
     }
     return () => {
-      document.body.style.position = ''
-      document.body.style.top = ''
-      document.body.style.width = ''
-      document.body.style.touchAction = ''
+      document.body.style.overflow = ''
+      document.body.style.height = ''
     }
   }, [visor, showForm])
 
@@ -246,7 +240,7 @@ export default function Noticias() {
       {visor && (
         <div
           style={{
-            position: 'fixed', inset: 0, zIndex: 1000,
+            position: 'fixed', inset: 0, zIndex: 9999,
             background: 'rgba(0,0,0,0.88)',
             overflowY: 'scroll',
             WebkitOverflowScrolling: 'touch',
@@ -255,7 +249,7 @@ export default function Noticias() {
             paddingTop: 'calc(4rem + env(safe-area-inset-top))',
             paddingLeft: '1rem',
             paddingRight: '1rem',
-            paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))',
+            paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))',
           }}
           onClick={() => setVisor(null)}
         >
