@@ -331,7 +331,7 @@ export default function Noticias() {
             <input id="input-portada" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleArchivo} />
             <div className="form-group" style={{ marginBottom: '1rem' }}>
               <label className="label">Titular</label>
-              <input className="input" type="text" placeholder="Ej: Messi ficha por el Tejera Balompié" value={titulo} onChange={e => { setTitulo(e.target.value); setError('') }} maxLength={120} />
+              <input className="input" type="text" value={titulo} onChange={e => { setTitulo(e.target.value); setError('') }} maxLength={120} />
             </div>
             <button onClick={handleSubmit} disabled={saving} className="btn btn-primary btn-block" style={{ fontSize: 16, opacity: saving ? 0.7 : 1 }}>
               {saving ? 'Publicando...' : '📰 Publicar portada'}

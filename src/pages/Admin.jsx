@@ -608,7 +608,12 @@ function PanelTemporada({ store }) {
         <div style={{ fontSize: 12, color: '#6a3a42', marginTop: 4 }}>Año {temporadaActiva?.año} · Todos los datos actuales pertenecen a esta temporada</div>
       </div>
 
-      {!showForm ? (
+      {!adminAuth.isSuperAdmin() ? (
+        <div style={{ background: '#f7f2f3', borderRadius: 12, padding: '1rem', marginBottom: '1.5rem', textAlign: 'center' }}>
+          <div style={{ fontSize: 20, marginBottom: 6 }}>🔐</div>
+          <div style={{ fontSize: 13, color: 'var(--gris-mid)' }}>Solo el superadmin puede cerrar la temporada</div>
+        </div>
+      ) : !showForm ? (
         <button onClick={() => setShowForm(true)} className="btn btn-ghost btn-block" style={{ marginBottom: '1.5rem' }}>
           🔚 Cerrar temporada y empezar nueva
         </button>
@@ -700,8 +705,19 @@ function PanelLog({ store, jugadores }) {
     }
   }, [])
 
-  const verificar = () => {
-    if (!adminAuth.isSuperAdmin()) { setErrorPwd('Contraseña incorrecta'); return }
+  const verificar = async () => {
+    // Hashear lo que escribió y comparar con el hash de superadmin
+    const msgUint8 = new TextEncoder().encode(pwdInput)
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    const hashCalculado = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+
+    // Importar el hash de superadmin desde adminAuth
+    const { SUPERADMIN_HASH } = await import('../lib/adminAuth')
+    if (hashCalculado !== SUPERADMIN_HASH) {
+      setErrorPwd('Contraseña incorrecta')
+      return
+    }
     setDesbloqueado(true)
     setCargando(true)
     store.getLog()

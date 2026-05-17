@@ -120,7 +120,7 @@ export default function Patrocinadores() {
 
                         <div className="form-group">
                             <label className="label">Nombre (opcional)</label>
-                            <input className="input" value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Ej: Bar El Faro" />
+                            <input className="input" value={nombre} onChange={e => setNombre(e.target.value)} />
                         </div>
 
                         <button onClick={handleSubmit} disabled={saving} className="btn btn-primary btn-block" style={{ opacity: saving ? 0.7 : 1 }}>

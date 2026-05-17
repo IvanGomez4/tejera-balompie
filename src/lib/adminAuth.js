@@ -72,3 +72,5 @@ export const adminAuth = {
     try { localStorage.setItem(KEY_JUGADOR, JSON.stringify(jugador)) } catch { }
   }
 }
+
+export const SUPERADMIN_HASH = SUPERADMIN_PASSWORD_HASH
