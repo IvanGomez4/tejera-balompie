@@ -384,17 +384,19 @@ export const store = {
   },
   async deleteNoticia(id) {
     if (USE_SUPABASE) {
-      // Obtener la URL de la imagen antes de borrar la fila
-      const noticia = _noticias.find(n => n.id === id)
+      // 1. Obtenemos la noticia directamente de Supabase para saber la URL de su imagen
+      const { data: noticia } = await supabase
+        .from('noticias')
+        .select('*')
+        .eq('id', id)
+        .single()
 
-      // Borrar la fila de la tabla
+      // 2. Borramos la fila de la base de datos
       await supabase.from('noticias').delete().eq('id', id)
 
-      // Borrar el archivo del bucket si existe
+      // 3. Si tenía imagen, la borramos del bucket
       if (noticia?.imagen_url) {
         try {
-          // Extraer el path del archivo desde la URL pública
-          // La URL tiene formato: .../storage/v1/object/public/noticias/FILENAME
           const url = noticia.imagen_url
           const bucketPath = url.split('/storage/v1/object/public/noticias/')[1]
           if (bucketPath) {
@@ -405,10 +407,13 @@ export const store = {
         }
       }
     } else {
-      _noticias = _noticias.filter(n => n.id !== id)
-      save('tj_noticias', _noticias)
+      // Modo local: Cargamos del localStorage, filtramos y volvemos a guardar
+      const noticiasActuales = load('tj_noticias', [])
+      const noticiasFiltradas = noticiasActuales.filter(n => n.id !== id)
+      save('tj_noticias', noticiasFiltradas)
     }
-    _noticias = _noticias.filter(n => n.id !== id)
+
+    // Notificamos a los componentes para que se actualice la UI
     notify()
   },
   async getLog() {

@@ -105,10 +105,16 @@ export default function Noticias() {
   }
 
   const handleDelete = async (id) => {
-    if (!window.confirm('¿Eliminar esta portada?')) return
-    await store.deleteNoticia(id)
-    setNoticias(prev => prev.filter(n => n.id !== id))
-    if (visor?.id === id) setVisor(null)
+    const confirmar = window.confirm('¿Eliminar esta portada?')
+    if (!confirmar) return
+    try {
+      await store.deleteNoticia(id)
+      setNoticias(prev => prev.filter(n => n.id !== id))
+      setVisor(null)
+    } catch (e) {
+      console.error('Error eliminando portada:', e)
+      alert('Error al eliminar la portada. Inténtalo de nuevo.')
+    }
   }
 
   const cancelForm = () => {
