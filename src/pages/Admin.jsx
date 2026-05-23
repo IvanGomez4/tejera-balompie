@@ -166,18 +166,39 @@ function PanelJugadores({ jugadores, store }) {
 // ---- Panel Partidos ----
 function PanelPartidos({ partidos, store }) {
   const [modal, setModal] = useState(null)
-  const emptyP = { jornada: '', fecha: '', hora: '', local: EQUIPO_NOMBRE, visitante: '', campo: 'Campo Municipal', jugado: false, goles_local: 0, goles_visitante: 0, amistoso: false }
+  const emptyP = { jornada: '', fecha: '', hora: '', local: EQUIPO_NOMBRE, visitante: '', campo: 'Campo Municipal', jugado: false, goles_local: 0, goles_visitante: 0, amistoso: false, escudo_rival_url: null }
   const [form, setForm] = useState(emptyP)
+  const [escudoFile, setEscudoFile] = useState(null)
+  const [escudoPreview, setEscudoPreview] = useState(null)
+  const [subiendoEscudo, setSubiendoEscudo] = useState(false)
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const nuestros = partidos
     .filter(p => p.local === EQUIPO_NOMBRE || p.visitante === EQUIPO_NOMBRE)
     .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
 
-  const openAdd = () => { setForm(emptyP); setModal({ mode: 'add' }) }
-  const openEdit = (p) => { setForm({ jornada: p.jornada, fecha: p.fecha, hora: p.hora || '', local: p.local, visitante: p.visitante, campo: p.campo, jugado: p.jugado, goles_local: p.goles_local, goles_visitante: p.goles_visitante, amistoso: p.amistoso || false }); setModal({ mode: 'edit', id: p.id }) }
-  const save = () => {
+  const openAdd = () => { setForm(emptyP); setEscudoFile(null); setEscudoPreview(null); setModal({ mode: 'add' }) }
+  const openEdit = (p) => {
+    setForm({ jornada: p.jornada, fecha: p.fecha, hora: p.hora || '', local: p.local, visitante: p.visitante, campo: p.campo, jugado: p.jugado, goles_local: p.goles_local, goles_visitante: p.goles_visitante, amistoso: p.amistoso || false, escudo_rival_url: p.escudo_rival_url || null })
+    setEscudoFile(null)
+    setEscudoPreview(p.escudo_rival_url || null)
+    setModal({ mode: 'edit', id: p.id })
+  }
+
+  const handleEscudoChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setEscudoFile(file)
+    setEscudoPreview(URL.createObjectURL(file))
+  }
+
+  const save = async () => {
     if (!form.fecha) return
+    setSubiendoEscudo(true)
+    let escudoUrl = form.escudo_rival_url || null
+
+    // Si hay archivo nuevo, subir primero (necesitamos el id del partido)
+    // Para add: insertamos primero sin escudo, luego subimos y actualizamos
     const fechaHoraStr = form.hora ? `${form.fecha}T${form.hora}:00` : `${form.fecha}T23:59:00`
     const fechaHora = new Date(fechaHoraStr)
     const esFuturo = fechaHora > new Date()
@@ -188,26 +209,38 @@ function PanelPartidos({ partidos, store }) {
       goles_local: Number(form.goles_local) || 0,
       goles_visitante: Number(form.goles_visitante) || 0,
       jugado: esFuturo ? false : (autoJugado ? true : form.jugado),
+      escudo_rival_url: escudoUrl,
     }
     haptics.success()
-    if (modal.mode === 'add') store.addPartido(data)
-    else store.updatePartido(modal.id, data)
+
+    if (modal.mode === 'add') {
+      await store.addPartido(data)
+      // Si hay archivo, subir con el id recién creado
+      if (escudoFile) {
+        const nuevoPartido = store.getPartidos?.().slice(-1)[0]
+        // Fallback: subir sin id específico usando timestamp
+        const url = await store.uploadEscudoRival(nuevoPartido?.id || Date.now(), escudoFile)
+        if (url && nuevoPartido?.id) await store.updatePartido(nuevoPartido.id, { ...data, escudo_rival_url: url })
+      }
+    } else {
+      if (escudoFile) {
+        escudoUrl = await store.uploadEscudoRival(modal.id, escudoFile)
+      }
+      await store.updatePartido(modal.id, { ...data, escudo_rival_url: escudoUrl })
+    }
 
     // Enviar notificación solo si el partido PASA de pendiente a jugado en esta edición
     const eraJugadoAntes = modal.mode === 'edit' && partidos.find(p => p.id === modal.id)?.jugado
     if (data.jugado && !eraJugadoAntes) {
       const esLocal = data.local === EQUIPO_NOMBRE
       const rival = esLocal ? data.visitante : data.local
-      const nuestros = esLocal ? data.goles_local : data.goles_visitante
-      const rivales = esLocal ? data.goles_visitante : data.goles_local
-      const resTexto = nuestros > rivales ? `Victoria ${nuestros}-${rivales}` : nuestros < rivales ? `Derrota ${nuestros}-${rivales}` : `Empate ${nuestros}-${rivales}`
-      enviarNotificacionResultado({
-        partido_id: modal.id || null,
-        rival,
-        resultado: resTexto,
-      })
+      const nuestrosG = esLocal ? data.goles_local : data.goles_visitante
+      const rivalesG = esLocal ? data.goles_visitante : data.goles_local
+      const resTexto = nuestrosG > rivalesG ? `Victoria ${nuestrosG}-${rivalesG}` : nuestrosG < rivalesG ? `Derrota ${nuestrosG}-${rivalesG}` : `Empate ${nuestrosG}-${rivalesG}`
+      enviarNotificacionResultado({ partido_id: modal.id || null, rival, resultado: resTexto })
     }
 
+    setSubiendoEscudo(false)
     setModal(null)
   }
   const del = (id) => { if (window.confirm('¿Eliminar partido y sus estadísticas?')) store.deletePartido(id) }
@@ -267,8 +300,27 @@ function PanelPartidos({ partidos, store }) {
             <input className="input" value={form.local} onChange={e => set('local', e.target.value)} />
           </div>
           <div className="form-group">
-            <label className="label">Equipo visitante</label>
+            <label className="label">Equipo rival</label>
             <input className="input" value={form.visitante} onChange={e => set('visitante', e.target.value)} placeholder="Nombre del rival" />
+          </div>
+          {/* Escudo rival */}
+          <div className="form-group">
+            <label className="label">Escudo rival <span style={{ fontWeight: 400, color: 'var(--gris-mid)', fontSize: 11 }}>(opcional)</span></label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              {escudoPreview ? (
+                <div style={{ position: 'relative', flexShrink: 0 }}>
+                  <img src={escudoPreview} alt="Escudo rival" style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--verde-pale)' }} />
+                  <button type="button" onClick={() => { setEscudoFile(null); setEscudoPreview(null); set('escudo_rival_url', null) }}
+                    style={{ position: 'absolute', top: -6, right: -6, width: 20, height: 20, borderRadius: '50%', background: '#c0392b', border: 'none', color: 'white', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>✕</button>
+                </div>
+              ) : (
+                <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#f5e8eb', border: '2px dashed #c8aab2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>🛡️</div>
+              )}
+              <label style={{ flex: 1, background: 'var(--verde-pale)', border: '1.5px solid #c8aab2', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: 'var(--verde)', fontWeight: 600, cursor: 'pointer', textAlign: 'center' }}>
+                {escudoPreview ? '📷 Cambiar escudo' : '📷 Subir escudo'}
+                <input type="file" accept="image/*" onChange={handleEscudoChange} style={{ display: 'none' }} />
+              </label>
+            </div>
           </div>
           <div className="form-group">
             <label className="label">Campo</label>
@@ -328,8 +380,8 @@ function PanelPartidos({ partidos, store }) {
             </div>
           )}
 
-          <button onClick={save} className="btn btn-primary btn-block" style={{ fontSize: 16 }}>
-            ⚽ Guardar partido
+          <button onClick={save} className="btn btn-primary btn-block" style={{ fontSize: 16 }} disabled={subiendoEscudo}>
+            {subiendoEscudo ? '⏳ Guardando...' : '⚽ Guardar partido'}
           </button>
         </Modal>
       )}

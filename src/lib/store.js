@@ -172,7 +172,7 @@ export const store = {
   // =====================
   async addPartido(p) {
     if (USE_SUPABASE) {
-      const { data } = await supabase.from('partidos').insert({ jornada: p.jornada, fecha: p.fecha, hora: p.hora || null, local: p.local, visitante: p.visitante, campo: p.campo, jugado: p.jugado || false, goles_local: p.goles_local || 0, goles_visitante: p.goles_visitante || 0, temporada_id: _temporadaActiva?.id || null, amistoso: p.amistoso || false }).select().single()
+      const { data } = await supabase.from('partidos').insert({ jornada: p.jornada, fecha: p.fecha, hora: p.hora || null, local: p.local, visitante: p.visitante, campo: p.campo, jugado: p.jugado || false, goles_local: p.goles_local || 0, goles_visitante: p.goles_visitante || 0, temporada_id: _temporadaActiva?.id || null, amistoso: p.amistoso || false, escudo_rival_url: p.escudo_rival_url || null }).select().single()
       if (data) { _partidos = [..._partidos, data] }
     } else {
       const id = Math.max(0, ..._partidos.map(x => x.id)) + 1
@@ -183,12 +183,22 @@ export const store = {
     notify()
   },
   async updatePartido(id, data) {
-    if (USE_SUPABASE) await supabase.from('partidos').update({ jornada: data.jornada, fecha: data.fecha, hora: data.hora || null, local: data.local, visitante: data.visitante, campo: data.campo, jugado: data.jugado, goles_local: data.goles_local, goles_visitante: data.goles_visitante, alineacion: data.alineacion || null, formacion: data.formacion || null, amistoso: data.amistoso || false }).eq('id', id)
+    if (USE_SUPABASE) await supabase.from('partidos').update({ jornada: data.jornada, fecha: data.fecha, hora: data.hora || null, local: data.local, visitante: data.visitante, campo: data.campo, jugado: data.jugado, goles_local: data.goles_local, goles_visitante: data.goles_visitante, alineacion: data.alineacion || null, formacion: data.formacion || null, amistoso: data.amistoso || false, escudo_rival_url: data.escudo_rival_url !== undefined ? data.escudo_rival_url : null }).eq('id', id)
     _partidos = _partidos.map(p => p.id === id ? { ...p, ...data } : p)
     if (!USE_SUPABASE) save('tj_partidos', _partidos)
     const p = _partidos.find(x => x.id === id)
     await log('✏️ Editó', 'Partido', `J${p?.jornada} vs ${p?.visitante || p?.local}`)
     notify()
+  },
+  async uploadEscudoRival(partidoId, archivo) {
+    if (!USE_SUPABASE) return null
+    const ext = archivo.name.split('.').pop()
+    const path = `rival_${partidoId}.${ext}`
+    await supabase.storage.from('escudos-rivales').remove([path])
+    const { error } = await supabase.storage.from('escudos-rivales').upload(path, archivo, { upsert: true })
+    if (error) { console.error('Error subiendo escudo rival:', error); return null }
+    const { data } = supabase.storage.from('escudos-rivales').getPublicUrl(path)
+    return data.publicUrl
   },
   async deletePartido(id) {
     if (USE_SUPABASE) await supabase.from('partidos').delete().eq('id', id)
@@ -336,16 +346,21 @@ export const store = {
   // =====================
   // NOTICIAS
   // =====================
-  async getNoticias() {
+  async getNoticias(from = 0, to = 5) {
     if (USE_SUPABASE) {
       const { data, error } = await supabase
         .from('noticias')
         .select('*')
         .order('created_at', { ascending: false })
+        .range(from, to) // Limita la descarga a las noticias que pidas
+
       if (error) console.error(error)
       return data || []
     }
-    return load('tj_noticias', [])
+
+    // Si estás trabajando en local, también recortamos el array
+    const localData = load('tj_noticias', [])
+    return localData.slice(from, to + 1)
   },
   // imagen_url ya viene procesada desde el componente (base64 o URL de Supabase)
   async addNoticia({ titulo, archivo, imagen_url_local }) {

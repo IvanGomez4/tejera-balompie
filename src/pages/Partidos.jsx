@@ -80,44 +80,118 @@ export default function Partidos() {
           {proximos.map((p, i) => {
             const rival = p.local === EQUIPO_NOMBRE ? p.visitante : p.local
             const cond = p.local === EQUIPO_NOMBRE ? 'Local' : 'Visitante'
+            const esSiguiente = i === 0
+            const letraRival = rival ? rival.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?'
             return (
-              <div key={p.id} onClick={() => nav(`/partido/${p.id}`)} style={{ background: i === 0 ? 'var(--negro-soft)' : 'white', borderRadius: 14, padding: '1rem', flexShrink: 0, minWidth: 180, border: '1px solid', borderColor: i === 0 ? 'var(--verde)' : '#f0e8ea', cursor: 'pointer' }}>
-                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4, color: i === 0 ? '#e8a0b0' : 'var(--verde-mid)' }}>{p.amistoso ? 'Amistoso' : `J${p.jornada}`} · {cond}</div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: i === 0 ? 'white' : 'var(--negro)', marginBottom: 4 }}>vs. {rival}</div>
-                <div style={{ fontSize: 12, color: i === 0 ? '#666' : 'var(--gris-mid)' }}>{fmt(p.fecha)} · {p.hora}</div>
-                <div style={{ fontSize: 11, color: i === 0 ? '#555' : 'var(--gris-light)', marginTop: 3 }}>📍 {p.campo}</div>
+              <div key={p.id} onClick={() => nav(`/partido/${p.id}`)}
+                style={{
+                  background: esSiguiente ? 'var(--negro-soft)' : 'white',
+                  borderRadius: 16,
+                  padding: '14px 16px',
+                  flexShrink: 0,
+                  minWidth: 190,
+                  border: `1.5px solid ${esSiguiente ? 'var(--verde)' : '#f0e8ea'}`,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
+                }}>
+                {/* Chip */}
+                <span style={{ alignSelf: 'flex-start', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', padding: '2px 8px', borderRadius: 20, background: esSiguiente ? 'rgba(200,153,26,0.2)' : 'rgba(155,42,64,0.1)', color: esSiguiente ? 'var(--dorado-light)' : 'var(--verde-mid)' }}>
+                  {p.amistoso ? 'Amistoso' : `J${p.jornada}`} · {cond}
+                </span>
+                {/* Escudos mini */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <img src="/escudo.png" alt="Tejera" style={{ width: 28, height: 28, objectFit: 'contain' }} />
+                  <span style={{ fontFamily: 'Bebas Neue', fontSize: 14, color: esSiguiente ? '#666' : '#ccc' }}>vs</span>
+                  {p.escudo_rival_url ? (
+                    <img src={p.escudo_rival_url} alt={rival} style={{ width: 36, height: 36, objectFit: 'contain' }} />
+                  ) : (
+                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: esSiguiente ? '#222' : '#f5e8eb', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1.5px solid ${esSiguiente ? '#444' : '#e0d0d5'}` }}>
+                      <span style={{ fontFamily: 'Bebas Neue', fontSize: 11, color: esSiguiente ? '#888' : '#aaa' }}>{letraRival}</span>
+                    </div>
+                  )}
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: esSiguiente ? 'white' : 'var(--negro)', lineHeight: 1.2 }}>{rival}</div>
+                <div style={{ fontSize: 11, color: esSiguiente ? '#888' : 'var(--gris-mid)' }}>{fmt(p.fecha)} · {p.hora}</div>
+                <div style={{ fontSize: 11, color: esSiguiente ? '#666' : 'var(--gris-light)' }}>📍 {p.campo}</div>
               </div>
             )
           })}
         </div>
       </>}
 
-      <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--gris-mid)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Historial</h2>
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        {jugados.length === 0 && <div className="empty">Sin partidos jugados</div>}
-        {jugados.map((p, i) => {
+      <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--gris-mid)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Historial</h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {jugados.length === 0 && (
+          <div className="card" style={{ textAlign: 'center', color: 'var(--gris-mid)', fontSize: 14, padding: '2rem' }}>Sin partidos jugados</div>
+        )}
+        {jugados.map((p) => {
           const esL = p.local === EQUIPO_NOMBRE
           const r = res(p)
           const rival = esL ? p.visitante : p.local
+          const nuestros = esL ? p.goles_local : p.goles_visitante
+          const rivales = esL ? p.goles_visitante : p.goles_local
+
+          const colorBorde = r === 'victoria' ? '#22a05a' : r === 'derrota' ? '#c0392b' : '#e0a020'
+          const colorFondo = r === 'victoria' ? 'rgba(34,160,90,0.06)' : r === 'derrota' ? 'rgba(192,57,43,0.06)' : 'rgba(224,160,32,0.06)'
+          const letraRival = rival ? rival.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?'
+
           return (
-            <div key={p.id} onClick={() => nav(`/partido/${p.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderBottom: i < jugados.length - 1 ? '1px solid #f5e8eb' : 'none', cursor: 'pointer', WebkitTapHighlightColor: 'rgba(0,0,0,0.04)' }}>
-              <div style={{ width: 4, height: 40, borderRadius: 2, flexShrink: 0, background: r === 'victoria' ? 'var(--verde-mid)' : r === 'derrota' ? '#c0392b' : '#bbb' }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              key={p.id}
+              onClick={() => nav(`/partido/${p.id}`)}
+              style={{
+                background: colorFondo,
+                border: '1px solid',
+                borderColor: `${colorBorde}33`,
+                borderLeft: `4px solid ${colorBorde}`,
+                borderRadius: 14,
+                padding: '14px 16px',
+                cursor: 'pointer',
+                WebkitTapHighlightColor: 'rgba(0,0,0,0.04)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 12,
+                transition: 'transform 0.12s',
+              }}
+              onTouchStart={e => e.currentTarget.style.transform = 'scale(0.985)'}
+              onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
+            >
+              {/* Escudo Tejera — izquierda */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, width: 64, flexShrink: 0 }}>
+                <img src="/escudo.png" alt="Tejera" style={{ width: 52, height: 52, objectFit: 'contain' }} />
+                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--gris-mid)', textTransform: 'uppercase', letterSpacing: '0.03em', textAlign: 'center', lineHeight: 1.2 }}>Tejera Balompié</span>
+              </div>
+
+              {/* Centro: fecha + marcador + chip */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 90 }}>
+                <span style={{ fontSize: 10, color: 'var(--gris-mid)' }}>{fmt(p.fecha)} · {p.hora}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>vs. {rival}</div>
-                  {p.amistoso && <span style={{ background: '#fff3cd', color: '#856a00', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 10, flexShrink: 0 }}>Amistoso</span>}
+                  <span style={{ fontFamily: 'Bebas Neue', fontSize: 38, lineHeight: 1, color: 'var(--negro)' }}>{esL ? p.goles_local : p.goles_visitante}</span>
+                  <span style={{ fontFamily: 'Bebas Neue', fontSize: 24, color: '#bbb', lineHeight: 1 }}>-</span>
+                  <span style={{ fontFamily: 'Bebas Neue', fontSize: 38, lineHeight: 1, color: 'var(--negro)' }}>{esL ? p.goles_visitante : p.goles_local}</span>
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--gris-mid)', marginTop: 1 }}>{p.amistoso ? 'Amistoso' : `J${p.jornada}`} · {fmt(p.fecha)} · {p.hora}</div>
+                {p.amistoso ? (
+                  <span style={{ background: '#fff3cd', color: '#856a00', fontSize: 10, fontWeight: 700, padding: '2px 9px', borderRadius: 20 }}>Amistoso</span>
+                ) : (
+                  <span style={{ background: 'rgba(155,42,64,0.12)', color: 'var(--verde-mid)', fontSize: 10, fontWeight: 700, padding: '2px 9px', borderRadius: 20 }}>Jornada {p.jornada}</span>
+                )}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
-                  <span style={{ fontFamily: 'Bebas Neue', fontSize: 24, color: esL ? 'var(--verde)' : 'var(--gris-mid)' }}>{p.goles_local}</span>
-                  <span style={{ color: '#ccc', fontSize: 16 }}>–</span>
-                  <span style={{ fontFamily: 'Bebas Neue', fontSize: 24, color: !esL ? 'var(--verde)' : 'var(--gris-mid)' }}>{p.goles_visitante}</span>
-                </div>
-                <span className={`tag-${r}`}>{r === 'victoria' ? 'V' : r === 'derrota' ? 'D' : 'E'}</span>
+
+              {/* Escudo rival — derecha */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, width: 64, flexShrink: 0 }}>
+                {p.escudo_rival_url ? (
+                  <img src={p.escudo_rival_url} alt={rival} style={{ width: 52, height: 52, objectFit: 'contain' }} />
+                ) : (
+                  <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--negro-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #333' }}>
+                    <span style={{ fontFamily: 'Bebas Neue', fontSize: 17, color: '#aaa', letterSpacing: '0.05em' }}>{letraRival}</span>
+                  </div>
+                )}
+                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--gris-mid)', textTransform: 'uppercase', letterSpacing: '0.03em', textAlign: 'center', lineHeight: 1.2, maxWidth: 64, wordBreak: 'break-word' }}>{rival}</span>
               </div>
-              <div style={{ color: '#ddd', fontSize: 16 }}>›</div>
+
             </div>
           )
         })}

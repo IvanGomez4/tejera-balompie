@@ -184,6 +184,9 @@ export default function DetallePartido() {
   const [editandoAlin, setEditandoAlin] = useState(false)
   const [editandoPartido, setEditandoPartido] = useState(false)
   const [formPartido, setFormPartido] = useState(null)
+  const [escudoRivalFile, setEscudoRivalFile] = useState(null)
+  const [escudoRivalPreview, setEscudoRivalPreview] = useState(null)
+  const [subiendoEscudo, setSubiendoEscudo] = useState(false)
   const isAdmin = adminAuth.isLogged()
   const [votos, setVotos] = useState([])
   const [miVoto, setMiVoto] = useState(null)
@@ -259,13 +262,21 @@ export default function DetallePartido() {
         {partido.jugado ? (
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: 12 }}>
-              <div style={{ flex: 1, textAlign: 'right' }}>
+              <div style={{ flex: 1, textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                <img src="/escudo.png" alt="Tejera" style={{ width: 40, height: 40, objectFit: 'contain' }} />
                 <div style={{ fontSize: 13, color: esLocal ? '#e8a0b0' : '#aaa', fontWeight: esLocal ? 700 : 400 }}>{partido.local}</div>
               </div>
               <div style={{ fontFamily: 'Bebas Neue', fontSize: 48, color: 'white', letterSpacing: '0.05em', background: 'rgba(0,0,0,0.3)', padding: '4px 20px', borderRadius: 12 }}>
                 {partido.goles_local}–{partido.goles_visitante}
               </div>
-              <div style={{ flex: 1, textAlign: 'left' }}>
+              <div style={{ flex: 1, textAlign: 'left', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+                {partido.escudo_rival_url ? (
+                  <img src={partido.escudo_rival_url} alt={rival} style={{ width: 52, height: 52, objectFit: 'contain' }} />
+                ) : (
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '2px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontFamily: 'Bebas Neue', fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>{rival ? rival.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?'}</span>
+                  </div>
+                )}
                 <div style={{ fontSize: 13, color: !esLocal ? '#e8a0b0' : '#aaa', fontWeight: !esLocal ? 700 : 400 }}>{partido.visitante}</div>
               </div>
             </div>
@@ -275,7 +286,18 @@ export default function DetallePartido() {
           </>
         ) : (
           <>
-            <div style={{ fontFamily: 'Bebas Neue', fontSize: 28, color: 'white', marginBottom: 8 }}>vs. {rival}</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 8 }}>
+              <img src="/escudo.png" alt="Tejera" style={{ width: 44, height: 44, objectFit: 'contain' }} />
+              <div style={{ fontFamily: 'Bebas Neue', fontSize: 28, color: 'white' }}>vs.</div>
+              {partido.escudo_rival_url ? (
+                <img src={partido.escudo_rival_url} alt={rival} style={{ width: 44, height: 44, objectFit: 'contain' }} />
+              ) : (
+                <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '2px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontFamily: 'Bebas Neue', fontSize: 15, color: 'rgba(255,255,255,0.4)' }}>{rival ? rival.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?'}</span>
+                </div>
+              )}
+            </div>
+            <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: 'white', marginBottom: 8 }}>{rival}</div>
             <span style={{ background: 'rgba(255,255,255,0.1)', color: '#e8a0b0', padding: '4px 14px', borderRadius: 20, fontSize: 13 }}>Pendiente</span>
           </>
         )}
@@ -484,7 +506,10 @@ export default function DetallePartido() {
                 goles_local: partido.goles_local,
                 goles_visitante: partido.goles_visitante,
                 amistoso: partido.amistoso || false,
+                escudo_rival_url: partido.escudo_rival_url || null,
               })
+              setEscudoRivalFile(null)
+              setEscudoRivalPreview(partido.escudo_rival_url || null)
               setEditandoPartido(true)
             }}
             className="btn btn-ghost btn-block"
@@ -527,6 +552,32 @@ export default function DetallePartido() {
             {/* Local / Visitante / Campo */}
             <div className="form-group"><label className="label">Equipo local</label><input className="input" value={formPartido.local} onChange={e => setFormPartido(f => ({ ...f, local: e.target.value }))} /></div>
             <div className="form-group"><label className="label">Equipo visitante</label><input className="input" value={formPartido.visitante} onChange={e => setFormPartido(f => ({ ...f, visitante: e.target.value }))} /></div>
+
+            {/* Escudo rival */}
+            <div className="form-group">
+              <label className="label">Escudo del rival <span style={{ fontWeight: 400, color: 'var(--gris-mid)', fontSize: 11 }}>(opcional)</span></label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {escudoRivalPreview ? (
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
+                    <img src={escudoRivalPreview} alt="Escudo rival" style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--verde-pale)' }} />
+                    <button type="button" onClick={() => { setEscudoRivalFile(null); setEscudoRivalPreview(null); setFormPartido(f => ({ ...f, escudo_rival_url: null })) }}
+                      style={{ position: 'absolute', top: -6, right: -6, width: 20, height: 20, borderRadius: '50%', background: '#c0392b', border: 'none', color: 'white', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>✕</button>
+                  </div>
+                ) : (
+                  <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#f5e8eb', border: '2px dashed #c8aab2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>🛡️</div>
+                )}
+                <label style={{ flex: 1, background: 'var(--verde-pale)', border: '1.5px solid #c8aab2', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: 'var(--verde)', fontWeight: 600, cursor: 'pointer', textAlign: 'center' }}>
+                  {escudoRivalPreview ? '📷 Cambiar escudo' : '📷 Subir escudo'}
+                  <input type="file" accept="image/*" onChange={e => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    setEscudoRivalFile(file)
+                    setEscudoRivalPreview(URL.createObjectURL(file))
+                  }} style={{ display: 'none' }} />
+                </label>
+              </div>
+            </div>
+
             <div className="form-group"><label className="label">Campo</label><input className="input" value={formPartido.campo} onChange={e => setFormPartido(f => ({ ...f, campo: e.target.value }))} /></div>
 
             {/* Amistoso */}
@@ -578,33 +629,41 @@ export default function DetallePartido() {
 
             <button
               onClick={async () => {
+                setSubiendoEscudo(true)
                 const esFuturo = formPartido.fecha && new Date(formPartido.fecha) > new Date()
+                let escudoUrl = formPartido.escudo_rival_url || null
+                if (escudoRivalFile) {
+                  escudoUrl = await store.uploadEscudoRival(partido.id, escudoRivalFile)
+                }
                 const dataGuardar = {
                   ...formPartido,
                   jornada: Number(formPartido.jornada) || 0,
                   goles_local: Number(formPartido.goles_local) || 0,
                   goles_visitante: Number(formPartido.goles_visitante) || 0,
                   jugado: esFuturo ? false : formPartido.jugado,
+                  escudo_rival_url: escudoUrl,
                 }
                 await store.updatePartido(partido.id, dataGuardar)
 
                 // Notificación solo si pasa de pendiente a jugado
                 const eraJugadoAntes = partido.jugado
                 if (dataGuardar.jugado && !eraJugadoAntes) {
-                  const esLocal = dataGuardar.local === EQUIPO_NOMBRE
-                  const rival = esLocal ? dataGuardar.visitante : dataGuardar.local
-                  const nuestros = esLocal ? dataGuardar.goles_local : dataGuardar.goles_visitante
-                  const rivales = esLocal ? dataGuardar.goles_visitante : dataGuardar.goles_local
-                  const resTexto = nuestros > rivales ? `Victoria ${nuestros}-${rivales}` : nuestros < rivales ? `Derrota ${nuestros}-${rivales}` : `Empate ${nuestros}-${rivales}`
-                  enviarNotificacionResultado({ partido_id: partido.id, rival, resultado: resTexto })
+                  const esLocalN = dataGuardar.local === EQUIPO_NOMBRE
+                  const rivalN = esLocalN ? dataGuardar.visitante : dataGuardar.local
+                  const nuestrosN = esLocalN ? dataGuardar.goles_local : dataGuardar.goles_visitante
+                  const rivalesN = esLocalN ? dataGuardar.goles_visitante : dataGuardar.goles_local
+                  const resTexto = nuestrosN > rivalesN ? `Victoria ${nuestrosN}-${rivalesN}` : nuestrosN < rivalesN ? `Derrota ${nuestrosN}-${rivalesN}` : `Empate ${nuestrosN}-${rivalesN}`
+                  enviarNotificacionResultado({ partido_id: partido.id, rival: rivalN, resultado: resTexto })
                 }
 
+                setSubiendoEscudo(false)
                 setEditandoPartido(false)
                 window.location.reload()
               }}
               className="btn btn-primary btn-block"
+              disabled={subiendoEscudo}
             >
-              Guardar cambios
+              {subiendoEscudo ? '⏳ Guardando...' : 'Guardar cambios'}
             </button>
           </div>
         </>

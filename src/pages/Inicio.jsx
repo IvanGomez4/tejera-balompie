@@ -246,8 +246,21 @@ export default function Inicio() {
                 </span>
               </div>
 
-              <div style={{ fontFamily: 'Bebas Neue', fontSize: 36, lineHeight: 1, marginBottom: 8 }}>
-                vs. {rival || 'Rival pendiente'}
+              {/* Escudos enfrentados */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                <img src="/escudo.png" alt="Tejera" style={{ width: 44, height: 44, objectFit: 'contain', flexShrink: 0 }} />
+                <div style={{ fontFamily: 'Bebas Neue', fontSize: 28, color: 'white', flex: 1 }}>
+                  vs. {rival || 'Rival pendiente'}
+                </div>
+                {proximo.escudo_rival_url ? (
+                  <img src={proximo.escudo_rival_url} alt={rival} style={{ width: 56, height: 56, objectFit: 'contain', flexShrink: 0 }} />
+                ) : (
+                  <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '2px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <span style={{ fontFamily: 'Bebas Neue', fontSize: 15, color: 'rgba(255,255,255,0.4)' }}>
+                      {rival ? rival.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?'}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {!cd.pasado && cd.dias > 1 && (

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useStore } from '../hooks/useStore'
-import { EQUIPO_NOMBRE } from '../lib/mockData'
 
 const medalColors = ['#c8a800', '#909090', '#a06030']
 
@@ -12,7 +11,7 @@ export default function Clasificacion() {
   const [grupoActivo, setGrupoActivo] = useState(null)
 
   // El grupo activo por defecto es el que contiene a nuestro equipo
-  const grupoPropio = clasificacion.find(e => e.equipo === EQUIPO_NOMBRE)?.grupo || grupos[0]
+  const grupoPropio = clasificacion.find(e => e.equipo === "Tejera Balompié FC")?.grupo || grupos[0]
   const grupoSeleccionado = grupoActivo ?? grupoPropio ?? grupos[0]
 
   const equiposGrupo = clasificacion
@@ -76,7 +75,7 @@ export default function Clasificacion() {
         </div>
 
         {equiposGrupo.map((e, i) => {
-          const esN = e.equipo === EQUIPO_NOMBRE
+          const esN = e.equipo === "Tejera Balompié FC"
           const dg = e.gf - e.gc
           return (
             <div

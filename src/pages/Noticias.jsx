@@ -31,15 +31,33 @@ export default function Noticias() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  // Estado push
+  // --- NUEVOS ESTADOS ---
   const [pushActivo, setPushActivo] = useState(false)
   const [pushCargando, setPushCargando] = useState(false)
+  const [pagina, setPagina] = useState(0)
+  const [hayMas, setHayMas] = useState(true)
+  const limit = 6
+
+  // --- NUEVA LÓGICA DE CARGA ---
+  const cargarPortadas = async (pagActual) => {
+    const from = pagActual * limit
+    const to = from + limit - 1
+
+    try {
+      const data = await store.getNoticias(from, to)
+      if (data.length < limit) setHayMas(false)
+
+      if (pagActual === 0) setNoticias(data)
+      else setNoticias(prev => [...prev, ...data])
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    store.getNoticias().then(data => {
-      setNoticias(data)
-      setLoading(false)
-    }).catch(() => setLoading(false))
+    cargarPortadas(0)
 
     // Comprobar si ya está suscrito
     if (pushSoportado()) {
@@ -48,6 +66,12 @@ export default function Noticias() {
       )
     }
   }, [])
+
+  const handleCargarMas = () => {
+    const nuevaPagina = pagina + 1
+    setPagina(nuevaPagina)
+    cargarPortadas(nuevaPagina)
+  }
 
   const scrollYRef = useRef(0)
 
@@ -233,7 +257,12 @@ export default function Noticias() {
             onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.13)' }}
           >
             <div style={{ aspectRatio: '3/4', overflow: 'hidden', background: '#eee' }}>
-              <img src={n.imagen_url} alt={n.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              <img
+                src={n.imagen_url}
+                alt={n.titulo}
+                loading="lazy"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
             </div>
             <div style={{ padding: '8px 10px 10px' }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--negro)', lineHeight: 1.3, marginBottom: 4 }}>{n.titulo}</div>
@@ -242,6 +271,19 @@ export default function Noticias() {
           </div>
         ))}
       </div>
+
+      {/* --- BOTÓN CARGAR MÁS --- */}
+      {!loading && hayMas && noticias.length > 0 && (
+        <div style={{ textAlign: 'center', marginTop: '2rem', marginBottom: '2rem' }}>
+          <button
+            onClick={handleCargarMas}
+            className="btn btn-primary btn-sm"
+            style={{ padding: '8px 24px', background: '#f4f7f4', color: 'var(--negro)', border: '1px solid #c0d0c0', cursor: 'pointer' }}
+          >
+            ↓ Cargar más portadas
+          </button>
+        </div>
+      )}
 
       {visor && (
         <div
