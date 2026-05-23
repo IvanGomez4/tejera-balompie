@@ -346,7 +346,7 @@ export const store = {
   // =====================
   // NOTICIAS
   // =====================
-  async getNoticias(from = 0, to = 5) {
+  async getNoticias(from = 0, to = 3) {
     if (USE_SUPABASE) {
       const { data, error } = await supabase
         .from('noticias')

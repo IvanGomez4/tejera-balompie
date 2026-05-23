@@ -36,7 +36,7 @@ export default function Noticias() {
   const [pushCargando, setPushCargando] = useState(false)
   const [pagina, setPagina] = useState(0)
   const [hayMas, setHayMas] = useState(true)
-  const limit = 6
+  const limit = 4
 
   // --- NUEVA LÓGICA DE CARGA ---
   const cargarPortadas = async (pagActual) => {
