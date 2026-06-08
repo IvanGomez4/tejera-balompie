@@ -251,18 +251,54 @@ function PanelPartidos({ partidos, store }) {
         <span style={{ fontSize: 14, color: 'var(--gris-mid)' }}>{nuestros.length} partidos</span>
         <button onClick={openAdd} className="btn btn-primary btn-sm">+ Añadir partido</button>
       </div>
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        {nuestros.map((p, i) => {
-          const rival = p.local === EQUIPO_NOMBRE ? p.visitante : p.local
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {nuestros.map((p) => {
+          const esL = p.local === EQUIPO_NOMBRE
+          const rival = esL ? p.visitante : p.local
+          const letraRival = rival ? rival.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?'
+          const res = p.jugado ? (esL ? (p.goles_local > p.goles_visitante ? 'victoria' : p.goles_local < p.goles_visitante ? 'derrota' : 'empate') : (p.goles_visitante > p.goles_local ? 'victoria' : p.goles_visitante < p.goles_local ? 'derrota' : 'empate')) : null
+          const colorBorde = !p.jugado ? '#aaa' : res === 'victoria' ? '#22a05a' : res === 'derrota' ? '#c0392b' : '#e0a020'
+          const colorFondo = !p.jugado ? 'white' : res === 'victoria' ? 'rgba(34,160,90,0.06)' : res === 'derrota' ? 'rgba(192,57,43,0.06)' : 'rgba(224,160,32,0.06)'
+          const fmt = (f) => { if (!f) return ''; const [y, m, d] = f.split('-'); const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']; return `${parseInt(d)} ${meses[parseInt(m) - 1]}` }
           return (
-            <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: i < nuestros.length - 1 ? '1px solid #f5e8eb' : 'none' }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.amistoso ? 'Amistoso' : `J${p.jornada}`} vs {rival} · {p.jugado ? `${p.goles_local} – ${p.goles_visitante}` : 'Pendiente'}</div>                <div style={{ fontSize: 11, color: 'var(--gris-mid)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span>{p.fecha} · {p.hora}</span>
-                  {p.amistoso && <span style={{ background: '#fff3cd', color: '#856a00', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 10 }}>Amistoso</span>}
-                </div>              </div>
-              <button onClick={() => openEdit(p)} style={{ background: 'none', border: '1px solid #c8aab2', borderRadius: 8, padding: '4px 10px', fontSize: 12, cursor: 'pointer', color: 'var(--verde)', flexShrink: 0 }}>Editar</button>
-              <button onClick={() => del(p.id)} style={{ background: 'none', border: '1px solid #fcc', borderRadius: 8, padding: '4px 10px', fontSize: 12, cursor: 'pointer', color: '#c0392b', flexShrink: 0 }}>✕</button>
+            <div key={p.id} style={{ background: colorFondo, border: '1px solid', borderColor: `${colorBorde}33`, borderLeft: `4px solid ${colorBorde}`, borderRadius: 14, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end', flexShrink: 0, minWidth: 160 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--gris-mid)', textTransform: 'uppercase', textAlign: 'right', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 120 }}>Tejera Balompié</span>
+                  <img src="/escudo.png" alt="Tejera" style={{ width: 44, height: 44, objectFit: 'contain', flexShrink: 0 }} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 90 }}>
+                  <span style={{ fontSize: 10, color: 'var(--gris-mid)' }}>{fmt(p.fecha)} · {p.hora}</span>
+                  {p.jugado ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontFamily: 'Bebas Neue', fontSize: 34, lineHeight: 1, color: 'var(--negro)' }}>{esL ? p.goles_local : p.goles_visitante}</span>
+                      <span style={{ fontFamily: 'Bebas Neue', fontSize: 20, color: '#bbb', lineHeight: 1 }}>-</span>
+                      <span style={{ fontFamily: 'Bebas Neue', fontSize: 34, lineHeight: 1, color: 'var(--negro)' }}>{esL ? p.goles_visitante : p.goles_local}</span>
+                    </div>
+                  ) : (
+                    <span style={{ fontFamily: 'Bebas Neue', fontSize: 20, color: '#aaa' }}>vs</span>
+                  )}
+                  {p.amistoso ? (
+                    <span style={{ background: '#e6f0fa', color: '#185fa4', fontSize: 10, fontWeight: 700, padding: '2px 9px', borderRadius: 20 }}>Amistoso</span>
+                  ) : (
+                    <span style={{ background: '#e6f0fa', color: '#185fa4', fontSize: 10, fontWeight: 700, padding: '2px 9px', borderRadius: 20 }}>Jornada {p.jornada}</span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-start', flexShrink: 0, minWidth: 160 }}>
+                  {p.escudo_rival_url ? (
+                    <img src={p.escudo_rival_url} alt={rival} style={{ width: 44, height: 44, objectFit: 'contain', flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--negro-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #333', flexShrink: 0 }}>
+                      <span style={{ fontFamily: 'Bebas Neue', fontSize: 15, color: '#aaa' }}>{letraRival}</span>
+                    </div>
+                  )}
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--gris-mid)', textTransform: 'uppercase', lineHeight: 1.2, maxWidth: 120, overflowWrap: 'break-word' }}>{rival}</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                <button onClick={() => openEdit(p)} style={{ background: 'none', border: '1px solid #c8aab2', borderRadius: 8, padding: '4px 14px', fontSize: 12, cursor: 'pointer', color: 'var(--verde)', fontWeight: 600 }}>✏️ Editar</button>
+                <button onClick={() => del(p.id)} style={{ background: 'none', border: '1px solid #fcc', borderRadius: 8, padding: '4px 10px', fontSize: 12, cursor: 'pointer', color: '#c0392b', fontWeight: 600 }}>🗑️</button>
+              </div>
             </div>
           )
         })}

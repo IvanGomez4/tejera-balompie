@@ -232,7 +232,7 @@ export default function Inicio() {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                 <div style={{ fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: '#f6d17a', fontWeight: 700 }}>
-                  Próximo partido · {proximo.amistoso ? 'Amistoso' : `J${proximo.jornada ?? '-'}`}
+                  Próximo partido · {proximo.amistoso ? 'Amistoso' : `Jornada ${proximo.jornada ?? '-'}`}
                 </div>
                 <span
                   className="badge"
@@ -349,16 +349,16 @@ export default function Inicio() {
                     flexShrink: 0,
                     background:
                       r === 'victoria'
-                        ? 'var(--verde-mid)'
+                        ? '#22a05a'
                         : r === 'derrota'
-                          ? 'var(--danger)'
-                          : '#b8b8b8',
+                          ? '#c0392b'
+                          : '#e0a020',
                   }}
                 />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 14, fontWeight: 600 }}>vs. {rival || 'Rival pendiente'}</div>
                   <div style={{ fontSize: 11, color: 'var(--gris-mid)' }}>
-                    {p.amistoso ? 'Amistoso' : `J${p.jornada ?? '-'}`} · {formatFecha(p.fecha)} · {p.hora || '--:--'}
+                    {p.amistoso ? 'Amistoso' : `Jornada ${p.jornada ?? '-'}`} · {formatFecha(p.fecha)} · {p.hora || '--:--'}
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

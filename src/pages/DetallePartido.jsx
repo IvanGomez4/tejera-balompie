@@ -590,7 +590,7 @@ export default function DetallePartido() {
 
             {/* Jugado — auto-calculado, bloqueado si fecha futura */}
             {(() => {
-              const fechaHoraStr = formPartido.hora ? `${formPartido.fecha}T${formPartido.hora}:00` : `${form.fecha}T23:59:00`
+              const fechaHoraStr = formPartido.hora ? `${formPartido.fecha}T${formPartido.hora}:00` : `${formPartido.fecha}T23:59:00`
               const esFuturo = formPartido.fecha && new Date(fechaHoraStr) > new Date()
               const autoJugado = formPartido.fecha && new Date(fechaHoraStr) < new Date()
               return (

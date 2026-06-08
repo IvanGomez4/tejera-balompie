@@ -79,7 +79,6 @@ export default function Partidos() {
         <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 8, marginBottom: '1.25rem', scrollbarWidth: 'none' }}>
           {proximos.map((p, i) => {
             const rival = p.local === EQUIPO_NOMBRE ? p.visitante : p.local
-            const cond = p.local === EQUIPO_NOMBRE ? 'Local' : 'Visitante'
             const esSiguiente = i === 0
             const letraRival = rival ? rival.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?'
             return (
@@ -98,7 +97,7 @@ export default function Partidos() {
                 }}>
                 {/* Chip */}
                 <span style={{ alignSelf: 'flex-start', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', padding: '2px 8px', borderRadius: 20, background: esSiguiente ? 'rgba(200,153,26,0.2)' : 'rgba(155,42,64,0.1)', color: esSiguiente ? 'var(--dorado-light)' : 'var(--verde-mid)' }}>
-                  {p.amistoso ? 'Amistoso' : `J${p.jornada}`} · {cond}
+                  {p.amistoso ? 'Amistoso' : `Jornada ${p.jornada}`}
                 </span>
                 {/* Escudos mini */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -151,45 +150,47 @@ export default function Partidos() {
                 cursor: 'pointer',
                 WebkitTapHighlightColor: 'rgba(0,0,0,0.04)',
                 display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
-                justifyContent: 'center',
-                gap: 12,
+                gap: 0,
                 transition: 'transform 0.12s',
               }}
               onTouchStart={e => e.currentTarget.style.transform = 'scale(0.985)'}
               onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
             >
-              {/* Escudo Tejera — izquierda */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, width: 64, flexShrink: 0 }}>
-                <img src="/escudo.png" alt="Tejera" style={{ width: 52, height: 52, objectFit: 'contain' }} />
-                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--gris-mid)', textTransform: 'uppercase', letterSpacing: '0.03em', textAlign: 'center', lineHeight: 1.2 }}>Tejera Balompié</span>
-              </div>
-
-              {/* Centro: fecha + marcador + chip */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 90 }}>
-                <span style={{ fontSize: 10, color: 'var(--gris-mid)' }}>{fmt(p.fecha)} · {p.hora}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontFamily: 'Bebas Neue', fontSize: 38, lineHeight: 1, color: 'var(--negro)' }}>{esL ? p.goles_local : p.goles_visitante}</span>
-                  <span style={{ fontFamily: 'Bebas Neue', fontSize: 24, color: '#bbb', lineHeight: 1 }}>-</span>
-                  <span style={{ fontFamily: 'Bebas Neue', fontSize: 38, lineHeight: 1, color: 'var(--negro)' }}>{esL ? p.goles_visitante : p.goles_local}</span>
+              {/* Fila de escudos + marcador */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, width: '100%' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end', flexShrink: 0, minWidth: 160 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--gris-mid)', textTransform: 'uppercase', letterSpacing: '0.03em', textAlign: 'right', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Tejera Balompié</span>
+                  <img src="/escudo.png" alt="Tejera" style={{ width: 52, height: 52, objectFit: 'contain', flexShrink: 0 }} />
                 </div>
-                {p.amistoso ? (
-                  <span style={{ background: '#fff3cd', color: '#856a00', fontSize: 10, fontWeight: 700, padding: '2px 9px', borderRadius: 20 }}>Amistoso</span>
-                ) : (
-                  <span style={{ background: 'rgba(155,42,64,0.12)', color: 'var(--verde-mid)', fontSize: 10, fontWeight: 700, padding: '2px 9px', borderRadius: 20 }}>Jornada {p.jornada}</span>
-                )}
-              </div>
 
-              {/* Escudo rival — derecha */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, width: 64, flexShrink: 0 }}>
-                {p.escudo_rival_url ? (
-                  <img src={p.escudo_rival_url} alt={rival} style={{ width: 52, height: 52, objectFit: 'contain' }} />
-                ) : (
-                  <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--negro-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #333' }}>
-                    <span style={{ fontFamily: 'Bebas Neue', fontSize: 17, color: '#aaa', letterSpacing: '0.05em' }}>{letraRival}</span>
+                {/* Centro: fecha + marcador + chip */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 90 }}>
+                  <span style={{ fontSize: 10, color: 'var(--gris-mid)' }}>{fmt(p.fecha)} · {p.hora}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontFamily: 'Bebas Neue', fontSize: 38, lineHeight: 1, color: 'var(--negro)' }}>{esL ? p.goles_local : p.goles_visitante}</span>
+                    <span style={{ fontFamily: 'Bebas Neue', fontSize: 24, color: '#bbb', lineHeight: 1 }}>-</span>
+                    <span style={{ fontFamily: 'Bebas Neue', fontSize: 38, lineHeight: 1, color: 'var(--negro)' }}>{esL ? p.goles_visitante : p.goles_local}</span>
                   </div>
-                )}
-                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--gris-mid)', textTransform: 'uppercase', letterSpacing: '0.03em', textAlign: 'center', lineHeight: 1.2, maxWidth: 64, wordBreak: 'break-word' }}>{rival}</span>
+                  {p.amistoso ? (
+                    <span style={{ background: '#e6f0fa', color: '#185fa4', fontSize: 10, fontWeight: 700, padding: '2px 9px', borderRadius: 20 }}>Amistoso</span>
+                  ) : (
+                    <span style={{ background: '#e6f0fa', color: '#185fa4', fontSize: 10, fontWeight: 700, padding: '2px 9px', borderRadius: 20 }}>Jornada {p.jornada}</span>
+                  )}
+                </div>
+
+                {/* Escudo rival */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-start', flexShrink: 0, minWidth: 160 }}>
+                  {p.escudo_rival_url ? (
+                    <img src={p.escudo_rival_url} alt={rival} style={{ width: 52, height: 52, objectFit: 'contain', flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--negro-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #333', flexShrink: 0 }}>
+                      <span style={{ fontFamily: 'Bebas Neue', fontSize: 17, color: '#aaa' }}>{letraRival}</span>
+                    </div>
+                  )}
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--gris-mid)', textTransform: 'uppercase', letterSpacing: '0.03em', textAlign: 'left', lineHeight: 1.2, maxWidth: 110, overflowWrap: 'break-word' }}>{rival}</span>
+                </div>
               </div>
 
             </div>
