@@ -261,14 +261,28 @@ function PanelPartidos({ partidos, store }) {
           const colorFondo = !p.jugado ? 'white' : res === 'victoria' ? 'rgba(34,160,90,0.06)' : res === 'derrota' ? 'rgba(192,57,43,0.06)' : 'rgba(224,160,32,0.06)'
           const fmt = (f) => { if (!f) return ''; const [y, m, d] = f.split('-'); const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']; return `${parseInt(d)} ${meses[parseInt(m) - 1]}` }
           return (
-            <div key={p.id} style={{ background: colorFondo, border: '1px solid', borderColor: `${colorBorde}33`, borderLeft: `4px solid ${colorBorde}`, borderRadius: 14, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end', flexShrink: 0, minWidth: 160 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--gris-mid)', textTransform: 'uppercase', textAlign: 'right', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 120 }}>Tejera Balompié</span>
-                  <img src="/escudo.png" alt="Tejera" style={{ width: 44, height: 44, objectFit: 'contain', flexShrink: 0 }} />
+            <div key={p.id} style={{ position: 'relative', background: colorFondo, border: '1px solid', borderColor: `${colorBorde}33`, borderLeft: `4px solid ${colorBorde}`, borderRadius: 14, padding: '16px 14px' }}>
+
+              {/* Botones de acción flotantes en la esquina superior derecha */}
+              <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 6 }}>
+                <button onClick={() => openEdit(p)} style={{ background: 'rgba(255,255,255,0.7)', border: '1px solid #c8aab2', borderRadius: 8, padding: '4px 8px', fontSize: 11, cursor: 'pointer', color: 'var(--verde)', fontWeight: 600 }}>✏️</button>
+                <button onClick={() => del(p.id)} style={{ background: 'rgba(255,255,255,0.7)', border: '1px solid #c8aab2', borderRadius: 8, padding: '4px 8px', fontSize: 11, cursor: 'pointer', color: '#c0392b', fontWeight: 600 }}>🗑️</button>
+              </div>
+
+              {/* Fila principal del partido */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+
+                {/* 1. Nombre Equipo Local */}
+                <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', paddingRight: 4 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--gris-mid)', textTransform: 'uppercase', textAlign: 'right', lineHeight: 1.2, textOverflow: 'ellipsis', maxWidth: 80, overflowWrap: 'break-word' }}>Tejera Balompié</span>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 90 }}>
-                  <span style={{ fontSize: 10, color: 'var(--gris-mid)' }}>{fmt(p.fecha)} · {p.hora}</span>
+
+                {/* 2. Escudo Local */}
+                <img src="/escudo.png" alt="Tejera" style={{ width: 44, height: 44, objectFit: 'contain', flexShrink: 0 }} />
+
+                {/* 3. Bloque Central */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                  <span style={{ fontSize: 10, color: 'var(--gris-mid)', whiteSpace: 'nowrap' }}>{fmt(p.fecha)} · {p.hora}</span>
                   {p.jugado ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span style={{ fontFamily: 'Bebas Neue', fontSize: 34, lineHeight: 1, color: 'var(--negro)' }}>{esL ? p.goles_local : p.goles_visitante}</span>
@@ -279,25 +293,26 @@ function PanelPartidos({ partidos, store }) {
                     <span style={{ fontFamily: 'Bebas Neue', fontSize: 20, color: '#aaa' }}>vs</span>
                   )}
                   {p.amistoso ? (
-                    <span style={{ background: '#e6f0fa', color: '#185fa4', fontSize: 10, fontWeight: 700, padding: '2px 9px', borderRadius: 20 }}>Amistoso</span>
+                    <span style={{ background: '#e6f0fa', color: '#185fa4', fontSize: 10, fontWeight: 700, padding: '2px 9px', borderRadius: 20, whiteSpace: 'nowrap' }}>Amistoso</span>
                   ) : (
-                    <span style={{ background: '#e6f0fa', color: '#185fa4', fontSize: 10, fontWeight: 700, padding: '2px 9px', borderRadius: 20 }}>Jornada {p.jornada}</span>
+                    <span style={{ background: '#e6f0fa', color: '#185fa4', fontSize: 10, fontWeight: 700, padding: '2px 9px', borderRadius: 20, whiteSpace: 'nowrap' }}>Jornada {p.jornada}</span>
                   )}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-start', flexShrink: 0, minWidth: 160 }}>
-                  {p.escudo_rival_url ? (
-                    <img src={p.escudo_rival_url} alt={rival} style={{ width: 44, height: 44, objectFit: 'contain', flexShrink: 0 }} />
-                  ) : (
-                    <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--negro-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #333', flexShrink: 0 }}>
-                      <span style={{ fontFamily: 'Bebas Neue', fontSize: 15, color: '#aaa' }}>{letraRival}</span>
-                    </div>
-                  )}
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--gris-mid)', textTransform: 'uppercase', lineHeight: 1.2, maxWidth: 120, overflowWrap: 'break-word' }}>{rival}</span>
+
+                {/* 4. Escudo Visitante */}
+                {p.escudo_rival_url ? (
+                  <img src={p.escudo_rival_url} alt={rival} style={{ width: 44, height: 44, objectFit: 'contain', flexShrink: 0 }} />
+                ) : (
+                  <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--negro-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #333', flexShrink: 0 }}>
+                    <span style={{ fontFamily: 'Bebas Neue', fontSize: 15, color: '#aaa' }}>{letraRival}</span>
+                  </div>
+                )}
+
+                {/* 5. Nombre Equipo Visitante */}
+                <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-start', paddingLeft: 4 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--gris-mid)', textTransform: 'uppercase', lineHeight: 1.2, maxWidth: 80, overflowWrap: 'break-word' }}>{rival}</span>
                 </div>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                <button onClick={() => openEdit(p)} style={{ background: 'none', border: '1px solid #c8aab2', borderRadius: 8, padding: '4px 14px', fontSize: 12, cursor: 'pointer', color: 'var(--verde)', fontWeight: 600 }}>✏️ Editar</button>
-                <button onClick={() => del(p.id)} style={{ background: 'none', border: '1px solid #fcc', borderRadius: 8, padding: '4px 10px', fontSize: 12, cursor: 'pointer', color: '#c0392b', fontWeight: 600 }}>🗑️</button>
+
               </div>
             </div>
           )
