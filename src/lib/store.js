@@ -182,12 +182,36 @@ export const store = {
     await log('➕ Añadió', 'Partido', `J${p.jornada} vs ${p.visitante || p.local}`)
     notify()
   },
+  async registrarPartidoJugado(partido_id, convocados_ids) {
+    const temporada_id = _temporadaActiva?.id || null
+    for (const jugador_id of convocados_ids) {
+      const existe = _stats.find(s => s.jugador_id === jugador_id && s.partido_id === partido_id)
+      if (!existe) {
+        const data = { jugador_id, partido_id, goles: 0, asistencias: 0, tarjetas_amarillas: 0, tarjetas_rojas: 0, paradas: 0, goles_encajados: 0, temporada_id }
+        if (USE_SUPABASE) {
+          await supabase.from('estadisticas').upsert(data, { onConflict: 'jugador_id,partido_id' })
+        }
+        const id = Math.max(0, ..._stats.map(x => x.id)) + 1
+        _stats = [..._stats, { ...data, id }]
+      }
+    }
+    if (!USE_SUPABASE) save('tj_stats', _stats)
+    notify()
+  },
   async updatePartido(id, data) {
-    if (USE_SUPABASE) await supabase.from('partidos').update({ jornada: data.jornada, fecha: data.fecha, hora: data.hora || null, local: data.local, visitante: data.visitante, campo: data.campo, jugado: data.jugado, goles_local: data.goles_local, goles_visitante: data.goles_visitante, alineacion: data.alineacion || null, formacion: data.formacion || null, amistoso: data.amistoso || false, escudo_rival_url: data.escudo_rival_url !== undefined ? data.escudo_rival_url : null }).eq('id', id)
+    if (USE_SUPABASE) await supabase.from('partidos').update({ jornada: data.jornada, fecha: data.fecha, hora: data.hora || null, local: data.local, visitante: data.visitante, campo: data.campo, jugado: data.jugado, goles_local: data.goles_local, goles_visitante: data.goles_visitante, alineacion: data.alineacion || null, formacion: data.formacion || null, amistoso: data.amistoso || false, escudo_rival_url: data.escudo_rival_url !== undefined ? data.escudo_rival_url : null, convocados: data.convocados || [] }).eq('id', id)
     _partidos = _partidos.map(p => p.id === id ? { ...p, ...data } : p)
     if (!USE_SUPABASE) save('tj_partidos', _partidos)
     const p = _partidos.find(x => x.id === id)
     await log('✏️ Editó', 'Partido', `J${p?.jornada} vs ${p?.visitante || p?.local}`)
+    notify()
+  },
+  async updateConvocados(partido_id, convocados) {
+    if (USE_SUPABASE) {
+      await supabase.from('partidos').update({ convocados }).eq('id', partido_id)
+    }
+    _partidos = _partidos.map(p => p.id === partido_id ? { ...p, convocados } : p)
+    if (!USE_SUPABASE) save('tj_partidos', _partidos)
     notify()
   },
   async uploadEscudoRival(partidoId, archivo) {

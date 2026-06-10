@@ -84,7 +84,26 @@ export default function Inicio() {
   }, [])
 
   const data = useMemo(() => {
-    const nuestro = clasificacion.find((e) => e.equipo === EQUIPO_NOMBRE)
+    // 1. Buscamos nuestro equipo
+    const nuestroObj = clasificacion.find((e) => e.equipo === EQUIPO_NOMBRE)
+    let posicionCalculada = '-'
+
+    // 2. Si lo encontramos, ordenamos su grupo para saber la posición real
+    if (nuestroObj) {
+      const miGrupo = nuestroObj.grupo || 'A'
+
+      const clasificacionGrupo = clasificacion
+        .filter(e => (e.grupo || 'A') === miGrupo)
+        .sort((a, b) => b.pts - a.pts || (b.gf - b.gc) - (a.gf - a.gc) || b.gf - a.gf)
+
+      const index = clasificacionGrupo.findIndex(e => e.equipo === EQUIPO_NOMBRE)
+      if (index !== -1) {
+        posicionCalculada = index + 1
+      }
+    }
+
+    // 3. Añadimos la posición calculada al objeto
+    const nuestro = nuestroObj ? { ...nuestroObj, posCalculada: posicionCalculada } : null
 
     const idsAmistosos = new Set(
       partidos.filter((p) => p.amistoso).map((p) => p.id)
@@ -192,7 +211,7 @@ export default function Inicio() {
 
         <div className="grid-3" style={{ marginTop: 12 }}>
           {[
-            [`${nuestro?.pos ?? '-'}º`, 'Posición'],
+            [`${nuestro?.posCalculada ?? '-'}º`, 'Posición'],
             [`${nuestro?.pts ?? 0}`, 'Puntos'],
             [`${nuestro?.pg ?? 0}-${nuestro?.pe ?? 0}-${nuestro?.pp ?? 0}`, 'Racha'],
           ].map(([valor, label]) => (

@@ -50,9 +50,21 @@ export default function Jugadores() {
 
   const conTotales = jugadores.map(j => {
     const ss = stats.filter(s => s.jugador_id === j.id && !partidos.find(p => p.id === s.partido_id)?.amistoso)
+    // Filtramos sobre la tabla de partidos para sumar +1 PJ
+    const partidosJugados = partidos.filter(p => {
+      const esOficial = !p.amistoso;
+      const esJugado = p.jugado === true;
+
+      // Comprobamos si el ID del jugador está en el array JSONB de convocados
+      // Asegurándonos de que p.convocados exista (por defecto es '[]')
+      const estaConvocado = p.convocados && p.convocados.includes(j.id);
+
+      return esOficial && esJugado && estaConvocado;
+    }).length
+
     return {
       ...j,
-      partidos: ss.length,
+      partidos: partidosJugados,
       goles: ss.reduce((a, s) => a + s.goles, 0),
       asistencias: ss.reduce((a, s) => a + s.asistencias, 0),
       tarjetas_amarillas: ss.reduce((a, s) => a + s.tarjetas_amarillas, 0),

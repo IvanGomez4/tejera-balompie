@@ -161,7 +161,7 @@ export default function Partidos() {
               {/* Fila de escudos + marcador */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, width: '100%' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end', flexShrink: 0, minWidth: 160 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--gris-mid)', textTransform: 'uppercase', letterSpacing: '0.03em', textAlign: 'right', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Tejera Balompié</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--gris-mid)', textTransform: 'uppercase', letterSpacing: '0.03em', textAlign: 'right', lineHeight: 1.2, textOverflow: 'ellipsis', maxWidth: 80, overflowWrap: 'break-word' }}>Tejera Balompié</span>
                   <img src="/escudo.png" alt="Tejera" style={{ width: 52, height: 52, objectFit: 'contain', flexShrink: 0 }} />
                 </div>
 
@@ -189,7 +189,7 @@ export default function Partidos() {
                       <span style={{ fontFamily: 'Bebas Neue', fontSize: 17, color: '#aaa' }}>{letraRival}</span>
                     </div>
                   )}
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--gris-mid)', textTransform: 'uppercase', letterSpacing: '0.03em', textAlign: 'left', lineHeight: 1.2, maxWidth: 110, overflowWrap: 'break-word' }}>{rival}</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--gris-mid)', textTransform: 'uppercase', letterSpacing: '0.03em', textAlign: 'left', lineHeight: 1.2, maxWidth: 80, overflowWrap: 'break-word' }}>{rival}</span>
                 </div>
               </div>
 
