@@ -214,15 +214,48 @@ export const store = {
     if (!USE_SUPABASE) save('tj_partidos', _partidos)
     notify()
   },
+  // =====================
+  // CLOUDINARY UPLOAD
+  // =====================
+  async comprimirImagen(archivo, { maxWidth = 800, maxHeight = 800, quality = 0.75 } = {}) {
+    return new Promise((resolve) => {
+      const img = new Image()
+      const url = URL.createObjectURL(archivo)
+      img.onload = () => {
+        URL.revokeObjectURL(url)
+        let { width, height } = img
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height)
+          width = Math.round(width * ratio)
+          height = Math.round(height * ratio)
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height)
+        canvas.toBlob(blob => resolve(blob || archivo), 'image/jpeg', quality)
+      }
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(archivo) }
+      img.src = url
+    })
+  },
+  async uploadToCloudinary(archivo, folder = 'tejera', opciones = {}) {
+    const blob = await store.comprimirImagen(archivo, opciones)
+    const formData = new FormData()
+    formData.append('file', blob)
+    formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET)
+    formData.append('folder', folder)
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
+      { method: 'POST', body: formData }
+    )
+    if (!res.ok) { console.error('Error subiendo a Cloudinary'); return null }
+    const data = await res.json()
+    return data.secure_url
+  },
+
   async uploadEscudoRival(partidoId, archivo) {
-    if (!USE_SUPABASE) return null
-    const ext = archivo.name.split('.').pop()
-    const path = `rival_${partidoId}.${ext}`
-    await supabase.storage.from('escudos-rivales').remove([path])
-    const { error } = await supabase.storage.from('escudos-rivales').upload(path, archivo, { upsert: true })
-    if (error) { console.error('Error subiendo escudo rival:', error); return null }
-    const { data } = supabase.storage.from('escudos-rivales').getPublicUrl(path)
-    return data.publicUrl
+    return await store.uploadToCloudinary(archivo, 'tejera/escudos-rivales', { maxWidth: 300, maxHeight: 300, quality: 0.80 })
   },
   async deletePartido(id) {
     if (USE_SUPABASE) await supabase.from('partidos').delete().eq('id', id)
@@ -354,16 +387,7 @@ export const store = {
     await log('👕 Alineación', 'Alineación', `J${p?.jornada} — ${formacion}`)
   },
   async subirFotoJugador(jugador_id, archivo) {
-    if (!USE_SUPABASE) return null
-    const ext = archivo.name.split('.').pop()
-    const path = `jugador_${jugador_id}.${ext}`
-    // Eliminar foto anterior si existe
-    await supabase.storage.from('avatares').remove([path])
-    // Subir nueva
-    const { error } = await supabase.storage.from('avatares').upload(path, archivo, { upsert: true })
-    if (error) { console.error('Error subiendo foto:', error); return null }
-    const { data } = supabase.storage.from('avatares').getPublicUrl(path)
-    return data.publicUrl
+    return await store.uploadToCloudinary(archivo, 'tejera/avatares', { maxWidth: 400, maxHeight: 400, quality: 0.75 })
   },
 
 
@@ -394,14 +418,8 @@ export const store = {
     if (USE_SUPABASE) {
       let imagen_url = imagen_url_local || null
       if (archivo) {
-        const ext = archivo.name.split('.').pop()
-        const path = `noticia_${id}.${ext}`
-        const { error: uploadError } = await supabase.storage
-          .from('noticias')
-          .upload(path, archivo, { upsert: true })
-        if (uploadError) throw uploadError
-        const { data: urlData } = supabase.storage.from('noticias').getPublicUrl(path)
-        imagen_url = urlData.publicUrl
+        imagen_url = await store.uploadToCloudinary(archivo, 'tejera/noticias', { maxWidth: 1000, maxHeight: 1400, quality: 0.72 })
+        if (!imagen_url) throw new Error('Error subiendo imagen a Cloudinary')
       }
       const { data, error } = await supabase
         .from('noticias')
@@ -433,18 +451,8 @@ export const store = {
       // 2. Borramos la fila de la base de datos
       await supabase.from('noticias').delete().eq('id', id)
 
-      // 3. Si tenía imagen, la borramos del bucket
-      if (noticia?.imagen_url) {
-        try {
-          const url = noticia.imagen_url
-          const bucketPath = url.split('/storage/v1/object/public/noticias/')[1]
-          if (bucketPath) {
-            await supabase.storage.from('noticias').remove([decodeURIComponent(bucketPath)])
-          }
-        } catch (e) {
-          console.error('Error borrando imagen del bucket:', e)
-        }
-      }
+      // La imagen está en Cloudinary — no es necesario borrarla desde el cliente
+      // (se puede hacer desde el dashboard de Cloudinary o ignorar, el storage es gratuito)
     } else {
       // Modo local: Cargamos del localStorage, filtramos y volvemos a guardar
       const noticiasActuales = load('tj_noticias', [])
@@ -558,11 +566,7 @@ export const store = {
     if (USE_SUPABASE) {
       let imagen_url = null
       if (archivo) {
-        const ext = archivo.name.split('.').pop()
-        const path = `patrocinador_${Date.now()}.${ext}`
-        await supabase.storage.from('patrocinadores').upload(path, archivo, { upsert: true })
-        const { data } = supabase.storage.from('patrocinadores').getPublicUrl(path)
-        imagen_url = data.publicUrl
+        imagen_url = await store.uploadToCloudinary(archivo, 'tejera/patrocinadores', { maxWidth: 600, maxHeight: 600, quality: 0.80 })
       }
       const { data } = await supabase.from('patrocinadores').insert({ nombre, imagen_url }).select().single()
       return data
