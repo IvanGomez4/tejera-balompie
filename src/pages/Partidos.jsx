@@ -159,7 +159,7 @@ export default function Partidos() {
               onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
             >
               {/* Fila de escudos + marcador */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, width: '100%' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end', flexShrink: 0, minWidth: 160 }}>
                   <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--gris-mid)', textTransform: 'uppercase', letterSpacing: '0.03em', textAlign: 'right', lineHeight: 1.2, textOverflow: 'ellipsis', maxWidth: 80, overflowWrap: 'break-word' }}>Tejera Balompié</span>
                   <img src="/escudo.png" alt="Tejera" style={{ width: 52, height: 52, objectFit: 'contain', flexShrink: 0 }} />
