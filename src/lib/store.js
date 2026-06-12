@@ -150,7 +150,7 @@ export const store = {
     notify()
   },
   async updateJugador(id, data) {
-    if (USE_SUPABASE) await supabase.from('jugadores').update({ nombre: data.nombre, posicion: data.posicion, dorsal: data.dorsal, foto_url: data.foto_url || null }).eq('id', id)
+    if (USE_SUPABASE) await supabase.from('jugadores').update({ nombre: data.nombre, posicion: data.posicion, dorsal: data.dorsal, foto_url: data.foto_url || null, estado: data.estado || 'disponible', estado_desc: data.estado_desc || null }).eq('id', id)
     _jugadores = _jugadores.map(j => j.id === id ? { ...j, ...data } : j)
     if (!USE_SUPABASE) save('tj_jugadores', _jugadores)
     const j = _jugadores.find(x => x.id === id)
@@ -199,7 +199,26 @@ export const store = {
     notify()
   },
   async updatePartido(id, data) {
-    if (USE_SUPABASE) await supabase.from('partidos').update({ jornada: data.jornada, fecha: data.fecha, hora: data.hora || null, local: data.local, visitante: data.visitante, campo: data.campo, jugado: data.jugado, goles_local: data.goles_local, goles_visitante: data.goles_visitante, alineacion: data.alineacion || null, formacion: data.formacion || null, amistoso: data.amistoso || false, escudo_rival_url: data.escudo_rival_url !== undefined ? data.escudo_rival_url : null, convocados: data.convocados || [] }).eq('id', id)
+    if (USE_SUPABASE) {
+      await supabase.from('partidos').update({
+        jornada: data.jornada,
+        fecha: data.fecha,
+        hora: data.hora || null,
+        local: data.local,
+        visitante: data.visitante,
+        campo: data.campo,
+        jugado: data.jugado,
+        goles_local: data.goles_local,
+        goles_visitante: data.goles_visitante,
+        alineacion: data.alineacion || null,
+        formacion: data.formacion || null,
+        amistoso: data.amistoso || false,
+        escudo_rival_url: data.escudo_rival_url !== undefined ? data.escudo_rival_url : null,
+        convocados: data.convocados || [],
+        mvp_jugador_id: data.mvp_jugador_id !== undefined ? data.mvp_jugador_id : null // LÍNEA AÑADIDA
+      }).eq('id', id)
+    }
+
     _partidos = _partidos.map(p => p.id === id ? { ...p, ...data } : p)
     if (!USE_SUPABASE) save('tj_partidos', _partidos)
     const p = _partidos.find(x => x.id === id)
@@ -348,14 +367,39 @@ export const store = {
   },
   async votarMvp(partido_id, votante_id, votado_id) {
     if (USE_SUPABASE) {
-      await supabase.from('votos_mvp').upsert(
-        { partido_id, votante_id, votado_id },
-        { onConflict: 'partido_id,votante_id' }
-      )
+      // 1. Borrado preventivo: nos aseguramos de limpiar cualquier rastro tuyo en este partido
+      await supabase
+        .from('votos_mvp')
+        .delete()
+        .eq('partido_id', partido_id)
+        .eq('votante_id', votante_id);
+
+      // 2. Insertamos el voto nuevo de forma limpia
+      const { error } = await supabase
+        .from('votos_mvp')
+        .insert([{ partido_id, votante_id, votado_id }]);
+
+      if (error) {
+        console.error("Error al guardar el nuevo voto:", error);
+      }
     } else {
+      // Tu lógica original de LocalStorage se mantiene intacta
       const votos = load('tj_votos_' + partido_id, [])
       const sin = votos.filter(v => v.votante_id !== votante_id)
       save('tj_votos_' + partido_id, [...sin, { partido_id, votante_id, votado_id }])
+    }
+  },
+  async eliminarVotoMvp(partido_id, votante_id) {
+    if (USE_SUPABASE) {
+      const { error } = await supabase
+        .from('votos_mvp')
+        .delete()
+        .eq('partido_id', partido_id)
+        .eq('votante_id', votante_id);
+
+      if (error) {
+        console.error("Error al eliminar el voto en Supabase:", error);
+      }
     }
   },
 

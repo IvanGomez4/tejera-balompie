@@ -110,7 +110,7 @@ export default function Navbar() {
     setIntentos(0)
     setLogged(true)
     setShowModal(false)
-    navigate('/admin')
+    navigate('/')
   }
 
   const handleLogout = () => {
@@ -118,7 +118,7 @@ export default function Navbar() {
     setLogged(false)
     setJugadorActivo(null)
     setShowMenu(false)
-    if (location.pathname === '/admin') navigate('/')
+    navigate('/')
   }
 
   const navegar = (to) => {

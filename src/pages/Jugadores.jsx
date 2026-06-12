@@ -20,10 +20,26 @@ const posiciones = ['Todos', 'Portero', 'Defensa', 'Centrocampista', 'Delantero'
 const POSICIONES = ['Portero', 'Defensa', 'Centrocampista', 'Delantero']
 const posClass = { Portero: 'pos-portero', Defensa: 'pos-defensa', Centrocampista: 'pos-centrocampista', Delantero: 'pos-delantero' }
 const posOrder = { Portero: 0, Defensa: 1, Centrocampista: 2, Delantero: 3 }
+const ESTADOS = {
+  disponible: { icono: null, label: 'Disponible', color: null },
+  lesionado: { icono: '🏥', label: 'Lesionado', color: '#c0392b' },
+  duda: { icono: '❓', label: 'Duda', color: '#e0a020' },
+  sancionado: { icono: '🟥', label: 'Sancionado', color: '#c0392b' },
+  baja: { icono: '💤', label: 'Baja', color: '#888' },
+}
+const IconoEstado = ({ estado, size = 16 }) => {
+  const e = ESTADOS[estado]
+  if (!e?.icono) return null
+  return (
+    <div style={{ position: 'absolute', top: 0, right: 0, width: size + 4, height: size + 4, borderRadius: '50%', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size - 2, boxShadow: '0 1px 4px rgba(0,0,0,0.2)', zIndex: 2 }}>
+      {e.icono === '🏥' ? <span style={{ color: '#c0392b', fontWeight: 900, fontSize: size - 2, lineHeight: 1 }}>✚</span> : e.icono}
+    </div>
+  )
+}
 
 const statTabs = [
   { key: 'goles', label: '⚽ Goles', color: 'var(--verde)' },
-  { key: 'asistencias', label: '🅰️ Asistencias', color: 'var(--dorado)' },
+  { key: 'asistencias', label: '🅰️ Asistencias', color: 'var(--verde)' },
   { key: 'partidos', label: '🎮 Partidos', color: 'var(--verde-mid)' },
   { key: 'tarjetas_amarillas', label: '🟨 Amarillas', color: '#c8a800' },
   { key: 'paradas', label: '🧤 Paradas', color: '#185fa5' },
@@ -40,7 +56,7 @@ export default function Jugadores() {
   const [statTab, setStatTab] = useState('goles')
 
   // Edit modal state
-  const emptyForm = { nombre: '', posicion: 'Delantero', dorsal: '', foto_url: '' }
+  const emptyForm = { nombre: '', posicion: 'Delantero', dorsal: '', foto_url: '', estado: 'disponible', estado_desc: '' }
   const [editModal, setEditModal] = useState(false)
   const [form, setForm] = useState(emptyForm)
   const [fotoArchivo, setFotoArchivo] = useState(null)
@@ -92,7 +108,7 @@ export default function Jugadores() {
   const maxPJ = Math.max(...conTotales.map(j => j.partidos), 0)
 
   const openEdit = (j) => {
-    setForm({ nombre: j.nombre, posicion: j.posicion, dorsal: j.dorsal, foto_url: j.foto_url || '' })
+    setForm({ nombre: j.nombre, posicion: j.posicion, dorsal: j.dorsal, foto_url: j.foto_url || '', estado: j.estado || 'disponible', estado_desc: j.estado_desc || '' })
     setFotoArchivo(null)
     setFotoPreview(j.foto_url || null)
     setEditModal(true)
@@ -146,11 +162,14 @@ export default function Jugadores() {
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
             {filtrados.map((j, i) => (
               <div key={j.id} onClick={() => setSelected(j.id === selected ? null : j.id)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < filtrados.length - 1 ? '1px solid #f5e8eb' : 'none', background: selected === j.id ? '#f9eff1' : 'white', cursor: 'pointer' }}>
-                <div className="avatar avatar-md" style={{ overflow: 'hidden', padding: 0 }}>
-                  {j.foto_url
-                    ? <img src={j.foto_url} alt={j.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
-                    : initials(j.nombre)
-                  }
+                <div style={{ position: 'relative', flexShrink: 0 }}>
+                  <div className="avatar avatar-md" style={{ overflow: 'hidden', padding: 0 }}>
+                    {j.foto_url
+                      ? <img src={j.foto_url} alt={j.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                      : initials(j.nombre)
+                    }
+                  </div>
+                  <IconoEstado estado={j.estado} size={12} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 15, fontWeight: 600 }}>{j.nombre}</div>
@@ -225,7 +244,7 @@ export default function Jugadores() {
                     <td><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Avatar jugador={j} size="sm" /><div><div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.2 }}>{j.nombre}</div><div style={{ fontSize: 10, color: 'var(--gris-mid)' }}>{j.posicion}</div></div></div></td>
                     <td style={{ textAlign: 'center', fontSize: 14 }}>{j.partidos}</td>
                     <td style={{ textAlign: 'center', fontSize: 14, fontWeight: 700, color: j.goles > 0 ? 'var(--verde)' : '#ccc' }}>{j.goles || '—'}</td>
-                    <td style={{ textAlign: 'center', fontSize: 14, fontWeight: 700, color: j.asistencias > 0 ? 'var(--dorado)' : '#ccc' }}>{j.asistencias || '—'}</td>
+                    <td style={{ textAlign: 'center', fontSize: 14, fontWeight: 700, color: j.asistencias > 0 ? 'var(--verde)' : '#ccc' }}>{j.asistencias || '—'}</td>
                     <td style={{ textAlign: 'center', fontSize: 14 }}>{j.tarjetas_amarillas > 0 ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><span style={{ width: 10, height: 13, background: '#f0c040', borderRadius: 2, display: 'inline-block' }} />{j.tarjetas_amarillas}</span> : <span style={{ color: '#ddd' }}>—</span>}</td>
                     <td style={{ textAlign: 'center', fontSize: 14, color: j.paradas > 0 ? '#185fa5' : '#ccc' }}>{j.paradas || '—'}</td>
                     <td style={{ textAlign: 'center', fontSize: 14, color: j.goles_encajados > 0 ? '#c0392b' : '#ccc' }}>{j.goles_encajados || '—'}</td>
@@ -262,7 +281,7 @@ export default function Jugadores() {
               {[
                 ['Partidos', jugador.partidos, 'var(--verde)'],
                 ['Goles', jugador.goles, 'var(--verde-mid)'],
-                ['Asistencias', jugador.asistencias, 'var(--dorado)'],
+                ['Asistencias', jugador.asistencias, 'var(--verde)'],
                 ['Amarillas', jugador.tarjetas_amarillas, '#c8a800'],
                 ...(jugador.posicion === 'Portero' ? [
                   ['Paradas', jugador.paradas || 0, '#185fa5'],
@@ -275,6 +294,15 @@ export default function Jugadores() {
                 </div>
               ))}
             </div>
+            {jugador.estado && jugador.estado !== 'disponible' && (
+              <div style={{ background: ESTADOS[jugador.estado]?.color + '18', border: `1.5px solid ${ESTADOS[jugador.estado]?.color}44`, borderRadius: 12, padding: '10px 14px', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 20 }}>{jugador.estado === 'lesionado' ? '✚' : ESTADOS[jugador.estado]?.icono}</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: ESTADOS[jugador.estado]?.color }}>{ESTADOS[jugador.estado]?.label}</div>
+                  {jugador.estado_desc && <div style={{ fontSize: 12, color: 'var(--gris-mid)', marginTop: 2 }}>{jugador.estado_desc}</div>}
+                </div>
+              </div>
+            )}
             {(jugador.goles + jugador.asistencias) > 0 && (
               <div style={{ background: '#f7f2f3', borderRadius: 12, padding: '12px 14px', marginBottom: '1rem' }}>
                 <div style={{ fontSize: 12, color: 'var(--gris-mid)', marginBottom: 6 }}>Participación ofensiva</div>
@@ -350,6 +378,20 @@ export default function Jugadores() {
                 </div>
               </div>
             </div>
+            <div className="form-group">
+              <label className="label">Estado</label>
+              <select className="select" value={form.estado} onChange={e => setF('estado', e.target.value)}>
+                {Object.entries(ESTADOS).map(([k, v]) => (
+                  <option key={k} value={k}>{v.icono ? `${v.icono === '🏥' ? '✚' : v.icono} ` : ''}{v.label}</option>
+                ))}
+              </select>
+            </div>
+            {form.estado !== 'disponible' && (
+              <div className="form-group">
+                <label className="label">Descripción <span style={{ fontWeight: 400, color: 'var(--gris-mid)', fontSize: 11 }}>(opcional)</span></label>
+                <input className="input" value={form.estado_desc} onChange={e => setF('estado_desc', e.target.value)} placeholder={form.estado === 'lesionado' ? 'Ej: Rotura de ligamentos' : 'Describe el motivo'} />
+              </div>
+            )}
             <button onClick={saveEdit} disabled={saving} className="btn btn-primary btn-block" style={{ opacity: saving ? 0.7 : 1 }}>
               {saving ? 'Guardando...' : 'Guardar cambios'}
             </button>

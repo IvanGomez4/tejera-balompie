@@ -201,6 +201,8 @@ export default function DetallePartido() {
   const [alineacionCargada, setAlineacionCargada] = useState(false)
 
   const partido = partidos.find(p => p.id === Number(id))
+  const [errorValidacion, setErrorValidacion] = useState(null)
+
 
   const jugadorActivo = adminAuth.isLogged() ? (() => {
     try { return JSON.parse(localStorage.getItem('tj_jugador_activo')) } catch { return null }
@@ -231,6 +233,22 @@ export default function DetallePartido() {
     setVotos(nuevos)
   }
 
+  const handleEliminarVoto = async () => {
+    if (!jugadorActivo) return;
+
+    // 1. Eliminamos el voto visualmente al instante
+    setMiVoto(null);
+
+    // 2. Eliminamos el registro real de la tabla 'votos_mvp'
+    if (store.eliminarVotoMvp) {
+      await store.eliminarVotoMvp(partido.id, jugadorActivo.id);
+    }
+
+    // 3. Volvemos a pedir los votos a la base de datos para que el contador general baje
+    const nuevos = await store.getVotosMvp(partido.id);
+    setVotos(nuevos);
+  };
+
   const handleSaveAlineacion = async (formacion, jugadoresAlin) => {
     await store.saveAlineacion(partido.id, formacion, jugadoresAlin)
     setAlineacion({ formacion, jugadores: jugadoresAlin })
@@ -255,15 +273,31 @@ export default function DetallePartido() {
   const suplentesIds = convocadosIds.filter(id => !titularesIds.includes(String(id)))
   const suplentes = suplentesIds.map(getJugador).filter(Boolean)
 
-  // Calcular MVP (el más votado)
-  const mvpId = votos.length > 0 ? (() => {
-    const conteo = {}
-    votos.forEach(v => { conteo[v.votado_id] = (conteo[v.votado_id] || 0) + 1 })
-    return Number(Object.entries(conteo).sort((a, b) => b[1] - a[1])[0][0])
-  })() : null
-  const mvpJugador = mvpId ? jugadores.find(j => j.id === mvpId) : null
+  // Calcular ranking de MVP y sus votos
+  let rankingVotos = [];
+  let mvpId = null; // Lo mantenemos para que la camiseta del campo siga brillando
+
+  if (votos.length > 0) {
+    const conteo = {};
+    votos.forEach(v => { conteo[v.votado_id] = (conteo[v.votado_id] || 0) + 1 });
+
+    // Ordenamos de mayor a menor número de votos
+    const ranking = Object.entries(conteo).sort((a, b) => b[1] - a[1]);
+
+    mvpId = Number(ranking[0][0]); // El primero de la lista es el MVP principal
+
+    // Creamos un array con la información de todos los jugadores votados
+    rankingVotos = ranking.map(([id, numVotos]) => ({
+      id: Number(id),
+      votos: numVotos,
+      jugador: jugadores.find(j => j.id === Number(id))
+    })).filter(item => item.jugador);
+  }
+
   const esLocal = partido.local === EQUIPO_NOMBRE
   const statsPartido = stats.filter(s => s.partido_id === partido.id)
+  const idsVotables = [...new Set([...convocadosIds, ...statsPartido.map(s => s.jugador_id)])];
+  const jugadoresVotables = jugadores.filter(j => idsVotables.includes(j.id)).sort(byPos);;
   const goleadores = statsPartido.filter(s => s.goles > 0).sort((a, b) => b.goles - a.goles)
   const asistentes = statsPartido.filter(s => s.asistencias > 0).sort((a, b) => b.asistencias - a.asistencias)
   const amarillas = statsPartido.filter(s => s.tarjetas_amarillas > 0)
@@ -392,17 +426,36 @@ export default function DetallePartido() {
             )}
 
             {/* Suplentes */}
-            {suplentes.length > 0 && (
+            {(suplentes.length > 0 || isAdmin) && (
               <div style={{ marginTop: 24, borderTop: '1px solid #f5e8eb', paddingTop: 16 }}>
-                <h3 style={{ fontSize: 15, color: 'var(--gris-dark)', marginBottom: 12 }}>🔄 Suplentes</h3>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                  {[...suplentes].sort(byPos).map(j => (
-                    <div key={j.id} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fcf8f9', border: '1px solid #f5e8eb', padding: '4px 12px 4px 4px', borderRadius: 24 }}>
-                      <Avatar jugador={j} size="sm" />
-                      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--gris-dark)' }}>{j.nombre}</span>
-                    </div>
-                  ))}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <h3 style={{ fontSize: 15, color: 'var(--gris-dark)', margin: 0 }}>🔄 Suplentes</h3>
+
+                  {/* Botón de editar (Solo para admins) */}
+                  {isAdmin && (
+                    <button
+                      onClick={() => { setFormConvocados(partido.convocados || []); setEditandoConvocatoria(true) }}
+                      style={{ background: 'var(--verde-pale)', border: 'none', padding: '6px 12px', borderRadius: 8, fontSize: 12, color: 'var(--verde)', fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      ✏️ Editar
+                    </button>
+                  )}
                 </div>
+
+                {suplentes.length > 0 ? (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                    {[...suplentes].sort(byPos).map(j => (
+                      <div key={j.id} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fcf8f9', border: '1px solid #f5e8eb', padding: '4px 12px 4px 4px', borderRadius: 24 }}>
+                        <Avatar jugador={j} size="sm" />
+                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--gris-dark)' }}>{j.nombre}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 13, color: 'var(--gris-mid)' }}>
+                    No hay suplentes.
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -464,30 +517,44 @@ export default function DetallePartido() {
           )}
 
           {/* Ficha completa */}
-          {statsPartido.length > 0 && (
-            <div className="card" style={{ marginBottom: '1rem' }}>
-              <h2 style={{ fontSize: 18, color: 'var(--verde)', marginBottom: 12 }}>📋 Ficha completa</h2>
-              <div style={{ overflowX: 'auto' }}>
-                <table>
-                  <thead><tr><th>Jugador</th><th style={{ textAlign: 'center' }}>⚽</th><th style={{ textAlign: 'center' }}>🅰️</th><th style={{ textAlign: 'center' }}>🟨</th><th style={{ textAlign: 'center' }}>🟥</th></tr></thead>
-                  <tbody>
-                    {statsPartido.map(s => {
-                      const j = getJugador(s.jugador_id); if (!j) return null
-                      return (
-                        <tr key={s.id}>
-                          <td><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Avatar jugador={j} size="sm" /><span style={{ fontSize: 13, fontWeight: 600 }}>{j.nombre}</span></div></td>
-                          <td style={{ textAlign: 'center', fontWeight: 700, color: s.goles > 0 ? 'var(--verde)' : '#ccc' }}>{s.goles || '—'}</td>
-                          <td style={{ textAlign: 'center', fontWeight: 700, color: s.asistencias > 0 ? 'var(--verde)' : '#ccc' }}>{s.asistencias || '—'}</td>
-                          <td style={{ textAlign: 'center' }}>{s.tarjetas_amarillas > 0 ? <span style={{ display: 'inline-block', width: 10, height: 14, background: '#f0c040', borderRadius: 2 }} /> : '—'}</td>
-                          <td style={{ textAlign: 'center' }}>{s.tarjetas_rojas > 0 ? <span style={{ display: 'inline-block', width: 10, height: 14, background: '#c0392b', borderRadius: 2 }} /> : '—'}</td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+          {(() => {
+            // Filtramos a los jugadores que tengan al menos una estadística > 0
+            const statsDestacadas = statsPartido.filter(s =>
+              s.goles > 0 ||
+              s.asistencias > 0 ||
+              s.tarjetas_amarillas > 0 ||
+              s.tarjetas_rojas > 0
+            );
+
+            // Si hay jugadores con estadísticas, mostramos la tabla
+            if (statsDestacadas.length > 0) {
+              return (
+                <div className="card" style={{ marginBottom: '1rem' }}>
+                  <h2 style={{ fontSize: 18, color: 'var(--verde)', marginBottom: 12 }}>📋 Ficha completa</h2>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table>
+                      <thead><tr><th>Jugador</th><th style={{ textAlign: 'center' }}>⚽</th><th style={{ textAlign: 'center' }}>🅰️</th><th style={{ textAlign: 'center' }}>🟨</th><th style={{ textAlign: 'center' }}>🟥</th></tr></thead>
+                      <tbody>
+                        {statsDestacadas.map(s => {
+                          const j = getJugador(s.jugador_id); if (!j) return null
+                          return (
+                            <tr key={s.id}>
+                              <td><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Avatar jugador={j} size="sm" /><span style={{ fontSize: 13, fontWeight: 600 }}>{j.nombre}</span></div></td>
+                              <td style={{ textAlign: 'center', fontWeight: 700, color: s.goles > 0 ? 'var(--verde)' : '#ccc' }}>{s.goles || '—'}</td>
+                              <td style={{ textAlign: 'center', fontWeight: 700, color: s.asistencias > 0 ? 'var(--verde)' : '#ccc' }}>{s.asistencias || '—'}</td>
+                              <td style={{ textAlign: 'center' }}>{s.tarjetas_amarillas > 0 ? <span style={{ display: 'inline-block', width: 10, height: 14, background: '#f0c040', borderRadius: 2 }} /> : '—'}</td>
+                              <td style={{ textAlign: 'center' }}>{s.tarjetas_rojas > 0 ? <span style={{ display: 'inline-block', width: 10, height: 14, background: '#c0392b', borderRadius: 2 }} /> : '—'}</td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            }
+            return null; // Si nadie tiene stats, no renderiza la tabla
+          })()}
         </>
       )}
 
@@ -528,23 +595,55 @@ export default function DetallePartido() {
         <div className="card" style={{ marginBottom: '1rem' }}>
           <h2 style={{ fontSize: 18, color: 'var(--verde)', marginBottom: 14 }}>⭐ MVP del partido</h2>
 
-          {/* MVP ganador por votos */}
-          {mvpJugador ? (
-            <div style={{ background: 'linear-gradient(135deg,#0d0a0b,#5a1520)', borderRadius: 12, padding: '12px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 48, height: 48, borderRadius: '50%', overflow: 'hidden', background: 'linear-gradient(135deg,#c8a800,#f0c040)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: 'white', flexShrink: 0 }}>
-                {mvpJugador.foto_url
-                  ? <img src={mvpJugador.foto_url} alt={mvpJugador.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
-                  : initials(mvpJugador.nombre)
-                }
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 11, color: '#e8a0b0', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  MVP — {votos.length} voto{votos.length !== 1 ? 's' : ''}
-                </div>
-                <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: 'white', lineHeight: 1.1 }}>{mvpJugador.nombre}</div>
-                <div style={{ fontSize: 11, color: '#6a3a42' }}>{mvpJugador.posicion} · #{mvpJugador.dorsal}</div>
-              </div>
-              <div style={{ fontSize: 28 }}>⭐</div>
+          {/* Ranking de votos */}
+          {rankingVotos.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
+              {rankingVotos.map((item, index) => {
+                const j = item.jugador;
+                const esGanador = index === 0; // El primero es el MVP real
+
+                return (
+                  <div key={j.id} style={{
+                    background: esGanador ? 'linear-gradient(135deg,#0d0a0b,#5a1520)' : 'white',
+                    border: esGanador ? 'none' : '1px solid #f5e8eb',
+                    borderRadius: 12,
+                    padding: esGanador ? '12px 16px' : '8px 12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12
+                  }}>
+                    <div style={{
+                      width: esGanador ? 48 : 36,
+                      height: esGanador ? 48 : 36,
+                      borderRadius: '50%',
+                      overflow: 'hidden',
+                      background: esGanador ? 'linear-gradient(135deg,#c8a800,#f0c040)' : '#f5e8eb',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: esGanador ? 18 : 14,
+                      fontWeight: 700,
+                      color: esGanador ? 'white' : 'var(--gris-dark)',
+                      flexShrink: 0
+                    }}>
+                      {j.foto_url
+                        ? <img src={j.foto_url} alt={j.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                        : initials(j.nombre)
+                      }
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 11, color: esGanador ? '#e8a0b0' : 'var(--gris-mid)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                        {esGanador ? 'MVP — ' : ''}{item.votos} voto{item.votos !== 1 ? 's' : ''}
+                      </div>
+                      <div style={{ fontFamily: 'Bebas Neue', fontSize: esGanador ? 22 : 18, color: esGanador ? 'white' : 'var(--negro)', lineHeight: 1.1 }}>
+                        {j.nombre}
+                      </div>
+                      {esGanador && <div style={{ fontSize: 11, color: '#6a3a42' }}>{j.posicion} · #{j.dorsal}</div>}
+                    </div>
+                    {esGanador && <div style={{ fontSize: 28 }}>⭐</div>}
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div style={{ color: 'var(--gris-mid)', fontSize: 13, textAlign: 'center', padding: '0.5rem 0', marginBottom: 12 }}>
@@ -553,25 +652,28 @@ export default function DetallePartido() {
           )}
 
           {/* Votación */}
-          {jugadorActivo && !miVoto && statsPartido.length > 0 && (
+          {jugadorActivo && !miVoto && jugadoresVotables.length > 0 && (
             <div>
               <div style={{ fontSize: 13, color: 'var(--gris-mid)', marginBottom: 10 }}>Vota al mejor del partido:</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {statsPartido.map(s => {
-                  const j = jugadores.find(x => x.id === s.jugador_id)
-                  if (!j || j.id === jugadorActivo.id) return null
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                {jugadoresVotables.map(j => {
+                  // Evitamos que el jugador se vote a sí mismo
+                  if (j.id === jugadorActivo.id) return null;
+
+                  // Buscamos sus stats reales, o inventamos unas a 0 si no tiene
+                  const s = statsPartido.find(stat => stat.jugador_id === j.id) || { goles: 0, asistencias: 0 };
+
                   return (
-                    <button key={s.id} onClick={() => { haptics.light(); handleVotar(j.id) }} style={{
-                      display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+                    <button key={j.id} onClick={() => { if (typeof haptics !== 'undefined' && haptics.light) haptics.light(); handleVotar(j.id) }} style={{
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px',
                       background: 'white', border: '1.5px solid #c8aab2', borderRadius: 10,
-                      cursor: 'pointer', textAlign: 'left', width: '100%'
+                      cursor: 'pointer', textAlign: 'left', width: '100%', boxSizing: 'border-box'
                     }}>
                       <Avatar jugador={j} size="sm" />
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 14, fontWeight: 600 }}>{j.nombre}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{j.nombre}</div>
                         <div style={{ fontSize: 11, color: 'var(--gris-mid)' }}>⚽{s.goles} 🅰️{s.asistencias}</div>
                       </div>
-                      <span style={{ fontSize: 18 }}>›</span>
                     </button>
                   )
                 })}
@@ -580,8 +682,33 @@ export default function DetallePartido() {
           )}
 
           {jugadorActivo && miVoto && (
-            <div style={{ background: 'var(--verde-pale)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: 'var(--verde)' }}>
-              ✓ Ya has votado a <strong>{jugadores.find(j => j.id === miVoto)?.nombre}</strong>
+            <div style={{
+              background: 'var(--verde-pale)',
+              borderRadius: 10,
+              padding: '10px 14px',
+              fontSize: 13,
+              color: 'var(--verde)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <span>✓ Ya has votado a <strong>{jugadores.find(j => j.id === miVoto)?.nombre}</strong></span>
+
+              <button
+                onClick={handleEliminarVoto}
+                style={{
+                  background: 'white',
+                  border: '1.5px solid var(--verde)',
+                  borderRadius: 8,
+                  padding: '4px 10px',
+                  fontSize: 11,
+                  color: 'var(--verde)',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                ✏️ Editar
+              </button>
             </div>
           )}
 
@@ -607,7 +734,30 @@ export default function DetallePartido() {
             <div style={{ fontSize: 13, color: 'var(--gris-dark)', marginBottom: 16 }}>
               Selecciona los jugadores que están disponibles para este partido.
             </div>
-
+            <button
+              type="button"
+              onClick={() => {
+                // Si ya están todos seleccionados, vaciamos, si no, seleccionamos todos
+                if (formConvocados.length === jugadores.length) {
+                  setFormConvocados([]);
+                } else {
+                  setFormConvocados(jugadores.map(j => j.id));
+                }
+              }}
+              style={{
+                background: 'none',
+                border: '1px solid var(--verde)',
+                color: 'var(--verde)',
+                padding: '8px',
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
+                marginBottom: 10
+              }}
+            >
+              {formConvocados.length === jugadores.length ? '❌ Deseleccionar todos' : '✅ Seleccionar todos'}
+            </button>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
               {[...jugadores].sort(byPos).map(j => {
                 const checked = formConvocados.includes(j.id)
@@ -633,13 +783,50 @@ export default function DetallePartido() {
             <button
               onClick={async () => {
                 try {
-                  // 1. Guardamos la lista en el store/localStorage
+                  // 1. Guardamos la nueva lista de convocados
                   await store.updateConvocados(partido.id, formConvocados);
 
-                  // 2. Cerramos el modal
+                  // --- 2. NUEVA LÓGICA: Limpiar alineación titular ---
+                  let alineacionModificada = false;
+
+                  // A. Revisamos la alineación principal del partido (Array de IDs: [1, 4, null, 12...])
+                  let nuevaAlineacion = partido.alineacion;
+                  if (Array.isArray(partido.alineacion)) {
+                    nuevaAlineacion = partido.alineacion.map(jid => {
+                      // Si la posición no está vacía Y el jugador NO está en los nuevos convocados
+                      if (jid && !formConvocados.includes(Number(jid))) {
+                        alineacionModificada = true;
+                        return null; // Lo sacamos del campo, dejando el hueco vacío
+                      }
+                      return jid;
+                    });
+                  }
+
+                  // Si se ha eliminado a alguien, guardamos la alineación limpia
+                  if (alineacionModificada) {
+                    await store.updatePartido(partido.id, {
+                      ...partido,
+                      alineacion: nuevaAlineacion
+                    });
+
+                    // B. Si usas la tabla externa extendida de alineaciones, la sincronizamos también
+                    if (alineacion?.jugadores) {
+                      const jugLimpios = alineacion.jugadores.map(slot => {
+                        const id = typeof slot === 'object' ? slot.jugador_id : slot;
+                        if (id && !formConvocados.includes(Number(id))) {
+                          return typeof slot === 'object' ? { ...slot, jugador_id: null } : null;
+                        }
+                        return slot;
+                      });
+                      await store.saveAlineacion(partido.id, alineacion.formacion || '1-3-2-1', jugLimpios);
+                    }
+                  }
+                  // ---------------------------------------------------
+
+                  // 3. Cerramos el modal
                   setEditandoConvocatoria(false);
 
-                  // 3. Forzamos la recarga para que la app lea los datos actualizados
+                  // 4. Forzamos la recarga para que la app lea los datos actualizados
                   window.location.reload();
                 } catch (error) {
                   console.error('Error al guardar la convocatoria:', error);
@@ -668,26 +855,32 @@ export default function DetallePartido() {
             {/* Jornada */}
             <div className="form-group">
               <label className="label">Jornada</label>
-              <input className="input" type="number" value={formPartido.amistoso ? '' : formPartido.jornada} onChange={e => setFormPartido(f => ({ ...f, jornada: e.target.value }))} placeholder={formPartido.amistoso ? 'No aplica (amistoso)' : 'Nº jornada'} disabled={formPartido.amistoso} style={{ opacity: formPartido.amistoso ? 0.5 : 1 }} />
+              <input
+                className="input"
+                type="number"
+                value={formPartido.amistoso ? '' : formPartido.jornada}
+                onChange={e => { setFormPartido(f => ({ ...f, jornada: e.target.value })); setErrorValidacion(null); }}
+                placeholder={formPartido.amistoso ? 'No aplica (amistoso)' : 'Nº jornada'}
+                disabled={formPartido.amistoso}
+                style={{ opacity: formPartido.amistoso ? 0.5 : 1 }}
+              />
             </div>
 
             {/* Fecha y hora */}
             <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <label className="label">Fecha</label>
-                <input className="input" type="date" value={formPartido.fecha} onChange={e => setFormPartido(f => ({ ...f, fecha: e.target.value }))}
-                  style={{ width: '100%', minWidth: 0, boxSizing: 'border-box' }} />
+                <input className="input" type="date" value={formPartido.fecha} onChange={e => { setFormPartido(f => ({ ...f, fecha: e.target.value })); setErrorValidacion(null); }} style={{ width: '100%', minWidth: 0, boxSizing: 'border-box' }} />
               </div>
               <div style={{ flex: '0 0 110px', minWidth: 0 }}>
                 <label className="label">Hora</label>
-                <input className="input" type="time" value={formPartido.hora} onChange={e => setFormPartido(f => ({ ...f, hora: e.target.value }))}
-                  style={{ width: '100%', minWidth: 0, boxSizing: 'border-box' }} />
+                <input className="input" type="time" value={formPartido.hora} onChange={e => { setFormPartido(f => ({ ...f, hora: e.target.value })); setErrorValidacion(null); }} style={{ width: '100%', minWidth: 0, boxSizing: 'border-box' }} />
               </div>
             </div>
 
             {/* Local / Visitante / Campo */}
-            <div className="form-group"><label className="label">Equipo local</label><input className="input" value={formPartido.local} onChange={e => setFormPartido(f => ({ ...f, local: e.target.value }))} /></div>
-            <div className="form-group"><label className="label">Equipo visitante</label><input className="input" value={formPartido.visitante} onChange={e => setFormPartido(f => ({ ...f, visitante: e.target.value }))} /></div>
+            <div className="form-group"><label className="label">Equipo local</label><input className="input" value={formPartido.local} disabled /></div>
+            <div className="form-group"><label className="label">Equipo visitante</label><input className="input" value={formPartido.visitante} onChange={e => { setFormPartido(f => ({ ...f, visitante: e.target.value })); setErrorValidacion(null); }} /></div>
 
             {/* Escudo rival */}
             <div className="form-group">
@@ -696,25 +889,19 @@ export default function DetallePartido() {
                 {escudoRivalPreview ? (
                   <div style={{ position: 'relative', flexShrink: 0 }}>
                     <img src={escudoRivalPreview} alt="Escudo rival" style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--verde-pale)' }} />
-                    <button type="button" onClick={() => { setEscudoRivalFile(null); setEscudoRivalPreview(null); setFormPartido(f => ({ ...f, escudo_rival_url: null })) }}
-                      style={{ position: 'absolute', top: -6, right: -6, width: 20, height: 20, borderRadius: '50%', background: '#c0392b', border: 'none', color: 'white', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>✕</button>
+                    <button type="button" onClick={() => { setEscudoRivalFile(null); setEscudoRivalPreview(null); setFormPartido(f => ({ ...f, escudo_rival_url: null })) }} style={{ position: 'absolute', top: -6, right: -6, width: 20, height: 20, borderRadius: '50%', background: '#c0392b', border: 'none', color: 'white', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>✕</button>
                   </div>
                 ) : (
                   <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#f5e8eb', border: '2px dashed #c8aab2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>🛡️</div>
                 )}
                 <label style={{ flex: 1, background: 'var(--verde-pale)', border: '1.5px solid #c8aab2', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: 'var(--verde)', fontWeight: 600, cursor: 'pointer', textAlign: 'center' }}>
                   {escudoRivalPreview ? '📷 Cambiar escudo' : '📷 Subir escudo'}
-                  <input type="file" accept="image/*" onChange={e => {
-                    const file = e.target.files?.[0]
-                    if (!file) return
-                    setEscudoRivalFile(file)
-                    setEscudoRivalPreview(URL.createObjectURL(file))
-                  }} style={{ display: 'none' }} />
+                  <input type="file" accept="image/*" onChange={e => { const file = e.target.files?.[0]; if (!file) return; setEscudoRivalFile(file); setEscudoRivalPreview(URL.createObjectURL(file)) }} style={{ display: 'none' }} />
                 </label>
               </div>
             </div>
 
-            <div className="form-group"><label className="label">Campo</label><input className="input" value={formPartido.campo} onChange={e => setFormPartido(f => ({ ...f, campo: e.target.value }))} /></div>
+            <div className="form-group"><label className="label">Campo</label><input className="input" value={formPartido.campo} onChange={e => { setFormPartido(f => ({ ...f, campo: e.target.value })); setErrorValidacion(null); }} /></div>
 
             {/* Amistoso */}
             <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -724,7 +911,7 @@ export default function DetallePartido() {
               </label>
             </div>
 
-            {/* Jugado — auto-calculado, bloqueado si fecha futura */}
+            {/* Jugado — auto-calculado */}
             {(() => {
               const fechaHoraStr = formPartido.hora ? `${formPartido.fecha}T${formPartido.hora}:00` : `${formPartido.fecha}T23:59:00`
               const esFuturo = formPartido.fecha && new Date(fechaHoraStr) > new Date()
@@ -763,8 +950,49 @@ export default function DetallePartido() {
               </div>
             )}
 
+            {/* BLOQUE DE ERROR */}
+            {errorValidacion && (
+              <div style={{ color: '#c0392b', backgroundColor: '#fadbd8', border: '1px solid #f5b7b1', padding: '10px 14px', borderRadius: 8, fontSize: 13, marginBottom: 16, fontWeight: 500, textAlign: 'center' }}>
+                ⚠️ {errorValidacion}
+              </div>
+            )}
+
             <button
               onClick={async () => {
+                // --- 1. VALIDACIÓN DE CAMPOS OBLIGATORIOS ---
+                let errorCampos = null;
+                if (!formPartido.fecha) errorCampos = 'La fecha del partido es obligatoria.';
+                else if (!formPartido.hora) errorCampos = 'La hora del partido es obligatoria.';
+                else if (!formPartido.visitante?.trim()) errorCampos = 'El nombre del equipo visitante es obligatorio.';
+                else if (!formPartido.campo?.trim()) errorCampos = 'El campo donde se jugará es obligatorio.';
+
+                if (errorCampos) {
+                  if (typeof haptics !== 'undefined' && haptics.error) haptics.error();
+                  setErrorValidacion(errorCampos);
+                  return;
+                }
+
+                // --- 2. VALIDACIÓN DE JORNADA ---
+                if (!formPartido.amistoso) {
+                  const jornadaNum = Number(formPartido.jornada);
+
+                  if (!jornadaNum || jornadaNum <= 0) {
+                    if (typeof haptics !== 'undefined' && haptics.error) haptics.error();
+                    setErrorValidacion('El número de jornada debe ser 1 o mayor.');
+                    return;
+                  }
+
+                  // OBTENER PARTIDOS para comprobar la repetición (Asegúrate de que 'store' tiene este método disponible aquí)
+                  const todosLosPartidos = store.getPartidos ? store.getPartidos() : [];
+                  const jornadaRepetida = todosLosPartidos.find(p => p.jornada === jornadaNum && p.id !== partido.id);
+
+                  if (jornadaRepetida) {
+                    if (typeof haptics !== 'undefined' && haptics.error) haptics.error();
+                    setErrorValidacion(`La Jornada ${jornadaNum} ya está registrada contra ${jornadaRepetida.visitante || jornadaRepetida.local}.`);
+                    return;
+                  }
+                }
+
                 try {
                   setSubiendoEscudo(true)
 
@@ -786,9 +1014,9 @@ export default function DetallePartido() {
                     jornada: Number(formPartido.jornada) || 0,
                     goles_local: Number(formPartido.goles_local) || 0,
                     goles_visitante: Number(formPartido.goles_visitante) || 0,
-                    jugado: partidoYaJugado, // Usamos nuestra variable calculada
+                    jugado: partidoYaJugado,
                     escudo_rival_url: escudoUrl,
-                    convocados: partido.convocados || [] // Mantenemos los convocados a salvo
+                    convocados: partido.convocados || []
                   }
                   await store.updatePartido(partido.id, dataGuardar)
 

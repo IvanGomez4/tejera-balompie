@@ -381,8 +381,8 @@ input[type="time"] {
   border-radius: 4px;
   font-size: 12px;
   font-weight: 600;
-  background: var(--verde-pale);
-  color: var(--verde);
+  background: #23a15a;
+  color: #ffffff;
 }
 
 .tag-derrota {
@@ -391,8 +391,8 @@ input[type="time"] {
   border-radius: 4px;
   font-size: 12px;
   font-weight: 600;
-  background: var(--danger-pale);
-  color: var(--danger);
+  background: #c1392a;
+  color: #ffffff;
 }
 
 .tag-empate {
@@ -401,14 +401,14 @@ input[type="time"] {
   border-radius: 4px;
   font-size: 12px;
   font-weight: 600;
-  background: #f0f0f0;
-  color: #555;
+  background: #e1a120;
+  color: #ffffff;
 }
 
 .score-box {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 22px;
-  background: var(--negro);
+  background: #591724;
   color: var(--dorado-light);
   padding: 3px 12px;
   border-radius: var(--radius-md);

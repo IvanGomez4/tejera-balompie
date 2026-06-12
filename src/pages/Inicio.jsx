@@ -51,26 +51,36 @@ function resultadoPartido(partido) {
   return 'empate'
 }
 
-function getCountdownLabel(fecha, now) {
-  const matchDate = new Date(`${fecha}T00:00:00`)
-  const diffMs = matchDate - now
+function getCountdownLabel(fecha, hora, now) {
+  const matchDate = new Date(`${fecha}T${hora}:00`);
+  const diffMs = matchDate - now;
+
   if (Number.isNaN(matchDate.getTime())) {
-    return { label: 'Fecha pendiente', dias: 0, horas: 0, pasado: false }
+    return { label: 'Fecha pendiente', dias: 0, horas: 0, pasado: false };
   }
 
-  const dias = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-  const horas = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-  const pasado = diffMs < 0
-  const esHoy = dias === 0 && diffMs > 0
-  const esManana = dias === 1
+  const pasado = diffMs < 0;
 
-  let label = 'Próximamente'
-  if (pasado) label = 'Hoy'
-  else if (esHoy) label = `Hoy · faltan ${Math.max(horas, 0)}h`
-  else if (esManana) label = 'Mañana'
-  else label = `En ${dias} días`
+  // Horas absolutas para calcular cuándo mostrar "Faltan 23h" en la etiqueta pequeña
+  const horasTotales = Math.floor(diffMs / (1000 * 60 * 60));
+  const diasRestantes = Math.floor(horasTotales / 24);
 
-  return { label, dias, horas, pasado }
+  // Horas sueltas (0-23) para que el contador grande muestre "1 día y 6h"
+  const horasSueltas = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+  let label = 'Próximamente';
+
+  if (pasado) {
+    label = 'En juego / Finalizado';
+  } else if (horasTotales <= 24) {
+    const esHoy = matchDate.toDateString() === now.toDateString();
+    label = esHoy ? `Hoy · faltan ${horasTotales}h` : `Faltan ${horasTotales}h`;
+  } else {
+    label = diasRestantes === 1 ? 'Falta 1 día' : `Faltan ${diasRestantes} días`;
+  }
+
+  // IMPORTANTE: Devolvemos horasSueltas en la variable "horas" para el componente
+  return { label, dias: diasRestantes, horas: horasSueltas, pasado };
 }
 
 export default function Inicio() {
@@ -237,7 +247,7 @@ export default function Inicio() {
       {proximo ? (
         (() => {
           const rival = proximo.local === EQUIPO_NOMBRE ? proximo.visitante : proximo.local
-          const cd = getCountdownLabel(proximo.fecha, ahora)
+          const cd = getCountdownLabel(proximo.fecha, proximo.hora, ahora)
 
           return (
             <section
@@ -282,7 +292,7 @@ export default function Inicio() {
                 )}
               </div>
 
-              {!cd.pasado && cd.dias > 1 && (
+              {!cd.pasado && cd.dias > 0 && (
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 10 }}>
                   <span style={{ fontFamily: 'Bebas Neue', fontSize: 48, color: 'var(--dorado-light)', lineHeight: 1 }}>
                     {cd.dias}

@@ -35,9 +35,54 @@ export default function Partidos() {
   const jugados = [...nuestros].filter(p => p.jugado).sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
   const proximos = [...nuestros].filter(p => !p.jugado).sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
 
-  const handleSave = () => {
-    if (!form.fecha) return
+  const [errorValidacion, setErrorValidacion] = useState(null);
 
+  const handleSave = () => {
+    // --- 1. VALIDACIÓN DE CAMPOS OBLIGATORIOS (Individuales) ---
+    let errorCampos = null;
+
+    // Evaluamos en orden. Se guardará el primer error que encuentre.
+    if (!form.fecha) {
+      errorCampos = 'La fecha del partido es obligatoria.';
+    } else if (!form.hora) {
+      errorCampos = 'La hora del partido es obligatoria.';
+    } else if (!form.visitante?.trim()) {
+      errorCampos = 'El nombre del equipo visitante es obligatorio.';
+    } else if (!form.campo?.trim()) {
+      errorCampos = 'El campo donde se jugará es obligatorio.';
+    }
+
+    // Si hay algún error en los campos, lo mostramos y cortamos la ejecución
+    if (errorCampos) {
+      if (typeof haptics !== 'undefined' && haptics.error) haptics.error();
+      setErrorValidacion(errorCampos);
+      return;
+    }
+
+    // --- 2. VALIDACIÓN DE JORNADA ---
+    if (!form.amistoso) {
+      const jornadaNum = Number(form.jornada);
+
+      // Que no sea 0, negativo o esté vacío
+      if (!jornadaNum || jornadaNum <= 0) {
+        if (typeof haptics !== 'undefined' && haptics.error) haptics.error();
+        setErrorValidacion('El número de jornada debe ser 1 o mayor.');
+        return;
+      }
+
+      // Que la jornada no exista ya (ajusta 'partidos' al nombre real de tu array si es necesario)
+      const jornadaRepetida = partidos.find(p =>
+        p.jornada === jornadaNum && p.id !== form.id
+      );
+
+      if (jornadaRepetida) {
+        if (typeof haptics !== 'undefined' && haptics.error) haptics.error();
+        setErrorValidacion(`La Jornada ${jornadaNum} ya está registrada contra ${jornadaRepetida.visitante || jornadaRepetida.local}.`);
+        return;
+      }
+    }
+
+    // --- 3. GUARDADO DEL PARTIDO ---
     // Calcular si el partido ya debería estar marcado como jugado
     // Combina fecha + hora para comparar con el momento actual
     const fechaHoraStr = form.hora
@@ -53,6 +98,7 @@ export default function Partidos() {
       goles_visitante: Number(form.goles_visitante) || 0,
       jugado: yaJugado ? true : form.jugado,
     }
+
     store.addPartido(data)
     setForm(emptyForm)
     setShowForm(false)
@@ -235,7 +281,7 @@ export default function Partidos() {
             </div>
             <div className="form-group">
               <label className="label">Equipo local</label>
-              <input className="input" value={form.local} onChange={e => set('local', e.target.value)} />
+              <input className="input" disabled value={form.local} />
             </div>
             <div className="form-group">
               <label className="label">Equipo visitante</label>
@@ -248,7 +294,7 @@ export default function Partidos() {
 
             {/* Amistoso */}
             <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <input type="checkbox" id="amistoso" checked={form.amistoso} onChange={e => set('amistoso', e.target.checked)} style={{ width: 18, height: 18, accentColor: 'var(--dorado)' }} />
+              <input type="checkbox" id="amistoso" checked={form.amistoso} onChange={e => set('amistoso', e.target.checked)} style={{ width: 18, height: 18, accentColor: 'var(--verde)' }} />
               <label htmlFor="amistoso" className="label" style={{ margin: 0 }}>
                 Partido amistoso <span style={{ fontSize: 11, color: 'var(--gris-mid)', fontWeight: 400 }}>(stats no computan en clasificación)</span>
               </label>
@@ -290,7 +336,21 @@ export default function Partidos() {
                 </div>
               </div>
             )}
-
+            {errorValidacion && (
+              <div style={{
+                color: '#c0392b',
+                backgroundColor: '#fadbd8',
+                border: '1px solid #f5b7b1',
+                padding: '10px 14px',
+                borderRadius: 8,
+                fontSize: 13,
+                marginBottom: 16,
+                fontWeight: 500,
+                textAlign: 'center'
+              }}>
+                ⚠️ {errorValidacion}
+              </div>
+            )}
             <button onClick={handleSave} className="btn btn-primary btn-block" style={{ fontSize: 16 }}>
               ⚽ Guardar partido
             </button>

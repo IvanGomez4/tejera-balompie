@@ -16,7 +16,7 @@ function Avatar({ jugador, size = 'sm' }) {
 }
 const tabs = [
   { key: 'goles', label: '⚽ Goles', color: 'var(--verde)' },
-  { key: 'asistencias', label: '🅰️ Asistencias', color: 'var(--dorado)' },
+  { key: 'asistencias', label: '🅰️ Asistencias', color: 'var(--verde)' },
   { key: 'partidos', label: '🎮 Partidos', color: 'var(--verde-mid)' },
   { key: 'tarjetas_amarillas', label: '🟨 Amarillas', color: '#c8a800' },
   { key: 'paradas', label: '🧤 Paradas', color: '#185fa5' },
@@ -79,7 +79,7 @@ export default function Estadisticas() {
                 <td><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Avatar jugador={j} size="sm" /><div><div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.2 }}>{j.nombre}</div><div style={{ fontSize: 10, color: 'var(--gris-mid)' }}>{j.posicion}</div></div></div></td>
                 <td style={{ textAlign: 'center', fontSize: 14 }}>{j.partidos}</td>
                 <td style={{ textAlign: 'center', fontSize: 14, fontWeight: 700, color: j.goles > 0 ? 'var(--verde)' : '#ccc' }}>{j.goles || '—'}</td>
-                <td style={{ textAlign: 'center', fontSize: 14, fontWeight: 700, color: j.asistencias > 0 ? 'var(--dorado)' : '#ccc' }}>{j.asistencias || '—'}</td>
+                <td style={{ textAlign: 'center', fontSize: 14, fontWeight: 700, color: j.asistencias > 0 ? 'var(--verde)' : '#ccc' }}>{j.asistencias || '—'}</td>
                 <td style={{ textAlign: 'center', fontSize: 14 }}>{j.tarjetas_amarillas > 0 ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><span style={{ width: 10, height: 13, background: '#f0c040', borderRadius: 2, display: 'inline-block' }} />{j.tarjetas_amarillas}</span> : <span style={{ color: '#ddd' }}>—</span>}</td>
                 <td style={{ textAlign: 'center', fontSize: 14, color: j.paradas > 0 ? '#185fa5' : '#ccc' }}>
                   {j.paradas || '—'}

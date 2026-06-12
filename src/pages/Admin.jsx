@@ -62,17 +62,30 @@ function PanelJugadores({ jugadores, store }) {
   const [form, setForm] = useState(empty)
   const [fotoArchivo, setFotoArchivo] = useState(null)
   const [fotoPreview, setFotoPreview] = useState(null)
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const [errorValidacion, setErrorValidacion] = useState(null)
 
-  const openAdd = () => { setForm(empty); setFotoArchivo(null); setFotoPreview(null); setModal({ mode: 'add' }) }
+  const set = (k, v) => { setForm(f => ({ ...f, [k]: v })); setErrorValidacion(null); }
+  const openAdd = () => { setForm(empty); setFotoArchivo(null); setFotoPreview(null); setErrorValidacion(null); setModal({ mode: 'add' }) }
   const openEdit = (j) => {
     setForm({ nombre: j.nombre, posicion: j.posicion, dorsal: j.dorsal, foto_url: j.foto_url || '' })
     setFotoArchivo(null)
     setFotoPreview(j.foto_url || null)
+    setErrorValidacion(null)
     setModal({ mode: 'edit', id: j.id })
   }
   const save = async () => {
     if (!form.nombre.trim()) return
+
+    const dorsalNum = Number(form.dorsal) || 0;
+    const jugadorConflicto = jugadores.find(j =>
+      j.dorsal === dorsalNum && (modal.mode === 'add' || j.id !== modal.id)
+    );
+
+    if (jugadorConflicto) {
+      if (typeof haptics !== 'undefined' && haptics.error) haptics.error();
+      setErrorValidacion(`El dorsal #${dorsalNum} ya pertenece a ${jugadorConflicto.nombre}`); return;
+    }
+
     let foto_url = form.foto_url || null
 
     if (fotoArchivo) {
@@ -82,9 +95,14 @@ function PanelJugadores({ jugadores, store }) {
       foto_url = await store.subirFotoJugador(id, fotoArchivo)
     }
 
-    haptics.success()
-    if (modal.mode === 'add') store.addJugador({ ...form, dorsal: Number(form.dorsal) || 0, foto_url })
-    else store.updateJugador(modal.id, { ...form, dorsal: Number(form.dorsal) || 0, foto_url })
+    if (typeof haptics !== 'undefined' && haptics.success) haptics.success()
+
+    if (modal.mode === 'add') {
+      store.addJugador({ ...form, dorsal: dorsalNum, foto_url })
+    } else {
+      store.updateJugador(modal.id, { ...form, dorsal: dorsalNum, foto_url })
+    }
+
     setFotoArchivo(null)
     setFotoPreview(null)
     setModal(null)
@@ -156,6 +174,21 @@ function PanelJugadores({ jugadores, store }) {
               </div>
             </div>
           </div>
+          {errorValidacion && (
+            <div style={{
+              color: '#c0392b',
+              backgroundColor: '#fadbd8',
+              border: '1px solid #f5b7b1',
+              padding: '10px 14px',
+              borderRadius: 8,
+              fontSize: 13,
+              marginBottom: 16,
+              fontWeight: 500,
+              textAlign: 'center'
+            }}>
+              ⚠️ {errorValidacion}
+            </div>
+          )}
           <button onClick={save} className="btn btn-primary btn-block">Guardar</button>
         </Modal>
       )}
@@ -171,17 +204,19 @@ function PanelPartidos({ partidos, store }) {
   const [escudoFile, setEscudoFile] = useState(null)
   const [escudoPreview, setEscudoPreview] = useState(null)
   const [subiendoEscudo, setSubiendoEscudo] = useState(false)
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const [errorValidacion, setErrorValidacion] = useState(null)
+  const set = (k, v) => { setForm(f => ({ ...f, [k]: v })); setErrorValidacion(null) }
 
   const nuestros = partidos
     .filter(p => p.local === EQUIPO_NOMBRE || p.visitante === EQUIPO_NOMBRE)
     .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
 
-  const openAdd = () => { setForm(emptyP); setEscudoFile(null); setEscudoPreview(null); setModal({ mode: 'add' }) }
+  const openAdd = () => { setForm(emptyP); setEscudoFile(null); setEscudoPreview(null); setErrorValidacion(null); setModal({ mode: 'add' }) }
   const openEdit = (p) => {
     setForm({ jornada: p.jornada, fecha: p.fecha, hora: p.hora || '', local: p.local, visitante: p.visitante, campo: p.campo, jugado: p.jugado, goles_local: p.goles_local, goles_visitante: p.goles_visitante, amistoso: p.amistoso || false, escudo_rival_url: p.escudo_rival_url || null })
     setEscudoFile(null)
     setEscudoPreview(p.escudo_rival_url || null)
+    setErrorValidacion(null)
     setModal({ mode: 'edit', id: p.id })
   }
 
@@ -193,12 +228,45 @@ function PanelPartidos({ partidos, store }) {
   }
 
   const save = async () => {
-    if (!form.fecha) return
+    // --- 1. VALIDACIÓN DE CAMPOS OBLIGATORIOS ---
+    let errorCampos = null;
+    if (!form.fecha) errorCampos = 'La fecha del partido es obligatoria.';
+    else if (!form.hora) errorCampos = 'La hora del partido es obligatoria.';
+    else if (!form.visitante?.trim()) errorCampos = 'El nombre del equipo visitante es obligatorio.';
+    else if (!form.campo?.trim()) errorCampos = 'El campo donde se jugará es obligatorio.';
+
+    if (errorCampos) {
+      if (typeof haptics !== 'undefined' && haptics.error) haptics.error();
+      setErrorValidacion(errorCampos);
+      return;
+    }
+
+    // --- 2. VALIDACIÓN DE JORNADA ---
+    if (!form.amistoso) {
+      const jornadaNum = Number(form.jornada);
+
+      if (!jornadaNum || jornadaNum <= 0) {
+        if (typeof haptics !== 'undefined' && haptics.error) haptics.error();
+        setErrorValidacion('El número de jornada debe ser 1 o mayor.');
+        return;
+      }
+
+      // Validar repetida (ignoramos el partido actual si estamos editando)
+      const jornadaRepetida = partidos.find(p =>
+        p.jornada === jornadaNum && (modal.mode === 'edit' ? p.id !== modal.id : true)
+      );
+
+      if (jornadaRepetida) {
+        if (typeof haptics !== 'undefined' && haptics.error) haptics.error();
+        setErrorValidacion(`La Jornada ${jornadaNum} ya está registrada contra ${jornadaRepetida.visitante || jornadaRepetida.local}.`);
+        return;
+      }
+    }
+
+    // --- 3. GUARDADO DEL PARTIDO ---
     setSubiendoEscudo(true)
     let escudoUrl = form.escudo_rival_url || null
 
-    // Si hay archivo nuevo, subir primero (necesitamos el id del partido)
-    // Para add: insertamos primero sin escudo, luego subimos y actualizamos
     const fechaHoraStr = form.hora ? `${form.fecha}T${form.hora}:00` : `${form.fecha}T23:59:00`
     const fechaHora = new Date(fechaHoraStr)
     const esFuturo = fechaHora > new Date()
@@ -211,14 +279,13 @@ function PanelPartidos({ partidos, store }) {
       jugado: esFuturo ? false : (autoJugado ? true : form.jugado),
       escudo_rival_url: escudoUrl,
     }
-    haptics.success()
+
+    if (typeof haptics !== 'undefined' && haptics.success) haptics.success()
 
     if (modal.mode === 'add') {
       await store.addPartido(data)
-      // Si hay archivo, subir con el id recién creado
       if (escudoFile) {
         const nuevoPartido = store.getPartidos?.().slice(-1)[0]
-        // Fallback: subir sin id específico usando timestamp
         const url = await store.uploadEscudoRival(nuevoPartido?.id || Date.now(), escudoFile)
         if (url && nuevoPartido?.id) await store.updatePartido(nuevoPartido.id, { ...data, escudo_rival_url: url })
       }
@@ -229,7 +296,6 @@ function PanelPartidos({ partidos, store }) {
       await store.updatePartido(modal.id, { ...data, escudo_rival_url: escudoUrl })
     }
 
-    // Enviar notificación solo si el partido PASA de pendiente a jugado en esta edición
     const eraJugadoAntes = modal.mode === 'edit' && partidos.find(p => p.id === modal.id)?.jugado
     if (data.jugado && !eraJugadoAntes) {
       const esLocal = data.local === EQUIPO_NOMBRE
@@ -237,7 +303,11 @@ function PanelPartidos({ partidos, store }) {
       const nuestrosG = esLocal ? data.goles_local : data.goles_visitante
       const rivalesG = esLocal ? data.goles_visitante : data.goles_local
       const resTexto = nuestrosG > rivalesG ? `Victoria ${nuestrosG}-${rivalesG}` : nuestrosG < rivalesG ? `Derrota ${nuestrosG}-${rivalesG}` : `Empate ${nuestrosG}-${rivalesG}`
-      enviarNotificacionResultado({ partido_id: modal.id || null, rival, resultado: resTexto })
+      try {
+        enviarNotificacionResultado({ partido_id: modal.id || null, rival, resultado: resTexto })
+      } catch (e) {
+        console.warn("Aviso PUSH:", e)
+      }
     }
 
     setSubiendoEscudo(false)
@@ -348,7 +418,7 @@ function PanelPartidos({ partidos, store }) {
           </div>
           <div className="form-group">
             <label className="label">Equipo local</label>
-            <input className="input" value={form.local} onChange={e => set('local', e.target.value)} />
+            <input className="input" value={form.local} disabled />
           </div>
           <div className="form-group">
             <label className="label">Equipo rival</label>
@@ -431,6 +501,12 @@ function PanelPartidos({ partidos, store }) {
             </div>
           )}
 
+
+          {errorValidacion && (
+            <div style={{ color: '#c0392b', backgroundColor: '#fadbd8', border: '1px solid #f5b7b1', padding: '10px 14px', borderRadius: 8, fontSize: 13, marginBottom: 16, fontWeight: 500, textAlign: 'center' }}>
+              ⚠️ {errorValidacion}
+            </div>
+          )}
           <button onClick={save} className="btn btn-primary btn-block" style={{ fontSize: 16 }} disabled={subiendoEscudo}>
             {subiendoEscudo ? '⏳ Guardando...' : '⚽ Guardar partido'}
           </button>
@@ -447,7 +523,22 @@ function PanelStats({ jugadores, partidos, stats, store }) {
   const emptyS = { jugador_id: '', goles: 0, asistencias: 0, tarjetas_amarillas: 0, tarjetas_rojas: 0, paradas: 0, goles_encajados: 0 }
   const [form, setForm] = useState(emptyS)
   const [mvpSel, setMvpSel] = useState('')
+  const posOrder = { Portero: 0, Defensa: 1, Centrocampista: 2, Delantero: 3 }
+  const byPos = (a, b) => (posOrder[a.posicion] ?? 99) - (posOrder[b.posicion] ?? 99)
+  const [errorValidacion, setErrorValidacion] = useState(null)
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  // Cargar el MVP correcto cuando cambiamos de partido seleccionado
+  useEffect(() => {
+    if (partidoSel) {
+      const partidoActual = partidos.find(p => p.id === Number(partidoSel));
+      if (partidoActual) {
+        setMvpSel(partidoActual.mvp_jugador_id ? String(partidoActual.mvp_jugador_id) : '');
+      }
+    } else {
+      setMvpSel('');
+    }
+  }, [partidoSel, partidos]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -458,19 +549,105 @@ function PanelStats({ jugadores, partidos, stats, store }) {
     }
   }, [partidos])
 
+  const handleMvpChange = async (e) => {
+    const nuevoMvpId = e.target.value;
+    setMvpSel(nuevoMvpId);
+
+    if (partidoSel) {
+      try {
+        const partidoActual = partidos.find(p => p.id === Number(partidoSel));
+        if (partidoActual) {
+          await store.updatePartido(Number(partidoSel), {
+            ...partidoActual,
+            mvp_jugador_id: nuevoMvpId ? Number(nuevoMvpId) : null
+          });
+          if (typeof haptics !== 'undefined' && haptics.success) haptics.success();
+        }
+      } catch (error) {
+        console.error("Error al guardar MVP:", error);
+      }
+    }
+  };
+
   const jugados = partidos
     .filter(p => p.jugado && (p.local === EQUIPO_NOMBRE || p.visitante === EQUIPO_NOMBRE))
     .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+
   const statsDelPartido = stats.filter(s => s.partido_id === Number(partidoSel))
+
+  // --- NUEVA LÓGICA: FORZAR QUE APAREZCAN TODOS LOS JUGADORES ---
+  const partidoActualRender = partidos.find(p => p.id === Number(partidoSel));
+  const convocadosIds = partidoActualRender?.convocados || [];
+  const idsConStats = statsDelPartido.map(s => s.jugador_id);
+
+  // Unimos los IDs de los convocados y los que ya tienen stats (sin duplicados)
+  const idsAMostrar = [...new Set([...convocadosIds, ...idsConStats])];
+  const jugadoresConvocados = jugadores.filter(j => idsAMostrar.includes(j.id)).sort(byPos);
+
+  const statsUnificados = jugadoresConvocados.map(j => {
+    const statReal = statsDelPartido.find(s => s.jugador_id === j.id);
+    return statReal || {
+      id: `mock-${j.id}`,
+      jugador_id: j.id,
+      partido_id: Number(partidoSel),
+      goles: 0, asistencias: 0, tarjetas_amarillas: 0, tarjetas_rojas: 0, paradas: 0, goles_encajados: 0
+    };
+  });
+  // -------------------------------------------------------------
 
   const openAdd = () => { setForm(emptyS); setModal({ mode: 'add' }) }
   const openEdit = (s) => { setForm({ jugador_id: String(s.jugador_id), goles: s.goles, asistencias: s.asistencias, tarjetas_amarillas: s.tarjetas_amarillas, tarjetas_rojas: s.tarjetas_rojas, paradas: s.paradas || 0, goles_encajados: s.goles_encajados || 0 }); setModal({ mode: 'edit', jugador_id: s.jugador_id }) }
+
   const save = () => {
-    if (!form.jugador_id || !partidoSel) return
-    haptics.success(); store.upsertStat({ jugador_id: Number(form.jugador_id), partido_id: Number(partidoSel), goles: form.goles, asistencias: form.asistencias, tarjetas_amarillas: form.tarjetas_amarillas, tarjetas_rojas: form.tarjetas_rojas, paradas: form.paradas || 0, goles_encajados: form.goles_encajados || 0 })
-    store.updatePartido(Number(partidoSel), { mvp_jugador_id: mvpSel ? Number(mvpSel) : null })
-    setModal(null)
-  }
+    if (!form.jugador_id || !partidoSel) return;
+    setErrorValidacion(null);
+
+    // 1. Buscamos el partido para saber cuántos goles metimos en total
+    const partidoActual = partidos.find(p => p.id === Number(partidoSel));
+    const golesEquipo = partidoActual ? (partidoActual.local === EQUIPO_NOMBRE ? partidoActual.goles_local : partidoActual.goles_visitante) : 0;
+    const golesRecibidosPorEquipo = partidoActual ? (partidoActual.local === EQUIPO_NOMBRE ? partidoActual.goles_visitante : partidoActual.goles_local) : 0;
+
+    // 2. Calculamos los goles y asistencias ya registrados (excluyendo el jugador que estamos editando ahora mismo)
+    const otrosGoles = statsDelPartido
+      .filter(s => s.jugador_id !== Number(form.jugador_id))
+      .reduce((acc, s) => acc + s.goles, 0);
+
+    const otrasAsistencias = statsDelPartido
+      .filter(s => s.jugador_id !== Number(form.jugador_id))
+      .reduce((acc, s) => acc + s.asistencias, 0);
+
+    // 3. Validamos: Los nuevos totales no pueden exceder los del partido
+    if ((otrosGoles + Number(form.goles)) > golesEquipo) {
+      setErrorValidacion(`¡Has intentado registrar más goles de los que metió el equipo! (Total: ${golesEquipo})`);
+      return;
+    }
+
+    if ((otrasAsistencias + Number(form.asistencias)) > golesEquipo) {
+      setErrorValidacion(`¡Las asistencias no pueden superar los goles totales del equipo! (Total: ${golesEquipo})`);
+      return;
+    }
+
+    const jugadorEditado = jugadores.find(j => j.id === Number(form.jugador_id));
+    if (jugadorEditado?.posicion === 'Portero') {
+      if (Number(form.goles_encajados) > golesRecibidosPorEquipo) {
+        setErrorValidacion(`¡Has intentado registrar más goles encajados de los que recibió el equipo! (Total recibido: ${golesRecibidosPorEquipo})`);
+        return;
+      }
+    }
+
+    if (typeof haptics !== 'undefined' && haptics.success) haptics.success();
+    store.upsertStat({
+      jugador_id: Number(form.jugador_id),
+      partido_id: Number(partidoSel),
+      goles: Number(form.goles),
+      asistencias: Number(form.asistencias),
+      tarjetas_amarillas: Number(form.tarjetas_amarillas),
+      tarjetas_rojas: Number(form.tarjetas_rojas),
+      paradas: Number(form.paradas) || 0,
+      goles_encajados: Number(form.goles_encajados) || 0
+    });
+    setModal(null);
+  };
   const del = (jid) => { if (window.confirm('¿Eliminar estas estadísticas?')) store.deleteStat(jid, Number(partidoSel)) }
 
   return (
@@ -480,24 +657,34 @@ function PanelStats({ jugadores, partidos, stats, store }) {
         <select className="select" value={partidoSel} onChange={e => setPartidoSel(e.target.value)}>
           <option value="">Elige un partido...</option>
           {jugados.map(p => {
-            const rival = p.local === EQUIPO_NOMBRE ? p.visitante : p.local
-            return <option key={p.id} value={p.id}>{p.amistoso ? 'Amistoso' : `J${p.jornada}`} vs {rival} ({p.goles_local}–{p.goles_visitante}) · {p.fecha}</option>
+            const rival = p.local === EQUIPO_NOMBRE ? p.visitante : p.local;
+            const esAmistoso = p.amistoso || Number(p.jornada) === 0;
+            const labelJornada = esAmistoso ? 'Amistoso' : `J${p.jornada}`;
+            return <option key={p.id} value={p.id}>{labelJornada} vs {rival} ({p.goles_local}–{p.goles_visitante}) · {p.fecha}</option>
           })}
         </select>
       </div>
       {partidoSel && (
         <>
+          <div className="form-group">
+            <label className="label">⭐ MVP del partido</label>
+            <select className="select" value={mvpSel} onChange={handleMvpChange}>
+              <option value="">Sin MVP</option>
+              {jugadores.map(j => (
+                <option key={j.id} value={j.id}>#{j.dorsal} — {j.nombre}</option>
+              ))}
+            </select>
+          </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-            <span style={{ fontSize: 14, color: 'var(--gris-mid)' }}>{statsDelPartido.length} jugadores registrados</span>
+            <span style={{ fontSize: 14, color: 'var(--gris-mid)' }}>{statsUnificados.length} jugadores convocados</span>
             <button onClick={openAdd} className="btn btn-primary btn-sm">+ Añadir jugador</button>
           </div>
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-            {statsDelPartido.length === 0 && <div className="empty" style={{ padding: '1.5rem' }}>Sin estadísticas — pulsa "Añadir jugador"</div>}
-            {statsDelPartido.map((s, i) => {
+            {statsUnificados.map((s, i) => {
               const j = jugadores.find(x => x.id === s.jugador_id)
               if (!j) return null
               return (
-                <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: i < statsDelPartido.length - 1 ? '1px solid #f5e8eb' : 'none' }}>
+                <div key={s.id || `fallback-${j.id}`} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: i < statsUnificados.length - 1 ? '1px solid #f5e8eb' : 'none' }}>
                   <Avatar jugador={j} size="sm" />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 600 }}>{j.nombre}</div>
@@ -515,7 +702,10 @@ function PanelStats({ jugadores, partidos, stats, store }) {
         </>
       )}
       {modal && (
-        <Modal title={modal.mode === 'add' ? 'Añadir estadísticas' : 'Editar estadísticas'} onClose={() => setModal(null)}>
+        <Modal
+          title={`${modal.mode === 'add' ? 'Añadir estadísticas' : 'Editar estadísticas'}${form.jugador_id ? ` · ${jugadores.find(j => j.id === Number(form.jugador_id))?.nombre || ''}` : ''}`}
+          onClose={() => setModal(null)}
+        >
           {modal.mode === 'add' && (
             <div className="form-group">
               <label className="label">Jugador</label>
@@ -546,15 +736,20 @@ function PanelStats({ jugadores, partidos, stats, store }) {
               </div>
             ))}
           </div>
-          <div className="form-group">
-            <label className="label">⭐ MVP del partido</label>
-            <select className="select" value={mvpSel} onChange={e => setMvpSel(e.target.value)}>
-              <option value="">Sin MVP</option>
-              {jugadores.map(j => (
-                <option key={j.id} value={j.id}>#{j.dorsal} — {j.nombre}</option>
-              ))}
-            </select>
-          </div>
+          {errorValidacion && (
+            <div style={{
+              background: '#ffebee',
+              color: '#c62828',
+              padding: '12px',
+              borderRadius: 8,
+              marginBottom: 16,
+              fontSize: 14,
+              textAlign: 'center',
+              border: '1px solid #ffcdd2'
+            }}>
+              ⚠️ {errorValidacion}
+            </div>
+          )}
           <button onClick={save} className="btn btn-primary btn-block">Guardar</button>
         </Modal>
       )}
