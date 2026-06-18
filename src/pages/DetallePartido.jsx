@@ -918,11 +918,11 @@ export default function DetallePartido() {
               const autoJugado = formPartido.fecha && new Date(fechaHoraStr) < new Date()
               return (
                 <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 10, opacity: esFuturo ? 0.4 : 1 }}>
-                  <input type="checkbox" id="jugado-detalle" checked={autoJugado || formPartido.jugado} onChange={e => !esFuturo && setFormPartido(f => ({ ...f, jugado: e.target.checked }))} disabled={esFuturo || autoJugado} style={{ width: 18, height: 18, accentColor: 'var(--verde)' }} />
+                  <input type="checkbox" id="jugado-detalle" checked={formPartido.jugado} onChange={e => !esFuturo && setFormPartido(f => ({ ...f, jugado: e.target.checked }))} disabled={esFuturo} style={{ width: 18, height: 18, accentColor: 'var(--verde)' }} />
                   <label htmlFor="jugado-detalle" className="label" style={{ margin: 0 }}>
                     Partido ya jugado
                     {esFuturo && <span style={{ fontSize: 11, color: 'var(--gris-mid)', fontWeight: 400 }}> (fecha futura)</span>}
-                    {autoJugado && <span style={{ fontSize: 11, color: 'var(--verde)', fontWeight: 400 }}> (marcado automáticamente)</span>}
+                    {!esFuturo && !formPartido.jugado && <span style={{ fontSize: 11, color: 'var(--gris-mid)', fontWeight: 400 }}> (márcalo al terminar)</span>}
                   </label>
                 </div>
               )
@@ -1002,8 +1002,7 @@ export default function DetallePartido() {
                   const autoJugado = formPartido.fecha && new Date(fechaHoraStr) < new Date()
 
                   // 2. Forzamos el estado jugado correcto
-                  const partidoYaJugado = esFuturo ? false : (autoJugado ? true : formPartido.jugado)
-
+                  const partidoYaJugado = esFuturo ? false : formPartido.jugado
                   let escudoUrl = formPartido.escudo_rival_url || null
                   if (escudoRivalFile) {
                     escudoUrl = await store.uploadEscudoRival(partido.id, escudoRivalFile)
