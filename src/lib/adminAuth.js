@@ -19,11 +19,6 @@ export const adminAuth = {
       try { localStorage.setItem(KEY_AUTH, JSON.stringify(token)) } catch { }
       return true
     }
-    if (hashCalculado === ADMIN_PASSWORD_HASH) {
-      const token = { hash: hashCalculado.slice(0, 16), superadmin: false, ts: Date.now() }
-      try { localStorage.setItem(KEY_AUTH, JSON.stringify(token)) } catch { }
-      return true
-    }
     return false
   },
 
