@@ -1028,17 +1028,6 @@ function PanelLog({ store, jugadores }) {
       <div style={{ fontSize: 40, marginBottom: 12 }}>🔐</div>
       <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: 'var(--verde)', marginBottom: 6 }}>Área restringida</div>
       <div style={{ fontSize: 13, color: 'var(--gris-mid)', marginBottom: 20 }}>Solo el superadmin puede ver el log de actividad</div>
-      <div style={{ position: 'relative', marginBottom: 12 }}>
-        <input className="input" type={showPwd ? 'text' : 'password'} placeholder="Contraseña de superadmin"
-          value={pwdInput} onChange={e => { setPwdInput(e.target.value); setErrorPwd('') }}
-          onKeyDown={e => e.key === 'Enter' && verificar()} style={{ paddingRight: 48 }} />
-        <button type="button" onClick={() => setShowPwd(v => !v)}
-          style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--gris-mid)' }}>
-          {showPwd ? '🙈' : '👁️'}
-        </button>
-      </div>
-      {errorPwd && <div style={{ color: '#c0392b', fontSize: 13, marginBottom: 10 }}>⚠️ {errorPwd}</div>}
-      <button onClick={verificar} className="btn btn-primary btn-block">Ver log de actividad</button>
     </div>
   )
 

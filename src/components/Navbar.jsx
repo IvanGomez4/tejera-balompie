@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { adminAuth } from '../lib/adminAuth'
 import { useStore } from '../hooks/useStore'
 import { haptics } from '../lib/haptics'
+import { supabase } from '../lib/supabase'
 
 const tabs = [
   { to: '/', label: 'Inicio', icon: '🏠' },
@@ -89,8 +90,29 @@ export default function Navbar() {
     e.preventDefault()
     if (bloqueado) return
     if (!jugadorSel) { setError('Elige tu nombre'); return }
-    const isValid = await adminAuth.login(pwd)
-    if (!isValid) {
+
+    // 1. Intentamos login como Admin general (la contraseña larga que ya tenías)
+    const isAdminLogin = await adminAuth.login(pwd)
+    let isValidPlayer = false
+
+    // 2. Si no es la de admin, comprobamos si es su PIN numérico en Supabase
+    if (!isAdminLogin) {
+      try {
+        const { data: esValido, error: rpcError } = await supabase.rpc('validar_clave', {
+          p_jugador_id: Number(jugadorSel),
+          p_clave: pwd
+        });
+        if (!rpcError && esValido) {
+          isValidPlayer = true
+          adminAuth.loginAsPlayer()
+        }
+      } catch (err) {
+        console.error("Error comprobando el PIN en Supabase:", err)
+      }
+    }
+
+    // 3. Si fallan las dos cosas, bloqueamos
+    if (!isAdminLogin && !isValidPlayer) {
       const nuevosIntentos = intentos + 1
       setIntentos(nuevosIntentos)
       if (nuevosIntentos >= 5) {
@@ -98,15 +120,18 @@ export default function Navbar() {
         setError('Demasiados intentos. Espera 5 minutos.')
         setTimeout(() => { setBloqueado(false); setIntentos(0); setError('') }, 5 * 60 * 1000)
       } else {
-        setError(`Contraseña incorrecta (${nuevosIntentos}/5 intentos)`)
+        setError(`Contraseña o PIN incorrecto (${nuevosIntentos}/5 intentos)`)
       }
       return
     }
+
+    // 4. Login exitoso (como admin o como jugador)
     const jugador = jugadores.find(j => j.id === Number(jugadorSel))
     if (jugador) {
       adminAuth.setJugador(jugador)
       setJugadorActivo(jugador)
     }
+
     setIntentos(0)
     setLogged(true)
     setShowModal(false)
@@ -363,17 +388,17 @@ export default function Navbar() {
                 </select>
               </div>
               <div className="form-group">
-                <label className="label">Contraseña del equipo</label>
+                <label className="label">Contraseña personal (o Admin)</label>
                 <div style={{ position: 'relative' }}>
                   <input
                     className="input"
                     type={showPwd ? 'text' : 'password'}
-                    placeholder="••••••••••••"
+                    placeholder="Tu contraseña..."
                     value={pwd}
                     onChange={e => { setPwd(e.target.value); setError('') }}
                     autoComplete="current-password"
                     required
-                    style={{ paddingRight: 48 }}
+                    style={{ paddingRight: 48 }} // Eliminamos el letter-spacing raro
                   />
                   <button type="button" onClick={() => setShowPwd(v => !v)}
                     style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--gris-mid)', padding: 4 }}>

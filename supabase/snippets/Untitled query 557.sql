@@ -1,0 +1,1 @@
+Select id from jugadores order by id

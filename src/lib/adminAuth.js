@@ -27,6 +27,11 @@ export const adminAuth = {
     return false
   },
 
+  loginAsPlayer: () => {
+    const token = { hash: ADMIN_PASSWORD_HASH.slice(0, 16), superadmin: false, ts: Date.now() }
+    try { localStorage.setItem(KEY_AUTH, JSON.stringify(token)) } catch { }
+  },
+
   isLogged: () => {
     try {
       const raw = localStorage.getItem(KEY_AUTH)
