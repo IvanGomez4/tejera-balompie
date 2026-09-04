@@ -179,6 +179,139 @@ function EditorAlineacion({ partido, jugadores, store, onClose }) {
 
 
 // ── Página principal ──
+function TandaPenaltis({ eventos, jugadores, convocados, rival, esLocal, onSave, onClose }) {
+  const [evs, setEvs] = useState(eventos || [])
+  const [equipo, setEquipo] = useState(null) // 'local' | 'rival'
+  const [tipo, setTipo] = useState(null)
+  const [jugadorId, setJugadorId] = useState(null)
+
+  const golesLocal = evs.filter(e => e.equipo === 'local' && e.tipo === 'gol').length
+  const golesRival = evs.filter(e => e.equipo === 'rival' && e.tipo === 'gol').length
+
+  const porteros = convocados.filter(j => j.posicion === 'Portero')
+  const lanzadores = convocados.filter(j => j.posicion !== 'Portero')
+
+  const necesitaJugador = equipo === 'local' || (equipo === 'rival' && tipo === 'parada')
+
+  const addEvento = () => {
+    if (!equipo || !tipo) return
+    if (necesitaJugador && !jugadorId) return
+    const ev = { equipo, tipo, ...(jugadorId ? { jugador_id: Number(jugadorId) } : {}) }
+    setEvs(prev => [...prev, ev])
+    setTipo(null)
+    setJugadorId(null)
+  }
+
+  const removeEvento = (i) => setEvs(prev => prev.filter((_, idx) => idx !== i))
+
+  const guardar = () => {
+    const gl = evs.filter(e => e.equipo === 'local' && e.tipo === 'gol').length
+    const gr = evs.filter(e => e.equipo === 'rival' && e.tipo === 'gol').length
+    onSave(evs, gl, gr)
+  }
+
+  const iconoTipo = (tipo) => tipo === 'gol' ? '⚽' : tipo === 'parada' ? '🧤' : '❌'
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200, display: 'flex', alignItems: 'flex-end' }}>
+      <div style={{ background: 'white', borderRadius: '20px 20px 0 0', width: '100%', maxHeight: '90vh', overflowY: 'scroll', WebkitOverflowScrolling: 'touch', padding: '1.5rem 1rem', paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h2 style={{ fontSize: 20, color: 'var(--verde)', fontFamily: 'Bebas Neue', margin: 0 }}>🥅 Tanda de Penaltis</h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: 'var(--gris-mid)' }}>✕</button>
+        </div>
+
+        {/* Marcador parcial */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, alignItems: 'center', marginBottom: 20, background: 'var(--negro-soft)', borderRadius: 12, padding: '12px 20px' }}>
+          <span style={{ fontSize: 13, color: '#aaa', fontWeight: 700, textTransform: 'uppercase' }}>Tejera</span>
+          <span style={{ fontFamily: 'Bebas Neue', fontSize: 36, color: 'white' }}>{golesLocal} - {golesRival}</span>
+          <span style={{ fontSize: 13, color: '#aaa', fontWeight: 700, textTransform: 'uppercase', maxWidth: 80, textAlign: 'center', lineHeight: 1.2 }}>{rival}</span>
+        </div>
+
+        {/* Lista de eventos */}
+        {evs.length > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            {evs.map((e, i) => {
+              const j = e.jugador_id ? jugadores.find(x => x.id === e.jugador_id) : null
+              const esLocalEv = e.equipo === 'local'
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '1px solid #f5e8eb' }}>
+                  <span style={{ fontSize: 11, color: 'var(--gris-mid)', minWidth: 20, textAlign: 'center' }}>{i + 1}</span>
+                  {esLocalEv ? (
+                    <>
+                      <span style={{ fontSize: 18 }}>{iconoTipo(e.tipo)}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>{j?.nombre || 'Tejera'}</span>
+                      <span style={{ fontSize: 11, color: 'var(--verde)', fontWeight: 700, textTransform: 'uppercase' }}>Tejera</span>
+                    </>
+                  ) : (
+                    <>
+                      <span style={{ fontSize: 11, color: '#c0392b', fontWeight: 700, textTransform: 'uppercase', flex: 1, textAlign: 'right' }}>{rival}</span>
+                      {e.tipo === 'parada' && j && <span style={{ fontSize: 12, color: 'var(--gris-mid)' }}>🧤 {j.nombre}</span>}
+                      <span style={{ fontSize: 18 }}>{iconoTipo(e.tipo)}</span>
+                    </>
+                  )}
+                  <button onClick={() => removeEvento(i)} style={{ background: 'none', border: 'none', color: '#c8aab2', fontSize: 16, cursor: 'pointer', padding: '0 4px' }}>✕</button>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Añadir evento */}
+        <div style={{ background: '#f9f0f2', borderRadius: 14, padding: '14px', marginBottom: 16 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--gris-dark)', marginBottom: 10 }}>Añadir lanzamiento #{evs.length + 1}</div>
+
+          {/* Seleccionar equipo */}
+          <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+            <button onClick={() => { setEquipo('local'); setTipo(null); setJugadorId(null) }}
+              style={{ flex: 1, padding: '8px', borderRadius: 10, border: `2px solid ${equipo === 'local' ? 'var(--verde)' : '#ddd'}`, background: equipo === 'local' ? 'var(--verde-pale)' : 'white', fontWeight: 700, fontSize: 13, cursor: 'pointer', color: equipo === 'local' ? 'var(--verde)' : '#666' }}>
+              Tejera
+            </button>
+            <button onClick={() => { setEquipo('rival'); setTipo(null); setJugadorId(null) }}
+              style={{ flex: 1, padding: '8px', borderRadius: 10, border: `2px solid ${equipo === 'rival' ? '#c0392b' : '#ddd'}`, background: equipo === 'rival' ? '#fdf0f0' : 'white', fontWeight: 700, fontSize: 13, cursor: 'pointer', color: equipo === 'rival' ? '#c0392b' : '#666' }}>
+              {rival}
+            </button>
+          </div>
+
+          {/* Seleccionar tipo */}
+          {equipo && (
+            <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+              {['gol', 'fallo', ...(equipo === 'rival' ? ['parada'] : [])].map(t => (
+                <button key={t} onClick={() => { setTipo(t); setJugadorId(null) }}
+                  style={{ flex: 1, padding: '8px', borderRadius: 10, border: `2px solid ${tipo === t ? 'var(--verde)' : '#ddd'}`, background: tipo === t ? 'var(--verde-pale)' : 'white', fontWeight: 700, fontSize: 12, cursor: 'pointer', color: tipo === t ? 'var(--verde)' : '#666' }}>
+                  {iconoTipo(t)} {t.charAt(0).toUpperCase() + t.slice(1)}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Seleccionar jugador */}
+          {equipo && tipo && necesitaJugador && (
+            <div style={{ marginBottom: 10 }}>
+              <select className="select" value={jugadorId || ''} onChange={e => setJugadorId(e.target.value)}>
+                <option value="">{equipo === 'local' ? 'Selecciona lanzador' : 'Selecciona portero'}</option>
+                {(equipo === 'local' ? [...lanzadores, ...porteros] : porteros).map(j => (
+                  <option key={j.id} value={j.id}>{j.nombre} (#{j.dorsal})</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <button onClick={addEvento}
+            disabled={!equipo || !tipo || (necesitaJugador && !jugadorId)}
+            style={{ width: '100%', padding: '10px', borderRadius: 10, border: 'none', background: (!equipo || !tipo || (necesitaJugador && !jugadorId)) ? '#ddd' : 'var(--verde)', color: 'white', fontWeight: 700, fontSize: 14, cursor: (!equipo || !tipo || (necesitaJugador && !jugadorId)) ? 'not-allowed' : 'pointer' }}>
+            + Añadir lanzamiento
+          </button>
+        </div>
+
+        <button onClick={guardar} className="btn btn-primary btn-block" style={{ fontSize: 16 }}>
+          💾 Guardar tanda ({golesLocal}-{golesRival})
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function DetallePartido() {
   const { id } = useParams()
   const nav = useNavigate()
@@ -189,6 +322,8 @@ export default function DetallePartido() {
   // Nuevo estado para la convocatoria
   const [editandoConvocatoria, setEditandoConvocatoria] = useState(false)
   const [formConvocados, setFormConvocados] = useState([])
+  const [editandoPenaltis, setEditandoPenaltis] = useState(false)
+  const [eventosPenaltis, setEventosPenaltis] = useState([])
 
   const [formPartido, setFormPartido] = useState(null)
   const [escudoRivalFile, setEscudoRivalFile] = useState(null)
@@ -202,6 +337,10 @@ export default function DetallePartido() {
 
   const partido = partidos.find(p => p.id === Number(id))
   const [errorValidacion, setErrorValidacion] = useState(null)
+
+  useEffect(() => {
+    if (partido?.eventos_penaltis?.length) setEventosPenaltis(partido.eventos_penaltis)
+  }, [partido?.id])
 
 
   const jugadorActivo = adminAuth.isLogged() ? (() => {
@@ -304,7 +443,9 @@ export default function DetallePartido() {
   const rojas = statsPartido.filter(s => s.tarjetas_rojas > 0)
   const nuestros = esLocal ? partido.goles_local : partido.goles_visitante
   const rivales = esLocal ? partido.goles_visitante : partido.goles_local
-  const resultado = nuestros > rivales ? 'victoria' : nuestros < rivales ? 'derrota' : 'empate'
+  const resultado = nuestros > rivales ? 'victoria' : nuestros < rivales ? 'derrota'
+    : !partido.penaltis ? 'empate'
+      : (esLocal ? partido.goles_penaltis_local : partido.goles_penaltis_visitante) > (esLocal ? partido.goles_penaltis_visitante : partido.goles_penaltis_local) ? 'victoria' : 'derrota'
   const rival = esLocal ? partido.visitante : partido.local
 
   return (
@@ -340,6 +481,9 @@ export default function DetallePartido() {
                   goles_visitante: partido.goles_visitante,
                   amistoso: partido.amistoso || false,
                   escudo_rival_url: partido.escudo_rival_url || null,
+                  penaltis: partido.penaltis || false,
+                  goles_penaltis_local: partido.goles_penaltis_local || 0,
+                  goles_penaltis_visitante: partido.goles_penaltis_visitante || 0,
                 })
                 setEscudoRivalFile(null)
                 setEscudoRivalPreview(partido.escudo_rival_url || null)
@@ -366,8 +510,15 @@ export default function DetallePartido() {
                 <img src="/escudo.png" alt="Tejera" style={{ width: 40, height: 40, objectFit: 'contain' }} />
                 <div style={{ fontSize: 13, color: esLocal ? '#e8a0b0' : '#aaa', fontWeight: esLocal ? 700 : 400 }}>{partido.local}</div>
               </div>
-              <div style={{ fontFamily: 'Bebas Neue', fontSize: 48, color: 'white', letterSpacing: '0.05em', background: 'rgba(0,0,0,0.3)', padding: '4px 20px', borderRadius: 12 }}>
-                {partido.goles_local}–{partido.goles_visitante}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                <div style={{ fontFamily: 'Bebas Neue', fontSize: 48, color: 'white', letterSpacing: '0.05em', background: 'rgba(0,0,0,0.3)', padding: '4px 20px', borderRadius: 12 }}>
+                  {partido.goles_local}–{partido.goles_visitante}
+                </div>
+                {partido.penaltis && (
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>
+                    ({partido.goles_penaltis_local ?? 0}-{partido.goles_penaltis_visitante ?? 0} p.)
+                  </span>
+                )}
               </div>
               <div style={{ flex: 1, textAlign: 'left', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
                 {partido.escudo_rival_url ? (
@@ -459,6 +610,54 @@ export default function DetallePartido() {
               </div>
             )}
           </div>
+
+          {/* Tanda de Penaltis */}
+          {partido.penaltis && (
+            <div className="card" style={{ marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <div>
+                  <h2 style={{ fontSize: 18, color: 'var(--verde)', margin: 0 }}>🥅 Tanda de Penaltis</h2>
+                  <span style={{ fontSize: 13, color: 'var(--gris-mid)' }}>
+                    {partido.goles_penaltis_local ?? 0}-{partido.goles_penaltis_visitante ?? 0} p.
+                  </span>
+                </div>
+                {isAdmin && (
+                  <button onClick={() => setEditandoPenaltis(true)}
+                    style={{ background: 'none', border: '1.5px solid #c8aab2', borderRadius: 8, padding: '4px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', color: 'var(--verde)' }}>
+                    ✏️ Editar
+                  </button>
+                )}
+              </div>
+              {eventosPenaltis.length > 0 ? (
+                eventosPenaltis.map((e, i) => {
+                  const j = e.jugador_id ? jugadores.find(x => x.id === e.jugador_id) : null
+                  const esLocalEv = e.equipo === 'local'
+                  const iconoTipo = (t) => t === 'gol' ? '⚽' : t === 'parada' ? '🧤' : '❌'
+                  return (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '1px solid #f5e8eb' }}>
+                      <span style={{ fontSize: 11, color: 'var(--gris-mid)', minWidth: 20, textAlign: 'center' }}>{i + 1}</span>
+                      {esLocalEv ? (
+                        <>
+                          <span style={{ fontSize: 18 }}>{iconoTipo(e.tipo)}</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>{j?.nombre || 'Tejera'}</span>
+                          <span style={{ fontSize: 11, color: 'var(--verde)', fontWeight: 700 }}>TEJERA</span>
+                        </>
+                      ) : (
+                        <>
+                          <span style={{ fontSize: 11, color: '#c0392b', fontWeight: 700 }}>{rival?.toUpperCase()}</span>
+                          {e.tipo === 'parada' && j && <span style={{ fontSize: 12, color: 'var(--gris-mid)' }}>🧤 {j.nombre}</span>}
+                          <span style={{ flex: 1 }} />
+                          <span style={{ fontSize: 18 }}>{iconoTipo(e.tipo)}</span>
+                        </>
+                      )}
+                    </div>
+                  )
+                })
+              ) : (
+                isAdmin && <p style={{ fontSize: 13, color: 'var(--gris-mid)', textAlign: 'center', margin: 0 }}>Pulsa editar para añadir los eventos de la tanda</p>
+              )}
+            </div>
+          )}
 
           {/* Goleadores */}
           {goleadores.length > 0 && (
@@ -950,6 +1149,24 @@ export default function DetallePartido() {
               </div>
             )}
 
+            {/* Penaltis — solo visible si es empate */}
+            {formPartido.jugado && formPartido.goles_local === formPartido.goles_visitante && (
+              <div style={{ background: '#f5e8eb', borderRadius: 12, padding: '12px 14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <input type="checkbox" id="penaltis" checked={formPartido.penaltis || false}
+                    onChange={e => setFormPartido(f => ({ ...f, penaltis: e.target.checked, goles_penaltis_local: 0, goles_penaltis_visitante: 0, eventos_penaltis: [] }))}
+                    style={{ width: 18, height: 18, accentColor: 'var(--verde)' }} />
+                  <label htmlFor="penaltis" style={{ fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Decidido en penaltis</label>
+                </div>
+                {formPartido.penaltis && (
+                  <p style={{ fontSize: 12, color: 'var(--gris-mid)', margin: '8px 0 0 28px' }}>
+                    Guarda el partido y edita la tanda desde el detalle del partido.
+                  </p>
+                )}
+              </div>
+            )}
+
+
             {/* BLOQUE DE ERROR */}
             {errorValidacion && (
               <div style={{ color: '#c0392b', backgroundColor: '#fadbd8', border: '1px solid #f5b7b1', padding: '10px 14px', borderRadius: 8, fontSize: 13, marginBottom: 16, fontWeight: 500, textAlign: 'center' }}>
@@ -1013,6 +1230,9 @@ export default function DetallePartido() {
                     jornada: Number(formPartido.jornada) || 0,
                     goles_local: Number(formPartido.goles_local) || 0,
                     goles_visitante: Number(formPartido.goles_visitante) || 0,
+                    penaltis: formPartido.penaltis || false,
+                    goles_penaltis_local: formPartido.penaltis ? (Number(formPartido.goles_penaltis_local) || 0) : 0,
+                    goles_penaltis_visitante: formPartido.penaltis ? (Number(formPartido.goles_penaltis_visitante) || 0) : 0,
                     jugado: partidoYaJugado,
                     escudo_rival_url: escudoUrl,
                     convocados: partido.convocados || []
@@ -1053,6 +1273,29 @@ export default function DetallePartido() {
             </button>
           </div>
         </>
+      )}
+
+      {/* Modal Tanda Penaltis */}
+      {editandoPenaltis && (
+        <TandaPenaltis
+          eventos={eventosPenaltis}
+          jugadores={jugadores}
+          convocados={convocados}
+          rival={rival}
+          esLocal={esLocal}
+          onClose={() => setEditandoPenaltis(false)}
+          onSave={async (evs, gl, gr) => {
+            await store.updatePartido(partido.id, {
+              ...partido,
+              eventos_penaltis: evs,
+              goles_penaltis_local: gl,
+              goles_penaltis_visitante: gr,
+            })
+            setEventosPenaltis(evs)
+            setEditandoPenaltis(false)
+            window.location.reload()
+          }}
+        />
       )}
     </div>
   )

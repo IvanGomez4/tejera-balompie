@@ -8,7 +8,11 @@ function fmt(str) { return new Date(str).toLocaleDateString('es-ES', { weekday: 
 function res(p) {
   const esL = p.local === EQUIPO_NOMBRE
   const n = esL ? p.goles_local : p.goles_visitante, r = esL ? p.goles_visitante : p.goles_local
-  return n > r ? 'victoria' : n < r ? 'derrota' : 'empate'
+  if (n !== r) return n > r ? 'victoria' : 'derrota'
+  if (!p.penaltis) return 'empate'
+  const np = esL ? p.goles_penaltis_local : p.goles_penaltis_visitante
+  const rp = esL ? p.goles_penaltis_visitante : p.goles_penaltis_local
+  return np > rp ? 'victoria' : 'derrota'
 }
 
 function Counter({ value, onChange }) {
@@ -219,6 +223,11 @@ export default function Partidos() {
                     <span style={{ fontFamily: 'Bebas Neue', fontSize: 24, color: '#bbb', lineHeight: 1 }}>-</span>
                     <span style={{ fontFamily: 'Bebas Neue', fontSize: 38, lineHeight: 1, color: 'var(--negro)' }}>{esL ? p.goles_visitante : p.goles_local}</span>
                   </div>
+                  {p.penaltis && (
+                    <span style={{ fontSize: 10, color: 'var(--gris-mid)', fontWeight: 600 }}>
+                      ({esL ? p.goles_penaltis_local : p.goles_penaltis_visitante}-{esL ? p.goles_penaltis_visitante : p.goles_penaltis_local} p.)
+                    </span>
+                  )}
                   {p.amistoso ? (
                     <span style={{ background: '#e6f0fa', color: '#185fa4', fontSize: 10, fontWeight: 700, padding: '2px 9px', borderRadius: 20 }}>Amistoso</span>
                   ) : (

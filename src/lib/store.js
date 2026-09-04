@@ -176,7 +176,7 @@ export const store = {
       if (data) { _partidos = [..._partidos, data] }
     } else {
       const id = Math.max(0, ..._partidos.map(x => x.id)) + 1
-      _partidos = [..._partidos, { ...p, id, jugado: false, goles_local: 0, goles_visitante: 0 }]
+      _partidos = [..._partidos, { ...p, id, jugado: false, goles_local: 0, goles_visitante: 0, penaltis: false, goles_penaltis_local: 0, goles_penaltis_visitante: 0, eventos_penaltis: [] }]
       save('tj_partidos', _partidos)
     }
     await log('➕ Añadió', 'Partido', `J${p.jornada} vs ${p.visitante || p.local}`)
@@ -215,6 +215,10 @@ export const store = {
         amistoso: data.amistoso || false,
         escudo_rival_url: data.escudo_rival_url !== undefined ? data.escudo_rival_url : null,
         convocados: data.convocados || [],
+        penaltis: data.penaltis || false,
+        goles_penaltis_local: data.penaltis ? (data.goles_penaltis_local || 0) : 0,
+        goles_penaltis_visitante: data.penaltis ? (data.goles_penaltis_visitante || 0) : 0,
+        eventos_penaltis: data.eventos_penaltis || [],
         mvp_jugador_id: data.mvp_jugador_id !== undefined ? data.mvp_jugador_id : null // LÍNEA AÑADIDA
       }).eq('id', id)
     }
